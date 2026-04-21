@@ -1,0 +1,30 @@
+{
+    "name": "erp-mbg-backend",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "start": "node dist/index.js",
+        "build": "tsc",
+        "db:push": "drizzle-kit push",
+        "db:generate": "drizzle-kit generate",
+        "db:studio": "drizzle-kit studio"
+    },
+    "dependencies": {
+        "@hono/node-server": "^1.13.7",
+        "@libsql/client": "^0.14.0",
+        "@opentelemetry/api": "^1.9.1",
+        "better-auth": "^1.2.7",
+        "dotenv": "^16.4.5",
+        "drizzle-orm": "^0.41.0",
+        "hono": "^4.7.7",
+        "zod": "^3.24.2"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.3",
+        "drizzle-kit": "^0.30.6",
+        "tsx": "^4.19.3",
+        "typescript": "^5.8.3"
+    }
+}
