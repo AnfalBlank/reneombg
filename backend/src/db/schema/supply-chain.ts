@@ -1,4 +1,5 @@
 import { text, integer, real, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { relations } from 'drizzle-orm'
 import { items } from './master'
 import { gudang, dapur } from './master'
 
@@ -115,3 +116,39 @@ export type DeliveryOrder = typeof deliveryOrders.$inferSelect
 export type NewDeliveryOrder = typeof deliveryOrders.$inferInsert
 export type KitchenReceiving = typeof kitchenReceivings.$inferSelect
 export type NewKitchenReceiving = typeof kitchenReceivings.$inferInsert
+
+export const internalRequestsRelations = relations(internalRequests, ({ one, many }) => ({
+    dapur: one(dapur, { fields: [internalRequests.dapurId], references: [dapur.id] }),
+    gudang: one(gudang, { fields: [internalRequests.gudangId], references: [gudang.id] }),
+    items: many(irItems),
+    deliveryOrders: many(deliveryOrders),
+}))
+
+export const irItemsRelations = relations(irItems, ({ one }) => ({
+    request: one(internalRequests, { fields: [irItems.irId], references: [internalRequests.id] }),
+    item: one(items, { fields: [irItems.itemId], references: [items.id] }),
+}))
+
+export const deliveryOrdersRelations = relations(deliveryOrders, ({ one, many }) => ({
+    request: one(internalRequests, { fields: [deliveryOrders.irId], references: [internalRequests.id] }),
+    gudang: one(gudang, { fields: [deliveryOrders.gudangId], references: [gudang.id] }),
+    dapur: one(dapur, { fields: [deliveryOrders.dapurId], references: [dapur.id] }),
+    items: many(doItems),
+    receivings: many(kitchenReceivings),
+}))
+
+export const doItemsRelations = relations(doItems, ({ one }) => ({
+    deliveryOrder: one(deliveryOrders, { fields: [doItems.doId], references: [deliveryOrders.id] }),
+    item: one(items, { fields: [doItems.itemId], references: [items.id] }),
+}))
+
+export const kitchenReceivingsRelations = relations(kitchenReceivings, ({ one, many }) => ({
+    deliveryOrder: one(deliveryOrders, { fields: [kitchenReceivings.doId], references: [deliveryOrders.id] }),
+    dapur: one(dapur, { fields: [kitchenReceivings.dapurId], references: [dapur.id] }),
+    items: many(krItems),
+}))
+
+export const krItemsRelations = relations(krItems, ({ one }) => ({
+    receiving: one(kitchenReceivings, { fields: [krItems.krId], references: [kitchenReceivings.id] }),
+    item: one(items, { fields: [krItems.itemId], references: [items.id] }),
+}))

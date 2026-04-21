@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Search } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
+import PeriodFilter from '../../components/ui/PeriodFilter'
 import styles from '../shared.module.css'
 
 import { useJournalEntries } from '../../hooks/useApi'
@@ -23,7 +24,9 @@ const typeLabelMap: Record<string, string> = {
 const fmt = (n: number) => 'Rp ' + (n || 0).toLocaleString('id-ID')
 
 export default function JournalPage() {
-    const { data: journalRes, isLoading, error } = useJournalEntries()
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+    const { data: journalRes, isLoading, error } = useJournalEntries(startDate, endDate)
     const journals = journalRes?.data || []
     const [search, setSearch] = useState('')
     const [type, setType] = useState('Semua')
@@ -79,6 +82,12 @@ export default function JournalPage() {
                             <option>COGS</option>
                             <option>Penyesuaian</option>
                         </select>
+                        <PeriodFilter
+                            onFilterChange={(s, e) => {
+                                setStartDate(s)
+                                setEndDate(e)
+                            }}
+                        />
                     </div>
                 </div>
                 <div className={styles.tableWrapper}>

@@ -5,21 +5,21 @@ import {
 } from 'recharts'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
+import PeriodFilter from '../../components/ui/PeriodFilter'
 import styles from '../shared.module.css'
-import { usePnLReport, usePeriods, useDapur } from '../../hooks/useApi'
+import { usePnLReport, useDapur } from '../../hooks/useApi'
 
 const fmt = (n: number) => 'Rp ' + (n || 0).toLocaleString('id-ID')
 
 export default function ReportsPage() {
-    const { data: pRes } = usePeriods()
     const { data: dRes } = useDapur()
-    const periods = pRes?.data || []
     const dapurs = dRes?.data || []
 
-    const [periodId, setPeriodId] = useState('')
     const [dapurId, setDapurId] = useState('')
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
 
-    const { data: pnlRes, isLoading, error } = usePnLReport(periodId, dapurId)
+    const { data: pnlRes, isLoading, error } = usePnLReport(startDate, endDate, dapurId)
     const pnl = pnlRes?.data || {}
 
     if (isLoading) return <div className={styles.page}>Loading report...</div>
@@ -40,15 +40,17 @@ export default function ReportsPage() {
                     <p className={styles.pageSubtitle}>Laba Rugi per dapur & konsolidasi</p>
                 </div>
                 <div className={styles.pageActions}>
-                    <select className={styles.filterSelect} value={periodId} onChange={e => setPeriodId(e.target.value)}>
-                        <option value="">Pilih Periode...</option>
-                        {periods.map((p: any) => <option key={p.id} value={p.id}>{p.label}</option>)}
-                    </select>
                     <select className={styles.filterSelect} value={dapurId} onChange={e => setDapurId(e.target.value)}>
                         <option value="">Semua Dapur</option>
                         {dapurs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
-                    <Button icon={<Download size={14} />} variant="secondary">Export PDF</Button>
+                    <PeriodFilter
+                        onFilterChange={(s, e) => {
+                            setStartDate(s)
+                            setEndDate(e)
+                        }}
+                    />
+                    <Button icon={<Download size={14} />} variant="secondary" onClick={() => window.print()}>Export PDF</Button>
                 </div>
             </div>
 

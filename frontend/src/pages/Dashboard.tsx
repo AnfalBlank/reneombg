@@ -1,4 +1,5 @@
 import { TrendingUp, Package, Truck, Receipt, ArrowUp, ArrowDown, AlertTriangle, CheckCircle } from 'lucide-react'
+import { useState } from 'react'
 import {
     AreaChart,
     Area,
@@ -12,6 +13,7 @@ import {
 } from 'recharts'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
+import PeriodFilter from '../components/ui/PeriodFilter'
 import styles from './Dashboard.module.css'
 
 const areaData = [
@@ -60,7 +62,9 @@ import { useDashboardSummary } from '../hooks/useApi'
 const fmt = (n: number) => 'Rp ' + (n || 0).toLocaleString('id-ID')
 
 export default function Dashboard() {
-    const { data: summaryRes, isLoading, error } = useDashboardSummary()
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+    const { data: summaryRes, isLoading, error } = useDashboardSummary(startDate || undefined, endDate || undefined)
     const summary = summaryRes?.data
 
     if (isLoading) return <div className={styles.page}>Loading dashboard...</div>
@@ -114,7 +118,10 @@ export default function Dashboard() {
                     <h1 className={styles.title}>Dashboard</h1>
                     <p className={styles.subtitle}>Ringkasan operasional & pembukuan ERP MBG</p>
                 </div>
-                <div className={styles.dateBadge}>📅 {summary?.currentPeriod}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <PeriodFilter onFilterChange={(s, e) => { setStartDate(s); setEndDate(e) }} />
+                    <div className={styles.dateBadge}>📅 {summary?.currentPeriod}</div>
+                </div>
             </div>
 
             {/* Alert Strip */}

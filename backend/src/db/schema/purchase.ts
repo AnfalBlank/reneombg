@@ -1,4 +1,5 @@
 import { text, integer, real, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { relations } from 'drizzle-orm'
 import { items } from './master'
 import { vendors } from './master'
 import { gudang } from './master'
@@ -85,3 +86,50 @@ export type GoodsReceipt = typeof goodsReceipts.$inferSelect
 export type NewGoodsReceipt = typeof goodsReceipts.$inferInsert
 export type GrItem = typeof grItems.$inferSelect
 export type NewGrItem = typeof grItems.$inferInsert
+
+export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
+    vendor: one(vendors, {
+        fields: [purchaseOrders.vendorId],
+        references: [vendors.id],
+    }),
+    gudang: one(gudang, {
+        fields: [purchaseOrders.gudangId],
+        references: [gudang.id],
+    }),
+    items: many(poItems),
+    goodsReceipts: many(goodsReceipts),
+}))
+
+export const poItemsRelations = relations(poItems, ({ one }) => ({
+    po: one(purchaseOrders, {
+        fields: [poItems.poId],
+        references: [purchaseOrders.id],
+    }),
+    item: one(items, {
+        fields: [poItems.itemId],
+        references: [items.id],
+    }),
+}))
+
+export const goodsReceiptsRelations = relations(goodsReceipts, ({ one, many }) => ({
+    po: one(purchaseOrders, {
+        fields: [goodsReceipts.poId],
+        references: [purchaseOrders.id],
+    }),
+    gudang: one(gudang, {
+        fields: [goodsReceipts.gudangId],
+        references: [gudang.id],
+    }),
+    items: many(grItems),
+}))
+
+export const grItemsRelations = relations(grItems, ({ one }) => ({
+    grn: one(goodsReceipts, {
+        fields: [grItems.grnId],
+        references: [goodsReceipts.id],
+    }),
+    item: one(items, {
+        fields: [grItems.itemId],
+        references: [items.id],
+    }),
+}))

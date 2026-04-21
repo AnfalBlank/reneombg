@@ -1,4 +1,5 @@
 import { text, integer, real, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { relations } from 'drizzle-orm'
 import { items } from './master'
 import { gudang, dapur } from './master'
 
@@ -42,3 +43,25 @@ export type InventoryStock = typeof inventoryStock.$inferSelect
 export type NewInventoryStock = typeof inventoryStock.$inferInsert
 export type InventoryMovement = typeof inventoryMovements.$inferSelect
 export type NewInventoryMovement = typeof inventoryMovements.$inferInsert
+
+export const inventoryStockRelations = relations(inventoryStock, ({ one }) => ({
+    item: one(items, {
+        fields: [inventoryStock.itemId],
+        references: [items.id],
+    }),
+    gudang: one(gudang, {
+        fields: [inventoryStock.gudangId],
+        references: [gudang.id],
+    }),
+    dapur: one(dapur, {
+        fields: [inventoryStock.dapurId],
+        references: [dapur.id],
+    }),
+}))
+
+export const inventoryMovementsRelations = relations(inventoryMovements, ({ one }) => ({
+    item: one(items, {
+        fields: [inventoryMovements.itemId],
+        references: [items.id],
+    }),
+}))

@@ -24,7 +24,7 @@ app.get('/', requireAuth, async (c) => {
 })
 
 app.get('/:id', requireAuth, async (c) => {
-    const item = await db.query.vendors.findFirst({ where: eq(vendors.id, c.req.param('id')) })
+    const item = await db.query.vendors.findFirst({ where: eq(vendors.id, c.req.param('id') as string) })
     if (!item) return c.json({ error: 'Vendor not found' }, 404)
     return c.json({ data: item })
 })
@@ -43,9 +43,16 @@ app.post('/', requireAuth, requireRole('super_admin', 'warehouse_admin'), async 
 
 app.patch('/:id', requireAuth, requireRole('super_admin', 'warehouse_admin'), async (c) => {
     const body = await c.req.json()
-    await db.update(vendors).set({ ...body, updatedAt: new Date() }).where(eq(vendors.id, c.req.param('id')))
-    const updated = await db.query.vendors.findFirst({ where: eq(vendors.id, c.req.param('id')) })
+    const id = c.req.param('id') as string
+    await db.update(vendors).set({ ...body, updatedAt: new Date() }).where(eq(vendors.id, id))
+    const updated = await db.query.vendors.findFirst({ where: eq(vendors.id, id) })
     return c.json({ data: updated })
+})
+
+app.delete('/:id', requireAuth, requireRole('super_admin'), async (c) => {
+    const id = c.req.param('id') as string
+    await db.update(vendors).set({ isActive: false, updatedAt: new Date() }).where(eq(vendors.id, id))
+    return c.json({ success: true })
 })
 
 export default app

@@ -9,6 +9,21 @@
     flex-shrink: 0;
 }
 
+.leftGroup {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.menuBtn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    cursor: pointer;
+    padding: 4px;
+}
+
 .breadcrumbs {
     display: flex;
     align-items: center;
@@ -40,6 +55,36 @@
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.actionIcons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kitchenSelector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    height: 36px;
+}
+
+.kitchenIcon {
+    color: var(--color-text-muted);
+}
+
+.kitchenSelect {
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
 }
 
 .searchBox {
@@ -118,4 +163,29 @@
     font-weight: 700;
     color: white;
     cursor: pointer;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+    .kitchenSelector {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .menuBtn {
+        display: flex;
+    }
+
+    .searchBox {
+        display: none;
+    }
+
+    .breadcrumbs {
+        display: none;
+    }
+
+    .header {
+        padding: 0 16px;
+    }
 }

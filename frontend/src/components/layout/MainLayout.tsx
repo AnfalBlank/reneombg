@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import styles from './MainLayout.module.css'
@@ -29,14 +30,32 @@ const breadcrumbMap: Record<string, string> = {
 
 export default function MainLayout() {
     const location = useLocation()
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const segments = location.pathname.split('/').filter(Boolean)
     const breadcrumbs = segments.map((s) => breadcrumbMap[s] ?? s)
 
+    // Close menu on navigation
+    useEffect(() => {
+        setIsMobileMenuOpen(false)
+    }, [location.pathname])
+
     return (
         <div className={styles.layout}>
-            <Sidebar />
+            {/* Mobile Overlay */}
+            {isMobileMenuOpen && (
+                <div
+                    className={styles.mobileOverlay}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
+            <Sidebar isOpen={isMobileMenuOpen} close={() => setIsMobileMenuOpen(false)} />
+
             <div className={styles.main}>
-                <Header breadcrumbs={breadcrumbs} />
+                <Header
+                    breadcrumbs={breadcrumbs}
+                    toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                />
                 <main className={styles.content}>
                     <div className="page-wrapper">
                         <Outlet />

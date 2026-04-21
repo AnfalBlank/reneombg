@@ -12,17 +12,28 @@ export type ApiResponse<T> = {
 };
 
 async function handleResponse<T>(response: Response): Promise<T> {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.error || data.message || 'API request failed');
+    const text = await response.text();
+    let data;
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch (e) {
+        if (!response.ok) {
+            throw new Error(`API Error ${response.status}: ${text || response.statusText}`);
+        }
+        throw new Error('Invalid JSON response from server');
     }
-    return data;
+
+    if (!response.ok) {
+        throw new Error(data?.error || data?.message || `API request failed with status ${response.status}`);
+    }
+    return data as T;
 }
 
 export const api = {
     get: async <T>(endpoint: string): Promise<T> => {
         const res = await fetch(`${BASE_URL}${endpoint}`, {
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
         });
         return handleResponse<T>(res);
     },
@@ -32,6 +43,7 @@ export const api = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
+            credentials: 'include',
         });
         return handleResponse<T>(res);
     },
@@ -41,6 +53,7 @@ export const api = {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
+            credentials: 'include',
         });
         return handleResponse<T>(res);
     },
@@ -48,6 +61,7 @@ export const api = {
     delete: async <T>(endpoint: string): Promise<T> => {
         const res = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'DELETE',
+            credentials: 'include',
         });
         return handleResponse<T>(res);
     },

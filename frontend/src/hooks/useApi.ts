@@ -2,10 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiResponse, Item, Vendor, Dapur, Coa } from '../lib/api';
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
-export function useDashboardSummary() {
+export function useDashboardSummary(startDate?: string, endDate?: string) {
+    const params = new URLSearchParams()
+    if (startDate) params.set('startDate', startDate)
+    if (endDate) params.set('endDate', endDate)
+    const qs = params.toString() ? '?' + params.toString() : ''
     return useQuery({
-        queryKey: ['dashboard-summary'],
-        queryFn: () => api.get<ApiResponse<any>>('/finance/dashboard-summary'),
+        queryKey: ['dashboard-summary', startDate, endDate],
+        queryFn: () => api.get<ApiResponse<any>>(`/finance/dashboard-summary${qs}`),
     });
 }
 
@@ -25,11 +29,51 @@ export function useCreateItem() {
     });
 }
 
+export function useUpdateItem() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: Partial<Item> }) => api.patch<ApiResponse<Item>>(`/items/${id}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['items'] }),
+    });
+}
+
+export function useDeleteItem() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete<ApiResponse<any>>(`/items/${id}`),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['items'] }),
+    });
+}
+
 // ─── Vendors ──────────────────────────────────────────────────────────────────
 export function useVendors() {
     return useQuery({
         queryKey: ['vendors'],
         queryFn: () => api.get<ApiResponse<Vendor[]>>('/vendors'),
+    });
+}
+
+export function useCreateVendor() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (newVendor: Partial<Vendor>) => api.post<ApiResponse<Vendor>>('/vendors', newVendor),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vendors'] }),
+    });
+}
+
+export function useUpdateVendor() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: Partial<Vendor> }) => api.patch<ApiResponse<Vendor>>(`/vendors/${id}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vendors'] }),
+    });
+}
+
+export function useDeleteVendor() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete<ApiResponse<any>>(`/vendors/${id}`),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vendors'] }),
     });
 }
 
@@ -48,6 +92,31 @@ export function useGudang() {
     });
 }
 
+// -- Generic CRUD mutations for Master Data --
+export function useCreateMaster(entity: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => api.post<ApiResponse<any>>(`/master/${entity}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['master', entity] }),
+    });
+}
+
+export function useUpdateMaster(entity: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => api.patch<ApiResponse<any>>(`/master/${entity}/${id}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['master', entity] }),
+    });
+}
+
+export function useDeleteMaster(entity: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete<ApiResponse<any>>(`/master/${entity}/${id}`),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['master', entity] }),
+    });
+}
+
 // ─── Finance ──────────────────────────────────────────────────────────────────
 export function useCoa() {
     return useQuery({
@@ -56,10 +125,10 @@ export function useCoa() {
     });
 }
 
-export function useJournalEntries() {
+export function useJournalEntries(startDate?: string, endDate?: string) {
     return useQuery({
-        queryKey: ['journals'],
-        queryFn: () => api.get<ApiResponse<any[]>>('/finance/journal'),
+        queryKey: ['journals', startDate, endDate],
+        queryFn: () => api.get<ApiResponse<any[]>>(`/finance/journal?${new URLSearchParams({ startDate: startDate || '', endDate: endDate || '' })}`),
     });
 }
 
@@ -109,6 +178,22 @@ export function useInternalRequests() {
     });
 }
 
+export function useCreateInternalRequest() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => api.post<ApiResponse<any>>('/supply-chain/requests', data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['supply-chain', 'requests'] }),
+    });
+}
+
+export function useApproveInternalRequest() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.patch<ApiResponse<any>>(`/supply-chain/requests/${id}/approve`, {}),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['supply-chain', 'requests'] }),
+    });
+}
+
 export function useDeliveryOrders() {
     return useQuery({
         queryKey: ['supply-chain', 'delivery-orders'],
@@ -116,10 +201,40 @@ export function useDeliveryOrders() {
     });
 }
 
+export function useCreateDeliveryOrder() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => api.post<ApiResponse<any>>('/supply-chain/delivery-orders', data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['supply-chain', 'delivery-orders'] });
+            queryClient.invalidateQueries({ queryKey: ['supply-chain', 'requests'] });
+        },
+    });
+}
+
 export function useKitchenReceivings() {
     return useQuery({
         queryKey: ['supply-chain', 'kitchen-receiving'],
         queryFn: () => api.get<ApiResponse<any[]>>('/supply-chain/kitchen-receiving'),
+    });
+}
+
+export function useConfirmKitchenReceiving() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ doId, data }: { doId: string; data: any }) => api.post<ApiResponse<any>>(`/supply-chain/kitchen-receiving/${doId}/confirm`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['supply-chain', 'kitchen-receiving'] });
+            queryClient.invalidateQueries({ queryKey: ['supply-chain', 'delivery-orders'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory', 'stock'] });
+        },
+    });
+}
+
+export function useGoodsReceipts() {
+    return useQuery({
+        queryKey: ['purchase', 'receipts'],
+        queryFn: () => api.get<ApiResponse<any[]>>('/purchase/receipts'),
     });
 }
 
@@ -143,18 +258,18 @@ export function usePeriods() {
     });
 }
 
-export function useGeneralLedger(coaId: string, periodId?: string) {
+export function useGeneralLedger(coaId: string, startDate?: string, endDate?: string) {
     return useQuery({
-        queryKey: ['finance', 'gl', coaId, periodId],
-        queryFn: () => api.get<ApiResponse<any>>(`/finance/general-ledger?coaId=${coaId}${periodId ? `&periodId=${periodId}` : ''}`),
+        queryKey: ['finance', 'gl', coaId, startDate, endDate],
+        queryFn: () => api.get<ApiResponse<any>>(`/finance/general-ledger?${new URLSearchParams({ coaId, startDate: startDate || '', endDate: endDate || '' })}`),
         enabled: !!coaId,
     });
 }
 
-export function usePnLReport(periodId?: string, dapurId?: string) {
+export function usePnLReport(startDate?: string, endDate?: string, dapurId?: string) {
     return useQuery({
-        queryKey: ['finance', 'reports', 'pnl', periodId, dapurId],
-        queryFn: () => api.get<ApiResponse<any>>(`/finance/reports/pl?${new URLSearchParams({ periodId: periodId || '', dapurId: dapurId || '' })}`),
+        queryKey: ['finance', 'reports', 'pnl', startDate, endDate, dapurId],
+        queryFn: () => api.get<ApiResponse<any>>(`/finance/reports/pl?${new URLSearchParams({ startDate: startDate || '', endDate: endDate || '', dapurId: dapurId || '' })}`),
     });
 }
 

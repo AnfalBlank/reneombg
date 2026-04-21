@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import Card from '../../components/ui/Card'
+import PeriodFilter from '../../components/ui/PeriodFilter'
 import styles from '../shared.module.css'
 
 import { useCoa, usePeriods, useGeneralLedger } from '../../hooks/useApi'
 
 export default function GeneralLedgerPage() {
     const { data: coaRes } = useCoa()
-    const { data: pRes } = usePeriods()
     const coas = coaRes?.data || []
-    const periods = pRes?.data || []
 
     const [coaId, setCoaId] = useState('')
-    const [periodId, setPeriodId] = useState('')
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
 
-    const { data: glRes, isLoading, error } = useGeneralLedger(coaId, periodId)
+    const { data: glRes, isLoading, error } = useGeneralLedger(coaId, startDate, endDate)
     const glData = glRes as any
     const ledgerEntries = glData?.data || []
 
@@ -34,10 +34,13 @@ export default function GeneralLedgerPage() {
                     <option value="">Pilih Akun...</option>
                     {coas.map((a: any) => <option key={a.id} value={a.id}>{a.code} - {a.name}</option>)}
                 </select>
-                <select className={styles.filterSelect} value={periodId} onChange={e => setPeriodId(e.target.value)}>
-                    <option value="">Semua Periode</option>
-                    {periods.map((p: any) => <option key={p.id} value={p.id}>{p.label}</option>)}
-                </select>
+                <div style={{ borderLeft: '1px solid var(--color-border)', height: 32, margin: '0 8px' }}></div>
+                <PeriodFilter
+                    onFilterChange={(s, e) => {
+                        setStartDate(s)
+                        setEndDate(e)
+                    }}
+                />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>

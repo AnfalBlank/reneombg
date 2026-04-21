@@ -195,3 +195,33 @@
     font-size: 11px;
     color: var(--color-text-muted);
 }
+
+.closeBtn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    cursor: pointer;
+    margin-left: auto;
+    padding: 4px;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebarOpen {
+        transform: translateX(0);
+    }
+
+    .closeBtn {
+        display: block;
+    }
+}

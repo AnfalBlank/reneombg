@@ -1,4 +1,5 @@
 import { text, integer, real, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { relations } from 'drizzle-orm'
 import { coa, dapur } from './master'
 
 // ─── Accounting Periods ───────────────────────────────────────────────────────
@@ -53,3 +54,26 @@ export type JournalEntry = typeof journalEntries.$inferSelect
 export type NewJournalEntry = typeof journalEntries.$inferInsert
 export type JournalLine = typeof journalLines.$inferSelect
 export type NewJournalLine = typeof journalLines.$inferInsert
+
+export const journalEntriesRelations = relations(journalEntries, ({ many, one }) => ({
+    lines: many(journalLines),
+    dapur: one(dapur, {
+        fields: [journalEntries.dapurId],
+        references: [dapur.id],
+    }),
+    period: one(accountingPeriods, {
+        fields: [journalEntries.periodId],
+        references: [accountingPeriods.id]
+    })
+}))
+
+export const journalLinesRelations = relations(journalLines, ({ one }) => ({
+    journal: one(journalEntries, {
+        fields: [journalLines.journalId],
+        references: [journalEntries.id],
+    }),
+    coa: one(coa, {
+        fields: [journalLines.coaId],
+        references: [coa.id],
+    }),
+}))

@@ -7,10 +7,11 @@ import { auth } from './lib/auth'
 import itemsRouter from './routes/items'
 import vendorsRouter from './routes/vendors'
 import masterRouter from './routes/master'
-import purchaseRouter from './routes/purchase'
-import inventoryRouter from './routes/inventory'
-import supplyChainRouter from './routes/supply-chain'
-import financeRouter from './routes/finance'
+import purchaseRoutes from './routes/purchase'
+import inventoryRoutes from './routes/inventory'
+import supplyChainRoutes from './routes/supply-chain'
+import financeRoutes from './routes/finance'
+import usersRoutes from './routes/users'
 
 const app = new Hono()
 
@@ -36,10 +37,11 @@ app.all('/api/auth/*', async (c) => {
 app.route('/api/items', itemsRouter)
 app.route('/api/vendors', vendorsRouter)
 app.route('/api/master', masterRouter)
-app.route('/api/purchase', purchaseRouter)
-app.route('/api/inventory', inventoryRouter)
-app.route('/api/supply-chain', supplyChainRouter)
-app.route('/api/finance', financeRouter)
+app.route('/api/purchase', purchaseRoutes)
+app.route('/api/inventory', inventoryRoutes)
+app.route('/api/supply-chain', supplyChainRoutes)
+app.route('/api/finance', financeRoutes)
+app.route('/api/users', usersRoutes)
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (c) => c.json({

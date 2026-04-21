@@ -18,9 +18,17 @@ import {
     FileText,
     Lock,
     Database,
+    X,
+    Settings,
+    Users
 } from 'lucide-react'
 import { useState } from 'react'
 import styles from './Sidebar.module.css'
+
+interface SidebarProps {
+    isOpen?: boolean
+    close?: () => void
+}
 
 const navItems = [
     {
@@ -73,9 +81,16 @@ const navItems = [
             { label: 'Laporan Keuangan', path: '/finance/reports', icon: FileText },
         ],
     },
+    {
+        label: 'Pengaturan',
+        icon: Settings,
+        children: [
+            { label: 'Pengguna & Akses', path: '/settings/users', icon: Users },
+        ],
+    },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, close }: SidebarProps) {
     const location = useLocation()
     const [openGroups, setOpenGroups] = useState<string[]>(['Master Data', 'Pembukuan'])
 
@@ -89,7 +104,7 @@ export default function Sidebar() {
         children.some((c) => location.pathname.startsWith(c.path))
 
     return (
-        <aside className={styles.sidebar}>
+        <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
             {/* Brand */}
             <div className={styles.brand}>
                 <div className={styles.brandLogo}>
@@ -99,6 +114,9 @@ export default function Sidebar() {
                     <div className={styles.brandName}>ERP MBG</div>
                     <div className={styles.brandSub}>Supply Chain & Finance</div>
                 </div>
+                <button className={styles.closeBtn} onClick={close} aria-label="Close menu">
+                    <X size={20} />
+                </button>
             </div>
 
             {/* Nav */}

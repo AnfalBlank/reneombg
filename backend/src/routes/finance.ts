@@ -10,7 +10,9 @@ const app = new Hono()
 app.get('/journal', requireAuth, async (c) => {
     const type = c.req.query('type')
     const dapurId = c.req.query('dapurId')
-    const limit = parseInt(c.req.query('limit') ?? '50')
+    const limit = parseInt(c.req.query('limit') ?? '500')
+    const startDate = c.req.query('startDate')
+    const endDate = c.req.query('endDate')
 
     let all = await db.query.journalEntries.findMany({
         with: { lines: { with: { coa: true } } },
@@ -19,6 +21,8 @@ app.get('/journal', requireAuth, async (c) => {
 
     if (type) all = all.filter(j => j.type === type)
     if (dapurId) all = all.filter(j => j.dapurId === dapurId)
+    if (startDate) all = all.filter(j => new Date(j.createdAt) >= new Date(startDate))
+    if (endDate) all = all.filter(j => new Date(j.createdAt) <= new Date(endDate + 'T23:59:59'))
 
     return c.json({ data: all.slice(0, limit), total: all.length })
 })
@@ -26,7 +30,8 @@ app.get('/journal', requireAuth, async (c) => {
 // ─── General Ledger ───────────────────────────────────────────────────────────
 app.get('/general-ledger', requireAuth, async (c) => {
     const coaId = c.req.query('coaId')
-    const periodId = c.req.query('periodId')
+    const startDate = c.req.query('startDate')
+    const endDate = c.req.query('endDate')
 
     if (!coaId) return c.json({ error: 'coaId query param required' }, 400)
 
@@ -36,8 +41,11 @@ app.get('/general-ledger', requireAuth, async (c) => {
         orderBy: (l, { asc }) => [asc(l.id)],
     })
 
-    if (periodId) {
-        lines = lines.filter(l => l.journal?.periodId === periodId)
+    if (startDate) {
+        lines = lines.filter(l => l.journal && new Date(l.journal.createdAt) >= new Date(startDate))
+    }
+    if (endDate) {
+        lines = lines.filter(l => l.journal && new Date(l.journal.createdAt) <= new Date(endDate + 'T23:59:59'))
     }
 
     // Compute running totals
@@ -69,9 +77,9 @@ app.get('/periods', requireAuth, async (c) => {
 })
 
 // ─── Period Close ─────────────────────────────────────────────────────────────
-app.post('/periods/:id/close', requireAuth, requireRole('super_admin', 'finance'), async (c) => {
-    const user = c.get('user') as { id: string }
-    const periodId = c.req.param('id')
+app.post('/periods/:id/close', requireAuth, requireRole('super_admin', 'admin', 'finance'), async (c) => {
+    const user = (c as any).get('user') as { id: string }
+    const periodId = c.req.param('id') as string
 
     const period = await db.query.accountingPeriods.findFirst({
         where: eq(accountingPeriods.id, periodId),
@@ -89,8 +97,9 @@ app.post('/periods/:id/close', requireAuth, requireRole('super_admin', 'finance'
 })
 
 // ─── Profit & Loss Report ─────────────────────────────────────────────────────
-app.get('/reports/pl', requireAuth, requireRole('super_admin', 'finance'), async (c) => {
-    const periodId = c.req.query('periodId')
+app.get('/reports/pl', requireAuth, requireRole('super_admin', 'admin', 'finance'), async (c) => {
+    const startDate = c.req.query('startDate')
+    const endDate = c.req.query('endDate')
     const dapurId = c.req.query('dapurId')
 
     // Get all journal entries for the period
@@ -99,7 +108,8 @@ app.get('/reports/pl', requireAuth, requireRole('super_admin', 'finance'), async
         orderBy: (j, { asc }) => [asc(j.createdAt)],
     })
 
-    if (periodId) journals = journals.filter(j => j.periodId === periodId)
+    if (startDate) journals = journals.filter(j => new Date(j.createdAt) >= new Date(startDate))
+    if (endDate) journals = journals.filter(j => new Date(j.createdAt) <= new Date(endDate + 'T23:59:59'))
     if (dapurId) journals = journals.filter(j => j.dapurId === dapurId || !dapurId)
 
     // Aggregate by account type
@@ -138,9 +148,8 @@ app.get('/reports/pl', requireAuth, requireRole('super_admin', 'finance'), async
 
 // ─── Dashboard Summary (for frontend Dashboard page) ─────────────────────────
 app.get('/dashboard-summary', requireAuth, async (c) => {
-    // Total PO this month
-    const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const startDate = c.req.query('startDate')
+    const endDate = c.req.query('endDate')
 
     const periods = await db.query.accountingPeriods.findMany({ orderBy: (p, { desc }) => [desc(p.year), desc(p.month)] })
     const currentPeriod = periods[0]
@@ -150,10 +159,14 @@ app.get('/dashboard-summary', requireAuth, async (c) => {
     const totalStockValue = stocks.reduce((a, s) => a + s.totalValue, 0)
     const totalSkuActive = new Set(stocks.map(s => s.itemId)).size
 
-    // Journal stats from current period
-    const journals = currentPeriod
+    // Journal stats - filtered by date range if provided, otherwise use current period
+    let journals = currentPeriod && currentPeriod.id
         ? await db.query.journalEntries.findMany({ where: eq(journalEntries.periodId, currentPeriod.id) })
         : []
+
+    if (startDate) journals = journals.filter(j => new Date(j.createdAt) >= new Date(startDate))
+    if (endDate) journals = journals.filter(j => new Date(j.createdAt) <= new Date(endDate + 'T23:59:59'))
+
     const totalCogs = journals.filter(j => j.type === 'consumption').reduce((a, j) => a + j.totalDebit, 0)
     const totalPurchase = journals.filter(j => j.type === 'purchase_receiving').reduce((a, j) => a + j.totalDebit, 0)
 

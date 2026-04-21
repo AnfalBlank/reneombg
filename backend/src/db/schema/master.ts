@@ -1,4 +1,5 @@
 import { text, integer, real, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { relations } from 'drizzle-orm'
 
 // ─── Items / SKU ───────────────────────────────────────────────────────────────
 export const items = sqliteTable('items', {
@@ -79,3 +80,10 @@ export type Dapur = typeof dapur.$inferSelect
 export type NewDapur = typeof dapur.$inferInsert
 export type Coa = typeof coa.$inferSelect
 export type NewCoa = typeof coa.$inferInsert
+
+export const coaRelations = relations(coa, ({ one }) => ({
+    dapur: one(dapur, {
+        fields: [coa.dapurId],
+        references: [dapur.id],
+    }),
+}))
