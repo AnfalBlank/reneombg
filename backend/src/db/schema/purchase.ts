@@ -14,9 +14,9 @@ export const purchaseOrders = sqliteTable('purchase_orders', {
     gudangId: text('gudang_id')
         .notNull()
         .references(() => gudang.id),
-    status: text('status', { enum: ['draft', 'open', 'partial', 'received', 'cancelled'] })
+    status: text('status', { enum: ['draft', 'pending_approval', 'open', 'partial', 'received', 'cancelled'] })
         .notNull()
-        .default('open'),
+        .default('draft'),
     orderDate: integer('order_date', { mode: 'timestamp' }).notNull(),
     expectedDate: integer('expected_date', { mode: 'timestamp' }),
     notes: text('notes'),

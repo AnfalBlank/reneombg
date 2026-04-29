@@ -7,7 +7,7 @@ export const user = sqliteTable('user', {
     email: text('email').notNull().unique(),
     emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
     image: text('image'),
-    role: text('role', { enum: ['super_admin', 'warehouse_admin', 'kitchen_admin', 'finance'] })
+    role: text('role', { enum: ['owner', 'super_admin', 'admin', 'kitchen_admin', 'finance'] })
         .notNull()
         .default('kitchen_admin'),
     dapurId: text('dapur_id'), // for kitchen admins

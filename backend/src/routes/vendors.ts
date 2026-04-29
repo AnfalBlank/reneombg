@@ -4,12 +4,13 @@ import { vendors } from '../db/schema/index'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { nextVendorCode } from '../lib/auto-code'
 import { z } from 'zod'
 
 const app = new Hono()
 
 const vendorSchema = z.object({
-    code: z.string().min(1),
+    code: z.string().optional(), // auto-generated if empty
     name: z.string().min(1),
     contactPerson: z.string().optional(),
     phone: z.string().optional(),
@@ -29,19 +30,20 @@ app.get('/:id', requireAuth, async (c) => {
     return c.json({ data: item })
 })
 
-app.post('/', requireAuth, requireRole('super_admin', 'warehouse_admin'), async (c) => {
+app.post('/', requireAuth, requireRole('super_admin', 'admin'), async (c) => {
     const body = await c.req.json()
     const parsed = vendorSchema.safeParse(body)
     if (!parsed.success) return c.json({ error: parsed.error.format() }, 400)
 
     const id = randomUUID()
     const now = new Date()
-    await db.insert(vendors).values({ id, ...parsed.data, isActive: true, createdAt: now, updatedAt: now })
+    const code = parsed.data.code?.trim() || await nextVendorCode()
+    await db.insert(vendors).values({ id, ...parsed.data, code, isActive: true, createdAt: now, updatedAt: now })
     const created = await db.query.vendors.findFirst({ where: eq(vendors.id, id) })
     return c.json({ data: created }, 201)
 })
 
-app.patch('/:id', requireAuth, requireRole('super_admin', 'warehouse_admin'), async (c) => {
+app.patch('/:id', requireAuth, requireRole('super_admin', 'admin'), async (c) => {
     const body = await c.req.json()
     const id = c.req.param('id') as string
     await db.update(vendors).set({ ...body, updatedAt: new Date() }).where(eq(vendors.id, id))

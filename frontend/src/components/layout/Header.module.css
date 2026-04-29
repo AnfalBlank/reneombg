@@ -5,7 +5,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 0 20px;
     flex-shrink: 0;
 }
 
@@ -13,6 +13,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    min-width: 0;
 }
 
 .menuBtn {
@@ -54,39 +55,40 @@
 .actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .actionIcons {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
-.kitchenSelector {
+/* Live Clock */
+.clock {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-muted);
     background: var(--color-surface-2);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 6px 12px;
-    height: 36px;
+    padding: 5px 12px;
+    height: 34px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.kitchenIcon {
-    color: var(--color-text-muted);
-}
-
-.kitchenSelect {
-    background: transparent;
-    border: none;
+.clockTime {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-weight: 600;
     color: var(--color-text);
-    font-size: 13px;
-    outline: none;
-    cursor: pointer;
+    font-size: 12px;
+    min-width: 62px;
 }
 
+/* Search */
 .searchBox {
     display: flex;
     align-items: center;
@@ -94,7 +96,8 @@
     background: var(--color-surface-2);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 6px 12px;
+    padding: 5px 12px;
+    height: 34px;
     transition: border-color var(--transition-fast);
 }
 
@@ -120,10 +123,11 @@
     color: var(--color-text-dim);
 }
 
+/* Icon buttons */
 .iconBtn {
     position: relative;
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: var(--radius-md);
     background: var(--color-surface-2);
     border: 1px solid var(--color-border);
@@ -140,15 +144,19 @@
     border-color: var(--color-border-strong);
 }
 
-.notifBadge {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--color-danger);
-    border: 1.5px solid var(--color-surface);
+/* User section */
+.userSection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 8px 4px 4px;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.userSection:hover {
+    background: var(--color-surface-2);
 }
 
 .avatar {
@@ -162,12 +170,39 @@
     font-size: 11px;
     font-weight: 700;
     color: white;
-    cursor: pointer;
     flex-shrink: 0;
 }
 
-@media (max-width: 1024px) {
-    .kitchenSelector {
+.userInfo {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.userName {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.userRole {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    line-height: 1.2;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1200px) {
+    .clock {
+        display: none;
+    }
+
+    .userInfo {
         display: none;
     }
 }
@@ -186,6 +221,14 @@
     }
 
     .header {
-        padding: 0 16px;
+        padding: 0 12px;
+    }
+
+    .userInfo {
+        display: none;
+    }
+
+    .clock {
+        display: none;
     }
 }

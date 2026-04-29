@@ -55,7 +55,6 @@ export default function VendorsPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!formData.code) return toastError('Kode vendor wajib diisi!')
         if (!formData.name) return toastError('Nama vendor wajib diisi!')
         try {
             if (editingId) {
@@ -63,7 +62,7 @@ export default function VendorsPage() {
                 success(`Vendor "${formData.name}" berhasil diperbarui!`)
             } else {
                 await createVendor.mutateAsync(formData)
-                success(`Vendor "${formData.name}" berhasil ditambahkan!`)
+                success(`Vendor berhasil ditambahkan!`)
             }
             setIsModalOpen(false)
         } catch (err: any) {
@@ -146,8 +145,8 @@ export default function VendorsPage() {
                 <form onSubmit={handleSubmit}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                         <div className={modalStyles.formGroup}>
-                            <label className={modalStyles.formLabel}>Kode Vendor</label>
-                            <input required className={modalStyles.formInput} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Cth: VND-001" />
+                            <label className={modalStyles.formLabel}>Kode Vendor <span style={{ color: 'var(--color-text-dim)', fontWeight: 400 }}>(otomatis jika kosong)</span></label>
+                            <input className={modalStyles.formInput} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Auto: VND-0001" />
                         </div>
                         <div className={modalStyles.formGroup}>
                             <label className={modalStyles.formLabel}>Nama Vendor</label>

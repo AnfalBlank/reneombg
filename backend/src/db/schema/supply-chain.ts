@@ -13,7 +13,7 @@ export const internalRequests = sqliteTable('internal_requests', {
     gudangId: text('gudang_id')
         .notNull()
         .references(() => gudang.id),
-    status: text('status', { enum: ['pending', 'approved', 'rejected', 'fulfilled'] })
+    status: text('status', { enum: ['pending', 'approved', 'rejected', 'in_transit', 'fulfilled', 'partial_received'] })
         .notNull()
         .default('pending'),
     requestDate: integer('request_date', { mode: 'timestamp' }).notNull(),
@@ -74,6 +74,8 @@ export const doItems = sqliteTable('do_items', {
     qtyDelivered: real('qty_delivered').notNull(),
     unitCost: real('unit_cost').notNull(), // HPP at time of delivery (Moving Average)
     totalCost: real('total_cost').notNull(),
+    sellPrice: real('sell_price').notNull().default(0),  // harga jual ke dapur
+    sellTotal: real('sell_total').notNull().default(0),   // qty × sellPrice
 })
 
 // ─── Kitchen Receivings ───────────────────────────────────────────────────────
@@ -92,6 +94,7 @@ export const kitchenReceivings = sqliteTable('kitchen_receivings', {
     receivedDate: integer('received_date', { mode: 'timestamp' }),
     notes: text('notes'),
     receivedBy: text('received_by'),
+    totalActualValue: real('total_actual_value').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
@@ -108,6 +111,7 @@ export const krItems = sqliteTable('kr_items', {
     qtyExpected: real('qty_expected').notNull(),
     qtyActual: real('qty_actual').notNull(),
     variance: real('variance').notNull().default(0), // actual - expected
+    rejectionReason: text('rejection_reason'),
 })
 
 export type InternalRequest = typeof internalRequests.$inferSelect

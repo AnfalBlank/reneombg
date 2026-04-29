@@ -4,6 +4,7 @@ import { dapur, gudang, coa } from '../db/schema/index'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { nextDapurCode, nextGudangCode } from '../lib/auto-code'
 
 const app = new Hono()
 
@@ -23,7 +24,8 @@ app.post('/dapur', requireAuth, requireRole('super_admin'), async (c) => {
     const body = await c.req.json()
     const id = randomUUID()
     const now = new Date()
-    await db.insert(dapur).values({ id, ...body, isActive: true, createdAt: now, updatedAt: now })
+    const code = body.code?.trim() || await nextDapurCode()
+    await db.insert(dapur).values({ id, ...body, code, isActive: true, createdAt: now, updatedAt: now })
     const created = await db.query.dapur.findFirst({ where: eq(dapur.id, id) })
     return c.json({ data: created }, 201)
 })
@@ -52,7 +54,8 @@ app.post('/gudang', requireAuth, requireRole('super_admin'), async (c) => {
     const body = await c.req.json()
     const id = randomUUID()
     const now = new Date()
-    await db.insert(gudang).values({ id, ...body, isActive: true, createdAt: now, updatedAt: now })
+    const code = body.code?.trim() || await nextGudangCode()
+    await db.insert(gudang).values({ id, ...body, code, isActive: true, createdAt: now, updatedAt: now })
     const created = await db.query.gudang.findFirst({ where: eq(gudang.id, id) })
     return c.json({ data: created }, 201)
 })

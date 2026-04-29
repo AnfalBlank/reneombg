@@ -60,7 +60,6 @@ export default function ItemsPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!formData.sku) return toastError('SKU Code wajib diisi!')
         if (!formData.name) return toastError('Nama Item wajib diisi!')
         if (!formData.uom) return toastError('Unit of Measure wajib diisi!')
         try {
@@ -69,7 +68,7 @@ export default function ItemsPage() {
                 success(`Item "${formData.name}" berhasil diperbarui!`)
             } else {
                 await createItem.mutateAsync(formData)
-                success(`Item "${formData.name}" berhasil ditambahkan!`)
+                success(`Item berhasil ditambahkan!`)
             }
             setIsModalOpen(false)
         } catch (err: any) {
@@ -150,8 +149,8 @@ export default function ItemsPage() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Edit Item' : 'Tambah Item Baru'}>
                 <form onSubmit={handleSubmit}>
                     <div className={modalStyles.formGroup}>
-                        <label className={modalStyles.formLabel}>SKU Code</label>
-                        <input required className={modalStyles.formInput} value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} placeholder="Cth: BRG-001" />
+                        <label className={modalStyles.formLabel}>SKU Code <span style={{ color: 'var(--color-text-dim)', fontWeight: 400 }}>(otomatis jika kosong)</span></label>
+                        <input className={modalStyles.formInput} value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} placeholder="Auto: ITM-0001" />
                     </div>
                     <div className={modalStyles.formGroup}>
                         <label className={modalStyles.formLabel}>Nama Item</label>

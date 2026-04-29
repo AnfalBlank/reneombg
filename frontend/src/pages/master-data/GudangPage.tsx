@@ -52,7 +52,6 @@ export default function GudangPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!formData.code) return toastError('Kode gudang wajib diisi!')
         if (!formData.name) return toastError('Nama gudang wajib diisi!')
         try {
             if (editingId) {
@@ -60,7 +59,7 @@ export default function GudangPage() {
                 success(`Gudang "${formData.name}" berhasil diperbarui!`)
             } else {
                 await createGudang.mutateAsync(formData)
-                success(`Gudang "${formData.name}" berhasil ditambahkan!`)
+                success(`Gudang berhasil ditambahkan!`)
             }
             setIsModalOpen(false)
         } catch (err: any) {
@@ -137,8 +136,8 @@ export default function GudangPage() {
                 <form onSubmit={handleSubmit}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                         <div className={modalStyles.formGroup}>
-                            <label className={modalStyles.formLabel}>Kode Gudang</label>
-                            <input required className={modalStyles.formInput} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Cth: GDG-001" />
+                            <label className={modalStyles.formLabel}>Kode Gudang <span style={{ color: 'var(--color-text-dim)', fontWeight: 400 }}>(otomatis jika kosong)</span></label>
+                            <input className={modalStyles.formInput} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Auto: GDG-0001" />
                         </div>
                         <div className={modalStyles.formGroup}>
                             <label className={modalStyles.formLabel}>Nama Gudang</label>

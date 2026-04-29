@@ -2,7 +2,7 @@
  * Typed API Client for ERP MBG
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export type ApiResponse<T> = {
     data: T;
@@ -51,6 +51,16 @@ export const api = {
     patch: async <T>(endpoint: string, body: any): Promise<T> => {
         const res = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            credentials: 'include',
+        });
+        return handleResponse<T>(res);
+    },
+
+    put: async <T>(endpoint: string, body: any): Promise<T> => {
+        const res = await fetch(`${BASE_URL}${endpoint}`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
             credentials: 'include',

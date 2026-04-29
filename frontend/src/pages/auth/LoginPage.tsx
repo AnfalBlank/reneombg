@@ -60,9 +60,7 @@ export default function LoginPage() {
         <div className={styles.page}>
             <div className={styles.card}>
                 <div className={styles.header}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, borderRadius: '12px', backgroundColor: 'var(--color-primary)', color: 'white', marginBottom: '1rem' }}>
-                        <LogIn size={24} />
-                    </div>
+                    <img src="/logo.png" alt="ERP MBG" style={{ height: 56, objectFit: 'contain', marginBottom: 12 }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     <h1 className={styles.title}>ERP MBG System</h1>
                     <p className={styles.subtitle}>Sign in to access your operational dashboard</p>
                 </div>

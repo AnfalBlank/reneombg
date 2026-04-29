@@ -10,11 +10,13 @@
 }
 
 .brand {
-    padding: 20px 16px;
+    height: var(--header-height);
+    padding: 0 16px;
     display: flex;
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
 }
 
 .brandLogo {

@@ -1,0 +1,404 @@
+/* FinanceDashboard – Dedicated Finance Dashboard */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.loadingState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 20px;
+    color: var(--color-text-muted);
+    font-size: 14px;
+}
+
+.loadingIcon {
+    animation: spin 1.5s linear infinite;
+    color: var(--color-primary);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Header */
+.pageHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.3px;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+}
+
+.headerActions {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filterSelect {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 7px 12px;
+    color: var(--color-text);
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    height: 36px;
+}
+
+/* KPI Grid */
+.kpiGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.kpiCard {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    transition: all 200ms ease;
+    cursor: default;
+}
+
+.kpiCard:hover {
+    border-color: var(--color-border-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.kpiTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.kpiIconWrap {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kpiChange {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+
+.kpiChange.up {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.kpiChange.down {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.kpiValue {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--color-text);
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+
+.kpiLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpiSub {
+    font-size: 11px;
+    color: var(--color-text-dim);
+    margin-top: 4px;
+}
+
+/* Cash Flow Strip */
+.cashFlowStrip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 16px 24px;
+}
+
+.cashFlowItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.cashFlowIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cashFlowLabel {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted);
+}
+
+.cashFlowValue {
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.cashFlowDivider {
+    width: 1px;
+    height: 40px;
+    background: var(--color-border);
+    margin: 0 24px;
+    flex-shrink: 0;
+}
+
+/* Charts */
+.chartsRow {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+}
+
+.chartWide {
+    min-width: 0;
+}
+
+.chartNarrow {
+    min-width: 0;
+}
+
+/* Top Expenses */
+.topExpensesList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+}
+
+.topExpenseItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topExpenseRank {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+
+.topExpenseInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.topExpenseName {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topExpenseBar {
+    height: 4px;
+    background: var(--color-surface-2);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.topExpenseBarFill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 600ms ease;
+}
+
+.topExpenseValue {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text);
+    flex-shrink: 0;
+    min-width: 70px;
+    text-align: right;
+}
+
+/* Table */
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    padding: 11px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted);
+    text-align: left;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.mono {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--color-primary);
+}
+
+.muted {
+    color: var(--color-text-muted);
+    font-size: 12px;
+}
+
+.viewAllLink {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.viewAllLink:hover {
+    text-decoration: underline;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1200px) {
+    .kpiGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chartsRow {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .pageHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .headerActions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filterSelect {
+        width: 100%;
+    }
+
+    .kpiGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .kpiCard {
+        padding: 14px;
+    }
+
+    .kpiValue {
+        font-size: 17px;
+    }
+
+    .cashFlowStrip {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .cashFlowDivider {
+        width: 100%;
+        height: 1px;
+        margin: 0;
+    }
+
+    .cashFlowItem {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpiGrid {
+        grid-template-columns: 1fr;
+    }
+}

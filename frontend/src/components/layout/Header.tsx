@@ -1,16 +1,49 @@
-import { Bell, Search, ChevronRight, Menu, Sun, Moon, Globe, Building2 } from 'lucide-react'
+import { Search, ChevronRight, Menu, Sun, Moon, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './Header.module.css'
+import NotificationDropdown from '../ui/NotificationDropdown'
+import ChatPanel from '../ui/ChatPanel'
+import { useSession } from '../../lib/auth-client'
+import { getRoleLabel } from '../../lib/roles'
 
 interface HeaderProps {
     breadcrumbs: string[]
     toggleSidebar: () => void
+    userId?: string
 }
 
-export default function Header({ breadcrumbs, toggleSidebar }: HeaderProps) {
+export default function Header({ breadcrumbs, toggleSidebar, userId }: HeaderProps) {
+    const navigate = useNavigate()
+    const { data: session } = useSession()
+    const user = session?.user as any
+
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark'
     })
+
+    // Live clock
+    const [now, setNow] = useState(new Date())
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 1000)
+        return () => clearInterval(timer)
+    }, [])
+
+    // Global search
+    const [searchQuery, setSearchQuery] = useState('')
+    const handleSearch = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            // Navigate to relevant page based on search prefix
+            const q = searchQuery.trim().toUpperCase()
+            if (q.startsWith('PO-')) navigate('/purchase/po')
+            else if (q.startsWith('IR-')) navigate('/supply-chain/requests')
+            else if (q.startsWith('DO-')) navigate('/supply-chain/delivery-orders')
+            else if (q.startsWith('KR-')) navigate('/supply-chain/kitchen-receiving')
+            else if (q.startsWith('GRN-')) navigate('/purchase/receiving')
+            else if (q.startsWith('JRN-')) navigate('/accounting/journal')
+            else navigate('/dashboard')
+        }
+    }
 
     useEffect(() => {
         if (theme === 'light') {
@@ -22,6 +55,10 @@ export default function Header({ breadcrumbs, toggleSidebar }: HeaderProps) {
         }
         localStorage.setItem('theme', theme)
     }, [theme])
+
+    const userName = user?.name || 'User'
+    const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    const roleInfo = getRoleLabel(user?.role || '')
 
     return (
         <header className={styles.header}>
@@ -42,22 +79,26 @@ export default function Header({ breadcrumbs, toggleSidebar }: HeaderProps) {
             </div>
 
             <div className={styles.actions}>
-                <div className={styles.kitchenSelector}>
-                    <Building2 size={14} className={styles.kitchenIcon} />
-                    <select className={styles.kitchenSelect} aria-label="Pilih Dapur">
-                        <option value="all">Semua Dapur (Superadmin)</option>
-                        <option value="dapur-a">Dapur A</option>
-                        <option value="dapur-b">Dapur B</option>
-                    </select>
+                {/* Live Clock */}
+                <div className={styles.clock}>
+                    <Clock size={13} />
+                    <span>{now.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    <span className={styles.clockTime}>{now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                 </div>
+
+                {/* Search */}
                 <div className={styles.searchBox}>
                     <Search size={14} className={styles.searchIcon} />
                     <input
                         className={styles.searchInput}
                         type="text"
-                        placeholder="Cari transaksi..."
+                        placeholder="Cari PO, IR, DO, GRN... (Enter)"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={handleSearch}
                     />
                 </div>
+
                 <div className={styles.actionIcons}>
                     <button
                         className={styles.iconBtn}
@@ -66,15 +107,18 @@ export default function Header({ breadcrumbs, toggleSidebar }: HeaderProps) {
                     >
                         {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                     </button>
-                    <button className={styles.iconBtn} aria-label="Language">
-                        <Globe size={16} />
-                    </button>
-                    <button className={styles.iconBtn} aria-label="Notifications">
-                        <Bell size={16} />
-                        <span className={styles.notifBadge} />
-                    </button>
+                    <ChatPanel userId={userId} />
+                    <NotificationDropdown userId={userId} />
                 </div>
-                <div className={styles.avatar}>SA</div>
+
+                {/* Avatar with user info */}
+                <div className={styles.userSection} onClick={() => navigate('/settings/profile')} title={`${userName} — ${roleInfo.label}`}>
+                    <div className={styles.avatar}>{initials}</div>
+                    <div className={styles.userInfo}>
+                        <div className={styles.userName}>{userName}</div>
+                        <div className={styles.userRole}>{roleInfo.label}</div>
+                    </div>
+                </div>
             </div>
         </header>
     )

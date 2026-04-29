@@ -53,7 +53,6 @@ export default function DapurPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!formData.code) return toastError('Kode dapur wajib diisi!')
         if (!formData.name) return toastError('Nama dapur wajib diisi!')
         try {
             if (editingId) {
@@ -61,7 +60,7 @@ export default function DapurPage() {
                 success(`Dapur "${formData.name}" berhasil diperbarui!`)
             } else {
                 await createDapur.mutateAsync(formData)
-                success(`Dapur "${formData.name}" berhasil ditambahkan!`)
+                success(`Dapur berhasil ditambahkan!`)
             }
             setIsModalOpen(false)
         } catch (err: any) {
@@ -138,8 +137,8 @@ export default function DapurPage() {
                 <form onSubmit={handleSubmit}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                         <div className={modalStyles.formGroup}>
-                            <label className={modalStyles.formLabel}>Kode Dapur</label>
-                            <input required className={modalStyles.formInput} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Cth: DPR-001" />
+                            <label className={modalStyles.formLabel}>Kode Dapur <span style={{ color: 'var(--color-text-dim)', fontWeight: 400 }}>(otomatis jika kosong)</span></label>
+                            <input className={modalStyles.formInput} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Auto: DPR-0001" />
                         </div>
                         <div className={modalStyles.formGroup}>
                             <label className={modalStyles.formLabel}>Nama Dapur / Outlet</label>

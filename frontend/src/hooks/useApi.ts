@@ -162,6 +162,14 @@ export function useReceivePurchaseOrder() {
     });
 }
 
+export function useUpdatePurchaseOrder() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => api.patch<ApiResponse<any>>(`/purchase/orders/${id}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['purchase', 'orders'] }),
+    });
+}
+
 // ─── Inventory ───────────────────────────────────────────────────────────────
 export function useStock() {
     return useQuery({
@@ -194,6 +202,14 @@ export function useApproveInternalRequest() {
     });
 }
 
+export function useUpdateInternalRequest() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => api.patch<ApiResponse<any>>(`/supply-chain/requests/${id}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['supply-chain', 'requests'] }),
+    });
+}
+
 export function useDeliveryOrders() {
     return useQuery({
         queryKey: ['supply-chain', 'delivery-orders'],
@@ -209,6 +225,14 @@ export function useCreateDeliveryOrder() {
             queryClient.invalidateQueries({ queryKey: ['supply-chain', 'delivery-orders'] });
             queryClient.invalidateQueries({ queryKey: ['supply-chain', 'requests'] });
         },
+    });
+}
+
+export function useUpdateDeliveryOrder() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => api.patch<ApiResponse<any>>(`/supply-chain/delivery-orders/${id}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['supply-chain', 'delivery-orders'] }),
     });
 }
 
@@ -280,5 +304,186 @@ export function useClosePeriod() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance', 'periods'] });
         },
+    });
+}
+
+// ─── Recipes (BOM) ───────────────────────────────────────────────────────────
+export function useRecipes() {
+    return useQuery({
+        queryKey: ['recipes'],
+        queryFn: () => api.get<ApiResponse<any[]>>('/recipes'),
+    });
+}
+
+export function useCreateRecipe() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => api.post<ApiResponse<any>>('/recipes', data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recipes'] }),
+    });
+}
+
+export function useUpdateRecipe() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => api.put<ApiResponse<any>>(`/recipes/${id}`, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recipes'] }),
+    });
+}
+
+export function useDeleteRecipe() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete<ApiResponse<any>>(`/recipes/${id}`),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recipes'] }),
+    });
+}
+
+// ─── Consumption (Pemakaian Bahan) ───────────────────────────────────────────
+export function useConsumption(dapurId?: string) {
+    const params = dapurId ? `?dapurId=${dapurId}` : '';
+    return useQuery({
+        queryKey: ['supply-chain', 'consumption', dapurId],
+        queryFn: () => api.get<ApiResponse<any[]>>(`/supply-chain/consumption${params}`),
+    });
+}
+
+export function useCreateConsumption() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => api.post<ApiResponse<any>>('/supply-chain/consumption', data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['supply-chain', 'consumption'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory', 'stock'] });
+            queryClient.invalidateQueries({ queryKey: ['journals'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+        },
+    });
+}
+
+// ─── Inventory Adjustments ───────────────────────────────────────────────────
+export function useCreateAdjustment() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => api.post<ApiResponse<any>>('/inventory/adjustments', data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['inventory', 'stock'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory', 'movements'] });
+        },
+    });
+}
+
+export function useInventoryMovements(itemId?: string) {
+    const params = itemId ? `?itemId=${itemId}` : '';
+    return useQuery({
+        queryKey: ['inventory', 'movements', itemId],
+        queryFn: () => api.get<ApiResponse<any[]>>(`/inventory/movements${params}`),
+    });
+}
+
+export function useLowStock() {
+    return useQuery({
+        queryKey: ['inventory', 'stock', 'low'],
+        queryFn: () => api.get<ApiResponse<any[]>>('/inventory/stock/low'),
+    });
+}
+
+// ─── Balance Sheet Report ────────────────────────────────────────────────────
+export function useBalanceSheet(endDate?: string) {
+    return useQuery({
+        queryKey: ['finance', 'reports', 'balance-sheet', endDate],
+        queryFn: () => api.get<ApiResponse<any>>(`/finance/reports/balance-sheet?${new URLSearchParams({ endDate: endDate || '' })}`),
+    });
+}
+
+// ─── Finance Dashboard ───────────────────────────────────────────────────────
+export function useFinanceDashboard(startDate?: string, endDate?: string, dapurId?: string) {
+    const params = new URLSearchParams()
+    if (startDate) params.set('startDate', startDate)
+    if (endDate) params.set('endDate', endDate)
+    if (dapurId) params.set('dapurId', dapurId)
+    const qs = params.toString() ? '?' + params.toString() : ''
+    return useQuery({
+        queryKey: ['finance', 'dashboard', startDate, endDate, dapurId],
+        queryFn: () => api.get<ApiResponse<any>>(`/finance/finance-dashboard${qs}`),
+    });
+}
+
+// ─── Cash Flow Report ────────────────────────────────────────────────────────
+export function useCashFlow(startDate?: string, endDate?: string) {
+    const params = new URLSearchParams()
+    if (startDate) params.set('startDate', startDate)
+    if (endDate) params.set('endDate', endDate)
+    const qs = params.toString() ? '?' + params.toString() : ''
+    return useQuery({
+        queryKey: ['finance', 'reports', 'cash-flow', startDate, endDate],
+        queryFn: () => api.get<ApiResponse<any>>(`/finance/reports/cash-flow${qs}`),
+    });
+}
+
+// ─── Finance Analysis ────────────────────────────────────────────────────────
+export function useFinanceAnalysis(startDate?: string, endDate?: string) {
+    const params = new URLSearchParams()
+    if (startDate) params.set('startDate', startDate)
+    if (endDate) params.set('endDate', endDate)
+    const qs = params.toString() ? '?' + params.toString() : ''
+    return useQuery({
+        queryKey: ['finance', 'reports', 'analysis', startDate, endDate],
+        queryFn: () => api.get<ApiResponse<any>>(`/finance/reports/analysis${qs}`),
+    });
+}
+
+// ─── PO Approval ─────────────────────────────────────────────────────────────
+export function useApprovePO() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.patch<ApiResponse<any>>(`/purchase/orders/${id}/approve`, {}),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['purchase', 'orders'] });
+        },
+    });
+}
+
+export function useRejectPO() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.patch<ApiResponse<any>>(`/purchase/orders/${id}/reject`, {}),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['purchase', 'orders'] });
+        },
+    });
+}
+
+// ─── Price History ───────────────────────────────────────────────────────────
+export function usePriceHistory(vendorId?: string, itemId?: string) {
+    const params = new URLSearchParams()
+    if (vendorId) params.set('vendorId', vendorId)
+    if (itemId) params.set('itemId', itemId)
+    const qs = params.toString() ? '?' + params.toString() : ''
+    return useQuery({
+        queryKey: ['price-history', vendorId, itemId],
+        queryFn: () => api.get<ApiResponse<any[]>>(`/price-history${qs}`),
+        enabled: !!vendorId || !!itemId,
+    });
+}
+
+export function useLatestPrice(vendorId?: string, itemId?: string) {
+    return useQuery({
+        queryKey: ['price-history', 'latest', vendorId, itemId],
+        queryFn: () => api.get<ApiResponse<any>>(`/price-history/latest?vendorId=${vendorId}&itemId=${itemId}`),
+        enabled: !!vendorId && !!itemId,
+    });
+}
+
+// ─── Kitchen Billing ─────────────────────────────────────────────────────────
+export function useKitchenBilling(month?: number, year?: number, dapurId?: string) {
+    const params = new URLSearchParams()
+    if (month) params.set('month', String(month))
+    if (year) params.set('year', String(year))
+    if (dapurId) params.set('dapurId', dapurId)
+    const qs = params.toString() ? '?' + params.toString() : ''
+    return useQuery({
+        queryKey: ['kitchen-billing', month, year, dapurId],
+        queryFn: () => api.get<ApiResponse<any>>(`/kitchen-billing${qs}`),
     });
 }

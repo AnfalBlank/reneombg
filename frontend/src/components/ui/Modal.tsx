@@ -8,9 +8,10 @@ interface ModalProps {
     title: string
     description?: string
     children: ReactNode
+    wide?: boolean
 }
 
-export default function Modal({ isOpen, onClose, title, description, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, description, children, wide }: ModalProps) {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'
@@ -24,7 +25,7 @@ export default function Modal({ isOpen, onClose, title, description, children }:
 
     return (
         <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modal} onClick={e => e.stopPropagation()} style={wide ? { maxWidth: 700 } : undefined}>
                 <div className={styles.header}>
                     <div>
                         <h2 className={styles.title}>{title}</h2>
