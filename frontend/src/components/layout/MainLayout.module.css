@@ -18,6 +18,16 @@
     padding: 24px 28px;
 }
 
+.footer {
+    padding: 16px 0;
+    margin-top: 24px;
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--color-text-dim);
+    letter-spacing: 0.3px;
+}
+
 .mobileOverlay {
     display: none;
     position: fixed;
@@ -27,12 +37,21 @@
     backdrop-filter: blur(2px);
 }
 
+/* ── Mobile ────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .content {
-        padding: 16px;
+        padding: 16px 14px;
+        /* Extra bottom padding for bottom nav */
+        padding-bottom: 80px;
     }
 
     .mobileOverlay {
         display: block;
+    }
+
+    .footer {
+        padding: 12px 0;
+        margin-top: 16px;
+        font-size: 10px;
     }
 }

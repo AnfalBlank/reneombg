@@ -299,3 +299,32 @@ a {
 /* Hide scrollbar for carousel */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Mobile Global Overrides ───────────────────────────────── */
+@media (max-width: 768px) {
+    :root {
+        --header-height: 52px;
+        font-size: 13px;
+    }
+
+    /* Better touch targets */
+    button, a, select, input[type="checkbox"], input[type="radio"] {
+        min-height: 36px;
+    }
+
+    /* Prevent zoom on input focus (iOS) */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+
+    /* Cards stack better */
+    .page-wrapper {
+        animation: none;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        font-size: 12.5px;
+    }
+}

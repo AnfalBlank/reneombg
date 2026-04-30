@@ -205,11 +205,15 @@
     .userInfo {
         display: none;
     }
+
+    .searchInput {
+        width: 140px;
+    }
 }
 
 @media (max-width: 768px) {
     .menuBtn {
-        display: flex;
+        display: none; /* Bottom nav handles navigation */
     }
 
     .searchBox {
@@ -222,6 +226,7 @@
 
     .header {
         padding: 0 12px;
+        height: 52px;
     }
 
     .userInfo {
@@ -230,5 +235,33 @@
 
     .clock {
         display: none;
+    }
+
+    .leftGroup {
+        gap: 8px;
+    }
+
+    /* Show a compact brand on mobile header */
+    .leftGroup::before {
+        content: 'ERP MBG';
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--color-primary);
+        letter-spacing: -0.3px;
+    }
+
+    .actions {
+        gap: 6px;
+    }
+
+    .iconBtn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 10px;
     }
 }

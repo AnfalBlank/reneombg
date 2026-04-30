@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import BottomNav from './BottomNav'
 import styles from './MainLayout.module.css'
 import { useSession } from '../../lib/auth-client'
 
@@ -33,6 +34,7 @@ const breadcrumbMap: Record<string, string> = {
     finance: 'Arus Kas',
     cashflow: 'Pembayaran',
     invoices: 'Invoice Dapur',
+    budget: 'Anggaran Dapur',
     reports: 'Laporan',
     'cash-flow': 'Arus Kas',
     analysis: 'Analisis Keuangan',
@@ -81,15 +83,14 @@ export default function MainLayout() {
                     <div className="page-wrapper">
                         <Outlet />
                     </div>
-                    <footer style={{
-                        padding: '16px 0', marginTop: 24, borderTop: '1px solid var(--color-border)',
-                        textAlign: 'center', fontSize: 11, color: 'var(--color-text-dim)',
-                        letterSpacing: '0.3px',
-                    }}>
+                    <footer className={styles.footer}>
                         Powered by <strong style={{ color: 'var(--color-text-muted)' }}>PT. Manggala Utama Indonesia</strong> — Solusi Sistem Terintegrasi
                     </footer>
                 </main>
             </div>
+
+            {/* Bottom Navigation — Mobile */}
+            <BottomNav onMoreClick={() => setIsMobileMenuOpen(true)} />
         </div>
     )
 }
