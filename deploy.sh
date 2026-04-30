@@ -16,7 +16,7 @@ git pull origin main
 echo ""
 echo "🏗️  Building backend..."
 cd backend
-npm install --production=false
+npm install --legacy-peer-deps
 npx tsc
 echo "✅ Backend built"
 
@@ -24,7 +24,7 @@ echo "✅ Backend built"
 echo ""
 echo "🏗️  Building frontend..."
 cd ../frontend
-npm install --production=false
+npm install --legacy-peer-deps
 npm run build
 echo "✅ Frontend built"
 
