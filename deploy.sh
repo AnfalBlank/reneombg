@@ -17,8 +17,7 @@ echo ""
 echo "🏗️  Building backend..."
 cd backend
 npm install --legacy-peer-deps
-npx tsc
-echo "✅ Backend built"
+echo "✅ Backend ready"
 
 # 3. Frontend
 echo ""
@@ -32,7 +31,7 @@ echo "✅ Frontend built"
 echo ""
 echo "🔄 Restarting PM2..."
 cd ..
-pm2 restart erp-backend 2>/dev/null || pm2 start backend/dist/index.js --name "erp-backend" --env production
+pm2 restart erp-backend 2>/dev/null || pm2 start npx --name "erp-backend" -- tsx backend/src/index.ts
 pm2 save
 
 echo ""
