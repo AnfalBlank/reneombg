@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Book — ERP MBG (Reneo MBG)</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 25mm 18mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; font-size: 11pt; color: #1a1a2e; line-height: 1.6; background: #fff; }
+
+  /* Print styles */
+  @media print {
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    body { font-size: 10pt; }
+  }
+
+  /* Cover */
+  .cover { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; padding: 40px; page-break-after: always; }
+  .cover img { width: 120px; margin-bottom: 30px; border-radius: 16px; }
+  .cover h1 { font-size: 32pt; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .cover .subtitle { font-size: 14pt; color: #a0aec0; margin-bottom: 40px; }
+  .cover .version { font-size: 11pt; color: #718096; margin-top: 20px; }
+  .cover .company { font-size: 10pt; color: #4a5568; margin-top: 60px; border-top: 1px solid #2d3748; padding-top: 20px; }
+
+  /* Content */
+  .content { max-width: 720px; margin: 0 auto; padding: 30px 20px; }
+
+  /* TOC */
+  .toc { page-break-after: always; }
+  .toc h2 { font-size: 18pt; margin-bottom: 20px; color: #1a1a2e; border-bottom: 3px solid #0f3460; padding-bottom: 8px; }
+  .toc-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #cbd5e0; font-size: 11pt; }
+  .toc-item a { color: #0f3460; text-decoration: none; }
+  .toc-section { font-weight: 700; margin-top: 12px; }
+
+  /* Headings */
+  h2 { font-size: 18pt; color: #0f3460; margin: 30px 0 16px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
+  h3 { font-size: 13pt; color: #1a1a2e; margin: 22px 0 10px; }
+  h4 { font-size: 11pt; color: #2d3748; margin: 16px 0 8px; }
+
+  /* Steps */
+  .steps { counter-reset: step; margin: 12px 0; padding-left: 0; }
+  .steps li { list-style: none; padding: 8px 0 8px 36px; position: relative; border-left: 2px solid #e2e8f0; margin-left: 14px; }
+  .steps li::before { counter-increment: step; content: counter(step); position: absolute; left: -15px; top: 6px; width: 28px; height: 28px; background: #0f3460; color: #fff; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .steps li:last-child { border-left-color: transparent; }
+
+  /* Screenshot placeholder */
+  .screenshot { border: 2px dashed #cbd5e0; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; background: #f7fafc; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .screenshot img { max-width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; }
+  .screenshot .placeholder { color: #a0aec0; font-size: 10pt; font-style: italic; }
+  .screenshot .caption { font-size: 9pt; color: #718096; margin-top: 8px; font-style: italic; }
+
+  /* Info boxes */
+  .info-box { padding: 12px 16px; border-radius: 8px; margin: 12px 0; font-size: 10pt; }
+  .info-box.tip { background: #ebf8ff; border-left: 4px solid #3182ce; }
+  .info-box.warning { background: #fffbeb; border-left: 4px solid #d69e2e; }
+  .info-box.important { background: #fff5f5; border-left: 4px solid #e53e3e; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; }
+  th { background: #0f3460; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+  tr:nth-child(even) { background: #f7fafc; }
+
+  /* Flow diagram */
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; padding: 16px; background: #f7fafc; border-radius: 8px; }
+  .flow-step { background: #0f3460; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 9pt; font-weight: 600; white-space: nowrap; }
+  .flow-arrow { color: #a0aec0; font-size: 14pt; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 9pt; font-weight: 600; }
+  .badge-green { background: #c6f6d5; color: #22543d; }
+  .badge-yellow { background: #fefcbf; color: #744210; }
+  .badge-red { background: #fed7d7; color: #742a2a; }
+  .badge-blue { background: #bee3f8; color: #2a4365; }
+  .badge-gray { background: #e2e8f0; color: #4a5568; }
+
+  /* Footer */
+  .page-footer { text-align: center; font-size: 8pt; color: #a0aec0; margin-top: 40px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+
+  /* Print button */
+  .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #0f3460; color: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .print-bar button { background: #fff; color: #0f3460; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 11pt; }
+  .print-bar button:hover { background: #ebf8ff; }
+  .print-spacer { height: 56px; }
+</style>
+</head>
+<body>
+
+<!-- Print Bar -->
+<div class="print-bar no-print">
+  <span>📖 Manual Book ERP MBG — Siap cetak ke PDF</span>
+  <div>
+    <button onclick="window.print()">🖨️ Cetak / Save PDF</button>
+  </div>
+</div>
+<div class="print-spacer no-print"></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- COVER PAGE -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="cover">
+  <img src="/logo.png" alt="Logo" onerror="this.style.display='none'">
+  <h1>MANUAL BOOK</h1>
+  <div class="subtitle">Sistem ERP MBG (Reneo MBG)</div>
+  <div style="font-size:11pt; color:#a0aec0;">Panduan Lengkap Penggunaan Aplikasi</div>
+  <div class="version">Versi 1.1.0 — April 2026</div>
+  <div class="company">
+    <strong>PT. Manggala Utama Indonesia</strong><br>
+    Solusi Sistem Terintegrasi<br>
+    https://rmb.manggalautama.web.id
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content toc">
+  <h2>Daftar Isi</h2>
+
+  <div class="toc-item toc-section"><a href="#sec1">1. Login &amp; Navigasi</a></div>
+  <div class="toc-item toc-section"><a href="#sec2">2. Dashboard</a></div>
+  <div class="toc-item toc-section"><a href="#sec3">3. Master Data</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-1">3.1 Item / SKU</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-2">3.2 Vendor</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-3">3.3 Dapur / Unit</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-4">3.4 Resep / BOM</a></div>
+  <div class="toc-item toc-section"><a href="#sec4">4. Pembelian</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-1">4.1 Purchase Order</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-2">4.2 Goods Receipt</a></div>
+  <div class="toc-item toc-section"><a href="#sec5">5. Supply Chain (Distribusi)</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-1">5.1 Internal Request</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-2">5.2 Delivery Order</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-3">5.3 Kitchen Receiving</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-4">5.4 Pemakaian Bahan</a></div>
+  <div class="toc-item toc-section"><a href="#sec6">6. Inventori</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-1">6.1 Stok Gudang</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-2">6.2 Stock Opname</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-3">6.3 Pengembalian Barang</a></div>
+  <div class="toc-item toc-section"><a href="#sec7">7. Keuangan (Arus Kas)</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-1">7.1 Pembayaran Vendor</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-2">7.2 Invoice Dapur</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-3">7.3 Anggaran Dapur</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-4">7.4 Pengeluaran</a></div>
+  <div class="toc-item toc-section"><a href="#sec8">8. Pembukuan</a></div>
+  <div class="toc-item toc-section"><a href="#sec9">9. Laporan</a></div>
+  <div class="toc-item toc-section"><a href="#sec10">10. Approval Center</a></div>
+  <div class="toc-item toc-section"><a href="#sec11">11. Notifikasi &amp; Chat</a></div>
+  <div class="toc-item toc-section"><a href="#sec12">12. Telegram Bot</a></div>
+  <div class="toc-item toc-section"><a href="#sec13">13. Pengaturan</a></div>
+  <div class="toc-item toc-section"><a href="#sec14">14. Role &amp; Hak Akses</a></div>
+  <div class="toc-item toc-section"><a href="#sec15">15. Flow Diagram</a></div>
+  <div class="toc-item toc-section"><a href="#sec16">16. FAQ &amp; Troubleshooting</a></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 1: LOGIN & NAVIGASI -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec1">
+  <h2>1. Login &amp; Navigasi</h2>
+
+  <h3>1.1 Login ke Sistem</h3>
+  <p>Untuk mengakses sistem ERP MBG, Anda memerlukan akun yang telah didaftarkan oleh Super Admin.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Login ERP MBG</div>
+    <div class="caption">Gambar 1.1 — Halaman login dengan form email dan password</div>
+  </div>
+
+  <ol class="steps">
+    <li>Buka browser dan akses URL <strong>https://rmb.manggalautama.web.id</strong></li>
+    <li>Masukkan <strong>Email</strong> yang telah didaftarkan</li>
+    <li>Masukkan <strong>Password</strong> Anda</li>
+    <li>Klik tombol <strong>Masuk</strong></li>
+    <li>Sistem akan mengarahkan ke Dashboard sesuai role Anda</li>
+  </ol>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Jika lupa password, hubungi Super Admin untuk melakukan reset password melalui menu Pengaturan → Pengguna.
+  </div>
+
+  <h3>1.2 Navigasi Sidebar</h3>
+  <p>Setelah login, Anda akan melihat sidebar navigasi di sisi kiri layar. Menu yang tampil berbeda sesuai role pengguna.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Sidebar navigasi dengan menu utama</div>
+    <div class="caption">Gambar 1.2 — Sidebar navigasi menampilkan menu sesuai role pengguna</div>
+  </div>
+
+  <ul>
+    <li><strong>Sidebar kiri:</strong> Menu utama (berbeda per role)</li>
+    <li><strong>Header atas:</strong> Logo, notifikasi 🔔, chat 💬, profil</li>
+    <li><strong>Klik menu</strong> untuk membuka halaman</li>
+    <li><strong>Submenu:</strong> Klik grup menu untuk expand/collapse</li>
+  </ul>
+
+  <h3>1.3 Logout</h3>
+  <p>Klik ikon <strong>Logout</strong> (↪) di bagian bawah sidebar untuk keluar dari sistem.</p>
+
+  <div class="info-box warning">
+    ⚠️ <strong>Perhatian:</strong> Selalu logout setelah selesai menggunakan sistem, terutama jika menggunakan komputer bersama.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 2: DASHBOARD -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec2">
+  <h2>2. Dashboard</h2>
+
+  <p>Dashboard adalah halaman utama setelah login. Menampilkan ringkasan operasional sesuai role pengguna.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Dashboard ERP MBG</div>
+    <div class="caption">Gambar 2.1 — Dashboard dengan summary cards, grafik, dan alert stok</div>
+  </div>
+
+  <h3>Komponen Dashboard</h3>
+  <table>
+    <thead>
+      <tr><th>Komponen</th><th>Keterangan</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Kartu Ringkasan</td><td>Total PO, IR, DO, KR aktif</td></tr>
+      <tr><td>Grafik Tren</td><td>Tren pembelian &amp; distribusi per periode</td></tr>
+      <tr><td>Alert Stok Rendah</td><td>Ticker berjalan di atas, klik untuk detail item</td></tr>
+      <tr><td>Sapaan</td><td>"Hai, [Nama Anda]" — personalisasi per user</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Admin Dapur hanya melihat data dapurnya sendiri di dashboard. Owner dan Super Admin melihat data seluruh unit.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 3: MASTER DATA -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec3">
+  <h2>3. Master Data</h2>
+  <p>Master Data adalah data dasar yang digunakan di seluruh modul sistem. Pastikan data master terisi lengkap sebelum memulai transaksi.</p>
+
+  <!-- 3.1 Item / SKU -->
+  <h3 id="sec3-1">3.1 Item / SKU</h3>
+  <p>Kelola daftar item/bahan yang digunakan dalam operasional. Setiap item memiliki kode SKU unik yang di-generate otomatis.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Master Data Item / SKU</div>
+    <div class="caption">Gambar 3.1 — Daftar item dengan tombol tambah dan edit</div>
+  </div>
+
+  <h4>Menambah Item Baru</h4>
+  <ol class="steps">
+    <li>Buka <strong>Master Data → Item / SKU</strong></li>
+    <li>Klik tombol <strong>+ Tambah Item</strong></li>
+    <li>Isi form: Nama, Kategori, Satuan (UOM), Min. Stok</li>
+    <li>SKU otomatis di-generate (ITM-0001, dst)</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <h4>Mengedit Item</h4>
+  <ol class="steps">
+    <li>Klik tombol <strong>Edit</strong> pada baris item yang ingin diubah</li>
+    <li>Ubah data yang diperlukan</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <!-- 3.2 Vendor -->
+  <h3 id="sec3-2">3.2 Vendor</h3>
+  <p>Kelola data vendor/supplier yang menyediakan bahan baku.</p>
+
+  <h4>Menambah Vendor</h4>
+  <ol class="steps">
+    <li>Buka <strong>Master Data → Vendor</strong></li>
+    <li>Klik <strong>+ Tambah Vendor</strong></li>
+    <li>Isi form: Nama, Kontak, Telepon, Email, Kategori</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Kategori vendor membantu memfilter vendor saat membuat Purchase Order.
+  </div>
+
+  <!-- 3.3 Dapur / Unit -->
+  <h3 id="sec3-3">3.3 Dapur / Unit</h3>
+  <p>Kelola data dapur/unit operasional yang menjadi tujuan distribusi bahan.</p>
+
+  <h4>Menambah Dapur</h4>
+  <ol class="steps">
+    <li>Buka <strong>Master Data → Dapur / Unit</strong></li>
+    <li>Klik <strong>+ Tambah Dapur</strong></li>
+    <li>Isi form: Nama, Lokasi, PIC (Person in Charge)</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- 3.4 Resep / BOM (new page) -->
+<div class="content page-break" id="sec3-4">
+  <h2>3. Master Data <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>3.4 Resep / BOM (Bill of Materials)</h3>
+  <p>Kelola resep menu beserta komposisi bahan. Resep digunakan untuk menghitung kebutuhan bahan saat membuat Internal Request.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Resep / BOM dengan daftar resep dan detail bahan</div>
+    <div class="caption">Gambar 3.2 — Daftar resep dengan scaling simulator</div>
+  </div>
+
+  <h4>Membuat Resep Manual</h4>
+  <ol class="steps">
+    <li>Buka <strong>Master Data → Resep / BOM</strong></li>
+    <li>Klik <strong>+ Buat Resep</strong></li>
+    <li>Isi nama menu dan default porsi</li>
+    <li>Tambahkan bahan: pilih item, qty, satuan</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <h4>Upload dari Template Excel</h4>
+  <ol class="steps">
+    <li>Klik <strong>Upload Template</strong></li>
+    <li>Pilih file Excel (format SPPG)</li>
+    <li>Sistem auto-detect menu, bahan, dan porsi</li>
+    <li>Item yang belum ada di master data otomatis dibuat</li>
+    <li>Review hasil parsing dan klik <strong>Simpan</strong></li>
+  </ol>
+
+  <h4>Scaling Simulator</h4>
+  <ol class="steps">
+    <li>Buka detail resep yang sudah ada</li>
+    <li>Masukkan target porsi yang diinginkan</li>
+    <li>Sistem otomatis menghitung kebutuhan bahan sesuai proporsi</li>
+  </ol>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Scaling simulator sangat berguna untuk menghitung kebutuhan bahan saat ada event atau pesanan dalam jumlah besar.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 4: PEMBELIAN -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec4">
+  <h2>4. Pembelian</h2>
+  <p>Modul pembelian mengelola proses pengadaan barang dari vendor, mulai dari pembuatan PO hingga penerimaan barang di gudang.</p>
+
+  <!-- 4.1 Purchase Order -->
+  <h3 id="sec4-1">4.1 Purchase Order (PO)</h3>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Form pembuatan Purchase Order</div>
+    <div class="caption">Gambar 4.1 — Form PO dengan pilihan vendor, gudang, dan daftar item</div>
+  </div>
+
+  <h4>Membuat PO</h4>
+  <ol class="steps">
+    <li>Buka <strong>Pembelian → Purchase Order</strong></li>
+    <li>Klik <strong>+ Buat PO</strong></li>
+    <li>Pilih <strong>Vendor</strong> dan <strong>Gudang</strong> tujuan</li>
+    <li>Tambahkan item: pilih item dari dropdown, masukkan Qty dan Harga Satuan (otomatis format Rp)</li>
+    <li>Klik <strong>Simpan</strong> — status PO menjadi <span class="badge badge-gray">Draft</span></li>
+  </ol>
+
+  <h4>Mengajukan Approval</h4>
+  <ol class="steps">
+    <li>Pada PO dengan status <span class="badge badge-gray">Draft</span>, klik tombol <strong>Ajukan</strong></li>
+    <li>Status berubah menjadi <span class="badge badge-yellow">Pending Approval</span></li>
+    <li>Admin/Super Admin akan menerima notifikasi untuk review</li>
+  </ol>
+
+  <h4>Approve PO</h4>
+  <ol class="steps">
+    <li>Buka PO dengan status <span class="badge badge-yellow">Pending</span></li>
+    <li>Review detail PO (vendor, item, harga)</li>
+    <li>Klik <strong>Approve</strong> — status berubah menjadi <span class="badge badge-green">Open</span> (siap diterima)</li>
+  </ol>
+
+  <div class="info-box warning">
+    ⚠️ <strong>Perhatian:</strong> PO yang sudah di-approve tidak dapat diedit. Pastikan semua data sudah benar sebelum approve.
+  </div>
+
+  <!-- 4.2 Goods Receipt -->
+  <h3 id="sec4-2">4.2 Goods Receipt (Penerimaan Barang)</h3>
+
+  <h4>Menerima Barang dari Vendor</h4>
+  <ol class="steps">
+    <li>Buka <strong>Pembelian → Goods Receipt</strong></li>
+    <li>Pilih PO yang statusnya <span class="badge badge-green">Open</span></li>
+    <li>Klik <strong>Terima Barang</strong></li>
+    <li>Input qty aktual yang diterima per item</li>
+    <li>Klik <strong>Konfirmasi</strong></li>
+    <li>Stok gudang otomatis bertambah</li>
+    <li>Record pembayaran vendor otomatis dibuat di modul Arus Kas</li>
+  </ol>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Setelah Goods Receipt, tagihan vendor otomatis muncul di menu Pembayaran Vendor untuk proses pembayaran.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 5: SUPPLY CHAIN -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec5">
+  <h2>5. Supply Chain (Distribusi)</h2>
+  <p>Modul Supply Chain mengelola alur distribusi bahan dari gudang pusat ke dapur/unit operasional.</p>
+
+  <div class="flow">
+    <div class="flow-step">Internal Request</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Approve IR</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Delivery Order</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Kirim Barang</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Kitchen Receiving</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Invoice</div>
+  </div>
+
+  <!-- 5.1 Internal Request -->
+  <h3 id="sec5-1">5.1 Internal Request (IR)</h3>
+  <p>Internal Request adalah permintaan bahan dari dapur ke gudang pusat.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Form Internal Request dengan info anggaran dan daftar item</div>
+    <div class="caption">Gambar 5.1 — Form IR menampilkan budget warning dan daftar item yang diminta</div>
+  </div>
+
+  <h4>Membuat IR Manual</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain → Internal Request</strong></li>
+    <li>Klik <strong>+ Buat IR</strong></li>
+    <li>Pilih <strong>Dapur Peminta</strong> (admin dapur: otomatis terisi)</li>
+    <li>Pilih <strong>Gudang Sumber</strong></li>
+    <li>Perhatikan <strong>info anggaran</strong> dapur (jika ada budget aktif)</li>
+    <li>Tambahkan item: pilih item, masukkan qty</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <h4>Membuat IR dari Resep/BOM</h4>
+  <ol class="steps">
+    <li>Di form IR, buka bagian <strong>Load dari Resep</strong></li>
+    <li>Pilih resep dan masukkan target porsi</li>
+    <li>Klik <strong>Load</strong> — item otomatis terisi sesuai resep</li>
+    <li>Sesuaikan qty jika perlu</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <h4>Upload IR dari Excel</h4>
+  <ol class="steps">
+    <li>Di form IR, klik <strong>Upload Excel</strong></li>
+    <li>Pilih file template SPPG (.xlsx)</li>
+    <li>Sistem auto-detect: dapur, menu, item, qty</li>
+    <li>Item baru otomatis dibuat di master data</li>
+    <li>Menu baru otomatis dibuat di BOM</li>
+    <li>Review hasil parsing dan klik <strong>Simpan</strong></li>
+  </ol>
+
+  <div class="info-box warning">
+    ⚠️ <strong>Budget Warning:</strong> Jika dapur memiliki anggaran aktif, sistem akan menampilkan sisa budget dan peringatan jika IR melebihi anggaran.
+  </div>
+
+  <h4>Approve IR</h4>
+  <ol class="steps">
+    <li>Buka IR dengan status <span class="badge badge-yellow">Pending</span></li>
+    <li>Review item dan qty yang diminta</li>
+    <li>Klik <strong>Approve</strong></li>
+    <li>Delivery Order otomatis dibuat (status Draft)</li>
+    <li>Notifikasi dikirim ke peminta (web + Telegram)</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- 5.2 Delivery Order -->
+<div class="content page-break">
+  <h2>5. Supply Chain <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3 id="sec5-2">5.2 Delivery Order (DO)</h3>
+  <p>Delivery Order dibuat otomatis setelah IR di-approve. Admin gudang melengkapi harga dan mengirim barang.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Delivery Order dengan daftar DO dan status</div>
+    <div class="caption">Gambar 5.2 — Daftar DO dengan tombol edit harga dan kirim</div>
+  </div>
+
+  <h4>Melengkapi DO (Input Harga)</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain → Delivery Order</strong></li>
+    <li>Pilih DO dengan status <span class="badge badge-gray">Draft</span></li>
+    <li>Klik <strong>Edit</strong> → input harga jual per item</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <h4>Konfirmasi Pengiriman</h4>
+  <ol class="steps">
+    <li>Klik <strong>Kirim</strong> pada DO yang sudah lengkap</li>
+    <li>Stok gudang berkurang sesuai qty</li>
+    <li>Status berubah menjadi <span class="badge badge-blue">Terkirim</span></li>
+    <li>Notifikasi dikirim ke admin dapur (web + Telegram)</li>
+    <li>Surat jalan bisa di-print (PDF)</li>
+  </ol>
+
+  <!-- 5.3 Kitchen Receiving -->
+  <h3 id="sec5-3">5.3 Kitchen Receiving (KR)</h3>
+  <p>Kitchen Receiving adalah proses penerimaan barang di dapur. Admin dapur memverifikasi qty aktual yang diterima.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Popup tabel Kitchen Receiving dengan kolom dikirim, diterima, selisih, dan alasan</div>
+    <div class="caption">Gambar 5.3 — Tabel KR menampilkan detail item dengan input qty aktual dan alasan penolakan</div>
+  </div>
+
+  <h4>Menerima Barang di Dapur</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain → Kitchen Receiving</strong></li>
+    <li>Di bagian <strong>Menunggu Penerimaan</strong>, klik <strong>Terima Barang</strong></li>
+    <li>Popup tabel muncul dengan kolom: Dikirim, Diterima, Selisih, Alasan</li>
+    <li>Input qty aktual yang diterima (default = qty dikirim)</li>
+    <li>Jika ada item ditolak, isi kolom <strong>Alasan</strong></li>
+    <li>Isi catatan penerimaan (opsional)</li>
+    <li>Lihat summary: Total Dikirim, Diterima, Ditolak</li>
+    <li>Klik <strong>Konfirmasi Penerimaan</strong></li>
+  </ol>
+
+  <div class="info-box important">
+    🔴 <strong>Penting:</strong> Setelah konfirmasi KR, sistem otomatis: (1) menambah stok dapur, (2) membuat invoice, (3) mencatat item ditolak ke Pengembalian, (4) membuat jurnal distribusi, (5) mengirim notifikasi Telegram.
+  </div>
+
+  <!-- 5.4 Pemakaian Bahan -->
+  <h3 id="sec5-4">5.4 Pemakaian Bahan</h3>
+  <p>Catat penggunaan bahan di dapur untuk mengurangi stok dapur.</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain → Pemakaian Bahan</strong></li>
+    <li>Pilih dapur</li>
+    <li>Pilih resep (opsional) atau input manual</li>
+    <li>Masukkan item dan qty yang dipakai</li>
+    <li>Klik <strong>Simpan</strong> — stok dapur berkurang</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 6: INVENTORI -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec6">
+  <h2>6. Inventori</h2>
+  <p>Modul Inventori mengelola stok barang di gudang dan dapur, termasuk stock opname dan pengembalian barang.</p>
+
+  <!-- 6.1 Stok Gudang -->
+  <h3 id="sec6-1">6.1 Stok Gudang</h3>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Stok Gudang dengan tabel stok per lokasi</div>
+    <div class="caption">Gambar 6.1 — Daftar stok gudang dengan indikator stok minimum</div>
+  </div>
+
+  <ol class="steps">
+    <li>Buka <strong>Inventori → Stok Gudang</strong></li>
+    <li>Lihat stok per gudang dan per dapur</li>
+    <li>Item dengan stok di bawah minimum ditandai <span class="badge badge-red">merah</span></li>
+    <li>Gunakan filter untuk melihat stok per lokasi tertentu</li>
+  </ol>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Stok otomatis terupdate saat terjadi Goods Receipt (masuk), Delivery Order (keluar), Kitchen Receiving (masuk dapur), dan Pemakaian Bahan (keluar dapur).
+  </div>
+
+  <!-- 6.2 Stock Opname -->
+  <h3 id="sec6-2">6.2 Stock Opname</h3>
+  <p>Stock Opname digunakan untuk mencocokkan stok fisik dengan stok di sistem.</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Inventori → Stock Opname</strong></li>
+    <li>Klik <strong>+ Buat Stock Opname</strong></li>
+    <li>Pilih gudang yang akan di-opname</li>
+    <li>Input qty fisik per item</li>
+    <li>Selisih otomatis terhitung (fisik − sistem)</li>
+    <li>Klik <strong>Simpan</strong></li>
+    <li>Hasil opname bisa di-view dan download PDF</li>
+  </ol>
+
+  <!-- 6.3 Pengembalian Barang -->
+  <h3 id="sec6-3">6.3 Pengembalian Barang</h3>
+  <p>Item yang ditolak saat Kitchen Receiving otomatis masuk ke daftar pengembalian.</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Inventori → Pengembalian</strong></li>
+    <li>Lihat daftar item yang <span class="badge badge-yellow">Pending Return</span> (dari KR partial)</li>
+    <li>Klik <strong>Detail</strong> untuk lihat info lengkap (alasan penolakan, qty)</li>
+    <li>Klik <strong>Approve</strong> untuk mengembalikan item ke gudang</li>
+    <li>Stok gudang bertambah kembali sesuai qty yang dikembalikan</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 7: KEUANGAN (ARUS KAS) -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec7">
+  <h2>7. Keuangan (Arus Kas)</h2>
+  <p>Modul Keuangan mengelola seluruh arus kas operasional: pembayaran vendor, invoice dapur, anggaran, dan pengeluaran.</p>
+
+  <!-- 7.1 Pembayaran Vendor -->
+  <h3 id="sec7-1">7.1 Pembayaran Vendor</h3>
+
+  <ol class="steps">
+    <li>Buka <strong>Arus Kas → Pembayaran Vendor</strong></li>
+    <li>Klik <strong>Sync</strong> untuk generate record dari Goods Receipt</li>
+    <li>Daftar tagihan vendor muncul (status: <span class="badge badge-red">Belum Bayar</span>)</li>
+    <li>Klik <strong>Upload Bukti</strong> → pilih file (JPG/PDF) → upload</li>
+    <li>Status berubah menjadi <span class="badge badge-yellow">Pending</span></li>
+    <li>Finance klik <strong>Approve</strong> → status menjadi <span class="badge badge-green">Lunas</span></li>
+  </ol>
+
+  <!-- 7.2 Invoice Dapur -->
+  <h3 id="sec7-2">7.2 Invoice Dapur</h3>
+  <p>Invoice otomatis terbit setelah Kitchen Receiving dikonfirmasi. Berisi detail item yang diterima beserta harga.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Invoice Dapur dengan filter, rekap, dan daftar invoice</div>
+    <div class="caption">Gambar 7.1 — Halaman invoice dengan summary tagihan dan status pembayaran</div>
+  </div>
+
+  <h4>Filter &amp; Rekap</h4>
+  <ul>
+    <li><strong>Filter:</strong> search, dapur, bulan, tahun, status</li>
+    <li><strong>Rekap per Dapur:</strong> tabel ringkasan (jika lebih dari 1 dapur)</li>
+    <li><strong>Summary:</strong> Total Tagihan, Lunas, Belum Bayar</li>
+  </ul>
+
+  <h4>Membayar Invoice</h4>
+  <ol class="steps">
+    <li>Klik <strong>Bayar</strong> pada invoice dengan status <span class="badge badge-red">Belum Bayar</span></li>
+    <li>Isi tanggal bayar dan metode pembayaran</li>
+    <li>Upload bukti pembayaran (JPG/PDF) — <strong>wajib</strong></li>
+    <li>Klik <strong>Upload &amp; Ajukan</strong></li>
+    <li>Status berubah menjadi <span class="badge badge-yellow">Pending</span></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Modal pembayaran invoice dengan upload bukti</div>
+    <div class="caption">Gambar 7.2 — Modal pembayaran dengan form tanggal, metode, dan upload bukti</div>
+  </div>
+
+  <h4>Approve Pembayaran</h4>
+  <ol class="steps">
+    <li>Klik <strong>Approve</strong> pada invoice dengan status <span class="badge badge-yellow">Pending</span></li>
+    <li>Konfirmasi → status menjadi <span class="badge badge-green">Lunas</span></li>
+  </ol>
+
+  <h4>Cetak Invoice</h4>
+  <ul>
+    <li><strong>PDF per invoice:</strong> klik tombol <strong>PDF</strong> pada baris invoice</li>
+    <li><strong>Rekap periode:</strong> klik <strong>Cetak Rekap</strong> di header halaman</li>
+  </ul>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Admin Dapur hanya melihat invoice dapurnya sendiri dan tidak bisa melakukan approve pembayaran.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- 7.3 Anggaran Dapur & 7.4 Pengeluaran -->
+<div class="content page-break">
+  <h2>7. Keuangan <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3 id="sec7-3">7.3 Anggaran Dapur</h3>
+  <p>Kelola anggaran operasional per dapur per periode. Sistem memantau penggunaan anggaran secara real-time.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Anggaran Dapur dengan progress bar dan badge status</div>
+    <div class="caption">Gambar 7.3 — Daftar anggaran dengan progress bar hijau/kuning/merah</div>
+  </div>
+
+  <h4>Membuat Anggaran</h4>
+  <ol class="steps">
+    <li>Buka <strong>Arus Kas → Anggaran Dapur</strong></li>
+    <li>Klik <strong>+ Buat Anggaran</strong></li>
+    <li>Pilih dapur tujuan</li>
+    <li>Tentukan tanggal mulai &amp; akhir (auto-suggest per 2 minggu)</li>
+    <li>Masukkan nominal anggaran (format Rp otomatis)</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <h4>Monitoring Anggaran</h4>
+  <table>
+    <thead>
+      <tr><th>Indikator</th><th>Kondisi</th><th>Warna</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Progress Bar</td><td>&lt; 80% terpakai</td><td><span class="badge badge-green">Hijau — Aman</span></td></tr>
+      <tr><td>Progress Bar</td><td>80% – 99% terpakai</td><td><span class="badge badge-yellow">Kuning — Hampir Habis</span></td></tr>
+      <tr><td>Progress Bar</td><td>≥ 100% terpakai</td><td><span class="badge badge-red">Merah — OVER BUDGET</span></td></tr>
+    </tbody>
+  </table>
+
+  <ul>
+    <li><strong>Detail:</strong> klik <strong>Detail</strong> untuk lihat breakdown invoice yang memotong anggaran</li>
+    <li><strong>Warning di IR:</strong> saat membuat IR, muncul info sisa budget dapur</li>
+    <li><strong>Tutup Periode:</strong> klik <strong>Tutup</strong> pada budget yang sudah selesai</li>
+    <li><strong>Cetak Rekap:</strong> klik <strong>Cetak Rekap</strong> untuk download PDF semua anggaran</li>
+  </ul>
+
+  <!-- 7.4 Pengeluaran -->
+  <h3 id="sec7-4">7.4 Pengeluaran</h3>
+  <p>Catat pengeluaran operasional di luar pembelian bahan (misalnya: transportasi, perlengkapan, dll).</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Arus Kas → Pengeluaran</strong></li>
+    <li>Klik <strong>+ Tambah Pengeluaran</strong></li>
+    <li>Isi form: Kategori, Jumlah (Rp), Deskripsi</li>
+    <li>Upload lampiran (opsional)</li>
+    <li>Klik <strong>Simpan</strong></li>
+    <li>Klik <strong>Detail</strong> untuk melihat lampiran yang sudah diupload</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 8: PEMBUKUAN -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec8">
+  <h2>8. Pembukuan</h2>
+  <p>Modul Pembukuan mencatat seluruh transaksi keuangan dalam bentuk jurnal akuntansi dan buku besar.</p>
+
+  <h3>8.1 Jurnal Umum</h3>
+  <p>Jurnal otomatis dibuat dari transaksi: distribusi, konsumsi bahan, dan waste. Anda juga bisa menambah jurnal manual.</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Pembukuan → Jurnal Umum</strong></li>
+    <li>Lihat daftar jurnal yang sudah tercatat</li>
+    <li>Untuk menambah jurnal manual, klik <strong>+ Tambah Jurnal</strong></li>
+    <li>Isi tanggal, akun debit, akun kredit, nominal, dan keterangan</li>
+    <li>Klik <strong>Simpan</strong></li>
+    <li>Gunakan filter periode untuk melihat jurnal per bulan/tahun</li>
+  </ol>
+
+  <h3>8.2 General Ledger (Buku Besar)</h3>
+  <p>Buku besar menampilkan ringkasan transaksi per akun COA (Chart of Accounts).</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Pembukuan → General Ledger</strong></li>
+    <li>Pilih akun COA yang ingin dilihat</li>
+    <li>Filter per periode (bulan/tahun)</li>
+    <li>Lihat saldo awal, mutasi debit/kredit, dan saldo akhir</li>
+  </ol>
+
+  <h3>8.3 Tutup Buku</h3>
+  <p>Tutup periode akuntansi untuk mengunci jurnal pada periode tersebut.</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Pembukuan → Tutup Buku</strong></li>
+    <li>Pilih periode yang akan ditutup</li>
+    <li>Klik <strong>Tutup Periode</strong></li>
+    <li>Jurnal pada periode tersebut tidak bisa diedit lagi</li>
+  </ol>
+
+  <div class="info-box important">
+    🔴 <strong>Penting:</strong> Tutup buku bersifat permanen. Pastikan semua jurnal sudah benar sebelum menutup periode.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 9: LAPORAN -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec9">
+  <h2>9. Laporan</h2>
+  <p>Modul Laporan menyediakan berbagai jenis laporan operasional dan keuangan yang bisa dilihat online maupun diunduh sebagai PDF.</p>
+
+  <ol class="steps">
+    <li>Buka menu <strong>Laporan</strong></li>
+    <li>Pilih jenis laporan yang diinginkan</li>
+    <li>Atur filter periode (bulan/tahun)</li>
+    <li>Lihat summary cards dan detail tabel</li>
+    <li>Klik <strong>Download PDF</strong> untuk mengunduh laporan</li>
+  </ol>
+
+  <h3>Jenis Laporan Tersedia</h3>
+  <table>
+    <thead>
+      <tr><th>No</th><th>Jenis Laporan</th><th>Keterangan</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Laporan Pembelian</td><td>Rekap PO dan Goods Receipt per periode</td></tr>
+      <tr><td>2</td><td>Laporan Internal Request</td><td>Rekap IR per dapur per periode</td></tr>
+      <tr><td>3</td><td>Laporan Distribusi</td><td>Rekap DO dan KR per periode</td></tr>
+      <tr><td>4</td><td>Laporan Inventori</td><td>Stok gudang dan dapur, mutasi stok</td></tr>
+      <tr><td>5</td><td>Laporan Jurnal</td><td>Rekap jurnal akuntansi per periode</td></tr>
+      <tr><td>6</td><td>Laporan Konsumsi</td><td>Pemakaian bahan per dapur per periode</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Setiap laporan memiliki summary cards di bagian atas yang menampilkan total dan rata-rata untuk quick overview.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 10: APPROVAL CENTER -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec10">
+  <h2>10. Approval Center</h2>
+  <p>Approval Center adalah pusat persetujuan untuk semua dokumen yang memerlukan approval.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Halaman Approval Center dengan daftar item pending</div>
+    <div class="caption">Gambar 10.1 — Approval Center menampilkan IR, PO, dan Return yang menunggu persetujuan</div>
+  </div>
+
+  <ol class="steps">
+    <li>Buka menu <strong>Approval</strong></li>
+    <li>Lihat semua item yang menunggu persetujuan</li>
+    <li>Klik pada item untuk melihat detail</li>
+    <li>Klik <strong>Approve</strong> untuk menyetujui atau <strong>Reject</strong> untuk menolak</li>
+    <li>Lihat history: siapa yang mengajukan, siapa yang approve, kapan</li>
+  </ol>
+
+  <h3>Jenis Dokumen yang Memerlukan Approval</h3>
+  <table>
+    <thead>
+      <tr><th>Dokumen</th><th>Diajukan Oleh</th><th>Di-approve Oleh</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Internal Request (IR)</td><td>Admin Dapur / Admin Pusat</td><td>Super Admin / Owner</td></tr>
+      <tr><td>Purchase Order (PO)</td><td>Admin Pusat</td><td>Super Admin / Owner</td></tr>
+      <tr><td>Pengembalian Barang</td><td>Otomatis dari KR</td><td>Admin Pusat / Super Admin</td></tr>
+      <tr><td>Pembayaran Vendor</td><td>Admin Pusat</td><td>Finance / Owner</td></tr>
+      <tr><td>Pembayaran Invoice</td><td>Admin Dapur</td><td>Finance / Owner</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 11: NOTIFIKASI & CHAT -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec11">
+  <h2>11. Notifikasi &amp; Chat</h2>
+
+  <h3>11.1 Notifikasi</h3>
+  <p>Sistem mengirim notifikasi real-time untuk setiap aktivitas penting.</p>
+
+  <ol class="steps">
+    <li>Klik ikon <strong>🔔</strong> di header atas</li>
+    <li>Badge merah menunjukkan jumlah notifikasi belum dibaca</li>
+    <li>Klik notifikasi untuk membuka halaman terkait</li>
+  </ol>
+
+  <h4>Notifikasi Otomatis Dikirim Untuk:</h4>
+  <ul>
+    <li>IR diajukan → notifikasi ke approver</li>
+    <li>IR di-approve → notifikasi ke peminta + DO dibuat</li>
+    <li>DO dikirim → notifikasi ke admin dapur</li>
+    <li>KR selesai → notifikasi ke admin gudang</li>
+    <li>PO diajukan → notifikasi ke approver</li>
+    <li>Pembayaran diajukan → notifikasi ke finance</li>
+  </ul>
+
+  <h3>11.2 Chat</h3>
+  <p>Fitur chat internal untuk komunikasi antar pengguna sistem.</p>
+
+  <ol class="steps">
+    <li>Klik ikon <strong>💬</strong> di header atas</li>
+    <li>Pilih kontak dari daftar pengguna</li>
+    <li>Ketik pesan dan tekan Enter atau klik kirim</li>
+    <li>Tanda centang: ✓ terkirim, ✓✓ dibaca</li>
+    <li>Badge unread count muncul per kontak</li>
+  </ol>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Chat panel bisa diminimize agar tidak mengganggu pekerjaan. Notifikasi pesan baru tetap muncul di badge.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 12: TELEGRAM BOT -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec12">
+  <h2>12. Telegram Bot</h2>
+  <p>Sistem terintegrasi dengan Telegram Bot untuk notifikasi, upload IR, dan approve dokumen langsung dari Telegram.</p>
+
+  <div class="screenshot">
+    <div class="placeholder">📸 Screenshot: Percakapan Telegram Bot — /start, link email, upload Excel, approve</div>
+    <div class="caption">Gambar 12.1 — Contoh interaksi dengan Telegram Bot ERP MBG</div>
+  </div>
+
+  <h3>12.1 Menghubungkan Akun</h3>
+  <ol class="steps">
+    <li>Buka bot Telegram (link dari admin)</li>
+    <li>Ketik <strong>/start</strong></li>
+    <li>Bot meminta email → masukkan email yang terdaftar di sistem</li>
+    <li>Akun terhubung ✅</li>
+  </ol>
+
+  <h3>12.2 Upload IR via Telegram</h3>
+  <ol class="steps">
+    <li>Kirim file Excel (template SPPG) ke bot</li>
+    <li>Bot auto-detect: dapur, menu, item, qty</li>
+    <li>Item baru otomatis dibuat di master data</li>
+    <li>BOM otomatis dibuat jika menu belum ada</li>
+    <li>IR otomatis tersimpan di sistem</li>
+  </ol>
+
+  <h3>12.3 Approve via Telegram</h3>
+  <ol class="steps">
+    <li>Saat ada IR/PO pending, bot mengirim notifikasi</li>
+    <li>Klik tombol <strong>Approve</strong> di pesan Telegram</li>
+    <li>IR/PO langsung ter-approve di sistem</li>
+    <li>DO otomatis dibuat (untuk IR)</li>
+  </ol>
+
+  <h3>12.4 Notifikasi Otomatis via Telegram</h3>
+  <p>Bot mengirim notifikasi untuk event berikut:</p>
+
+  <table>
+    <thead>
+      <tr><th>Event</th><th>Isi Notifikasi</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>✅ IR Disetujui</td><td>No. IR + No. DO yang dibuat</td></tr>
+      <tr><td>🚚 DO Terkirim</td><td>No. DO + link surat jalan</td></tr>
+      <tr><td>📦 KR Selesai</td><td>No. IR, DO, KR + detail item diterima/ditolak + No. Invoice</td></tr>
+      <tr><td>💰 Pembayaran Pending</td><td>No. Invoice + nominal yang diajukan</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box warning">
+    ⚠️ <strong>Perhatian:</strong> Pastikan email yang di-link ke Telegram sama persis dengan email yang terdaftar di sistem ERP.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 13: PENGATURAN -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec13">
+  <h2>13. Pengaturan</h2>
+  <p>Menu Pengaturan hanya tersedia untuk role Owner dan Super Admin (kecuali Profil Saya yang tersedia untuk semua role).</p>
+
+  <h3>13.1 Admin Panel</h3>
+  <p>Panel administrasi menampilkan overview statistik sistem dan akses ke pengaturan lanjutan.</p>
+  <ul>
+    <li><strong>Overview:</strong> Statistik pengguna, transaksi, dan sistem</li>
+    <li><strong>Users:</strong> Kelola pengguna (lihat 13.2)</li>
+    <li><strong>Settings:</strong> Pengaturan sistem global</li>
+    <li><strong>Audit:</strong> Log aktivitas (lihat 13.3)</li>
+    <li><strong>Announcements:</strong> Buat pengumuman untuk semua pengguna</li>
+  </ul>
+
+  <h3>13.2 Kelola Pengguna</h3>
+  <ol class="steps">
+    <li>Buka <strong>Pengaturan → Pengguna &amp; Akses</strong></li>
+    <li><strong>Tambah User:</strong> Klik + → isi nama, email, password, role, dapur (jika Admin Dapur)</li>
+    <li><strong>Edit User:</strong> Klik Edit → ubah nama, email, role, dapur</li>
+    <li><strong>Reset Password:</strong> Klik Reset → masukkan password baru</li>
+  </ol>
+
+  <div class="info-box tip">
+    💡 <strong>Tip:</strong> Saat menambah user dengan role Admin Dapur, wajib memilih dapur yang akan dikelola.
+  </div>
+
+  <h3>13.3 Audit Log</h3>
+  <p>Audit Log mencatat seluruh aktivitas pengguna di sistem untuk keperluan tracking dan keamanan.</p>
+
+  <ol class="steps">
+    <li>Buka <strong>Pengaturan → Audit Log</strong></li>
+    <li>Lihat semua aktivitas: siapa, kapan, aksi apa, pada data apa</li>
+    <li>Filter per user, tanggal, dan tipe aksi</li>
+  </ol>
+
+  <h3>13.4 Profil Saya</h3>
+  <ol class="steps">
+    <li>Buka <strong>Pengaturan → Profil Saya</strong></li>
+    <li>Edit nama dan email</li>
+    <li>Ganti password (masukkan password lama dan password baru)</li>
+    <li>Klik <strong>Simpan</strong></li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 14: ROLE & HAK AKSES -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec14">
+  <h2>14. Role &amp; Hak Akses</h2>
+  <p>Sistem ERP MBG memiliki 5 role utama dengan hak akses berbeda per modul.</p>
+
+  <h3>Matriks Hak Akses</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Modul</th>
+        <th>Owner</th>
+        <th>Super Admin</th>
+        <th>Admin Pusat</th>
+        <th>Admin Dapur</th>
+        <th>Finance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Dashboard</strong></td>
+        <td>✅ Semua</td>
+        <td>✅ Semua</td>
+        <td>✅ Semua</td>
+        <td>✅ Dapur sendiri</td>
+        <td>✅ Keuangan</td>
+      </tr>
+      <tr>
+        <td><strong>Master Data</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>❌</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td><strong>Purchase Order</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Buat &amp; Ajukan</td>
+        <td>❌</td>
+        <td>👁️ View</td>
+      </tr>
+      <tr>
+        <td><strong>Goods Receipt</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>❌</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td><strong>Internal Request</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full + Approve</td>
+        <td>✅ Buat</td>
+        <td>✅ Buat (dapur sendiri)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td><strong>Delivery Order</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>👁️ View (dapur sendiri)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td><strong>Kitchen Receiving</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>👁️ View</td>
+        <td>✅ Terima (dapur sendiri)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td><strong>Inventori</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>👁️ View (dapur sendiri)</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td><strong>Invoice Dapur</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Bayar (dapur sendiri)</td>
+        <td>✅ Approve</td>
+      </tr>
+      <tr>
+        <td><strong>Anggaran</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>👁️ View (dapur sendiri)</td>
+        <td>✅ Full</td>
+      </tr>
+      <tr>
+        <td><strong>Pembukuan</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>👁️ View</td>
+        <td>❌</td>
+        <td>✅ Full</td>
+      </tr>
+      <tr>
+        <td><strong>Laporan</strong></td>
+        <td>✅ Semua</td>
+        <td>✅ Semua</td>
+        <td>✅ Semua</td>
+        <td>✅ Dapur sendiri</td>
+        <td>✅ Keuangan</td>
+      </tr>
+      <tr>
+        <td><strong>Approval</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>⚡ Terbatas</td>
+        <td>❌</td>
+        <td>✅ Keuangan</td>
+      </tr>
+      <tr>
+        <td><strong>Pengaturan</strong></td>
+        <td>✅ Full</td>
+        <td>✅ Full</td>
+        <td>❌</td>
+        <td>❌</td>
+        <td>❌</td>
+      </tr>
+      <tr>
+        <td><strong>Telegram Bot</strong></td>
+        <td>✅</td>
+        <td>✅</td>
+        <td>✅</td>
+        <td>✅</td>
+        <td>✅</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Keterangan Simbol</h3>
+  <ul>
+    <li>✅ — Akses penuh atau sesuai keterangan</li>
+    <li>👁️ — Hanya bisa melihat (view only)</li>
+    <li>⚡ — Akses terbatas pada fungsi tertentu</li>
+    <li>❌ — Tidak memiliki akses</li>
+  </ul>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 15: FLOW DIAGRAM -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec15">
+  <h2>15. Flow Diagram</h2>
+  <p>Berikut adalah diagram alur proses utama dalam sistem ERP MBG.</p>
+
+  <h3>15.1 Flow Pembelian</h3>
+  <p>Alur pengadaan barang dari vendor ke gudang.</p>
+  <div class="flow">
+    <div class="flow-step">Buat PO (Draft)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Ajukan PO</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Approve PO</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">PO Open</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Goods Receipt</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Stok Gudang +</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Tagihan Vendor</div>
+  </div>
+
+  <h3>15.2 Flow Distribusi (IR → DO → KR → Invoice)</h3>
+  <p>Alur distribusi bahan dari gudang pusat ke dapur.</p>
+  <div class="flow">
+    <div class="flow-step">Buat IR</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Approve IR</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">DO Dibuat (Auto)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Input Harga DO</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Kirim DO</div>
+  </div>
+  <div class="flow" style="margin-top: 4px;">
+    <div class="flow-step" style="background: #2d3748;">Stok Gudang −</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Kitchen Receiving</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background: #2d3748;">Stok Dapur +</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Invoice Terbit (Auto)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Bayar Invoice</div>
+  </div>
+
+  <div class="info-box tip">
+    💡 <strong>Catatan:</strong> Jika ada item ditolak saat KR, item tersebut otomatis masuk ke Pengembalian Barang dan invoice hanya dihitung berdasarkan qty yang diterima.
+  </div>
+
+  <h3>15.3 Flow Pembayaran</h3>
+  <p>Alur pembayaran untuk vendor dan invoice dapur.</p>
+
+  <h4>Pembayaran Vendor</h4>
+  <div class="flow">
+    <div class="flow-step">Goods Receipt</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Tagihan Muncul</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Upload Bukti</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Pending</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Approve</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background: #22543d;">Lunas ✓</div>
+  </div>
+
+  <h4>Pembayaran Invoice Dapur</h4>
+  <div class="flow">
+    <div class="flow-step">KR Selesai</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Invoice Terbit</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Bayar + Upload Bukti</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Pending</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Approve</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background: #22543d;">Lunas ✓</div>
+  </div>
+
+  <h3>15.4 Flow Anggaran</h3>
+  <p>Alur pengelolaan anggaran dapur.</p>
+  <div class="flow">
+    <div class="flow-step">Buat Anggaran</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Periode Aktif</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Invoice Memotong Budget</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Monitoring Progress</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Tutup Periode</div>
+  </div>
+
+  <div style="margin-top: 16px;">
+    <h4>Status Anggaran</h4>
+    <div class="flow">
+      <div class="flow-step" style="background: #38a169;">Aman (&lt;80%)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="background: #d69e2e;">Hampir Habis (80-99%)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="background: #e53e3e;">OVER BUDGET (≥100%)</div>
+    </div>
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 16: FAQ & TROUBLESHOOTING -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="content page-break" id="sec16">
+  <h2>16. FAQ &amp; Troubleshooting</h2>
+  <p>Pertanyaan yang sering diajukan dan solusi untuk masalah umum.</p>
+
+  <h3>Login &amp; Akses</h3>
+
+  <h4>Q: Tidak bisa login?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Pastikan email dan password benar. Perhatikan huruf besar/kecil pada password. Jika lupa password, minta Super Admin untuk reset melalui menu Pengaturan → Pengguna.
+  </div>
+
+  <h4>Q: Menu tertentu tidak muncul di sidebar?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Menu yang tampil disesuaikan dengan role Anda. Admin Dapur hanya melihat menu yang relevan dengan operasional dapur. Hubungi Super Admin jika merasa ada menu yang seharusnya tersedia.
+  </div>
+
+  <h3>Data &amp; Transaksi</h3>
+
+  <h4>Q: Data tidak muncul atau kosong?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Cek role Anda — Admin Dapur hanya melihat data dapurnya sendiri. Coba refresh halaman (Ctrl+Shift+R). Pastikan filter periode sudah benar.
+  </div>
+
+  <h4>Q: Invoice tidak muncul setelah Kitchen Receiving?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Invoice otomatis dibuat saat Kitchen Receiving <strong>dikonfirmasi</strong>. Pastikan KR sudah di-confirm (klik Konfirmasi Penerimaan), bukan hanya dilihat.
+  </div>
+
+  <h4>Q: Budget warning tidak muncul saat buat IR?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Pastikan sudah ada anggaran aktif untuk dapur tersebut di periode saat ini. Buat anggaran terlebih dahulu di menu Arus Kas → Anggaran Dapur.
+  </div>
+
+  <h3>Upload &amp; File</h3>
+
+  <h4>Q: Upload Excel gagal?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Pastikan format file <strong>.xlsx</strong> (bukan .xls). Gunakan template SPPG yang sesuai. Pastikan ada kolom: No, Bahan, Qty, Satuan. Jangan mengubah struktur header template.
+  </div>
+
+  <h4>Q: Upload bukti pembayaran gagal?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Format yang didukung: JPG, PNG, dan PDF. Pastikan ukuran file tidak melebihi batas (maks 5MB). Coba kompres file jika terlalu besar.
+  </div>
+
+  <h3>Telegram Bot</h3>
+
+  <h4>Q: Telegram bot tidak merespons?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Pastikan sudah mengetik /start dan menghubungkan email. Cek apakah email yang dimasukkan <strong>sama persis</strong> dengan yang terdaftar di sistem (termasuk huruf besar/kecil).
+  </div>
+
+  <h4>Q: Notifikasi Telegram tidak masuk?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Pastikan akun Telegram sudah terhubung. Cek apakah bot tidak di-block. Pastikan notifikasi Telegram tidak di-mute.
+  </div>
+
+  <h3>Cetak &amp; PDF</h3>
+
+  <h4>Q: Bagaimana cara cetak/save PDF?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Klik tombol <strong>PDF</strong> atau <strong>Cetak</strong> pada halaman terkait. Browser akan membuka dialog print. Pilih <strong>"Save as PDF"</strong> sebagai printer, atau langsung print ke printer fisik.
+  </div>
+
+  <h4>Q: Harga tidak muncul separator titik?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Input harga menggunakan komponen khusus. Ketik angka saja (tanpa titik atau koma), separator titik ribuan akan otomatis muncul.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 — PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- BACK COVER -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="cover page-break" style="min-height: 100vh;">
+  <img src="/logo.png" alt="Logo" onerror="this.style.display='none'" style="width: 80px; margin-bottom: 20px;">
+  <h1 style="font-size: 20pt;">MANUAL BOOK</h1>
+  <div class="subtitle" style="font-size: 12pt;">Sistem ERP MBG (Reneo MBG)</div>
+  <div style="margin-top: 40px; font-size: 10pt; color: #718096; line-height: 2;">
+    <strong>PT. Manggala Utama Indonesia</strong><br>
+    Email: support@manggalautama.web.id<br>
+    Web: https://rmb.manggalautama.web.id<br><br>
+    Versi 1.1.0 — April 2026<br>
+    <span style="font-size: 9pt; color: #4a5568;">Dokumen ini bersifat rahasia dan hanya untuk penggunaan internal.</span>
+  </div>
+</div>
+
+</body>
+</html>
