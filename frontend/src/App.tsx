@@ -26,6 +26,7 @@ import ReportsPage from './pages/finance/ReportsPage'
 import FinanceDashboard from './pages/finance/FinanceDashboard'
 import ArusKasPage from './pages/finance/ArusKasPage'
 import InvoicePage from './pages/finance/InvoicePage'
+import BudgetPage from './pages/finance/BudgetPage'
 import AnalysisPage from './pages/finance/AnalysisPage'
 import ExpensePage from './pages/finance/ExpensePage'
 import UsersPage from './pages/settings/UsersPage'
@@ -87,6 +88,7 @@ export default function App() {
                         <Route path="finance/cash-flow" element={<ArusKasPage />} />
                         <Route path="finance/cashflow" element={<ArusKasPage />} />
                         <Route path="finance/invoices" element={<InvoicePage />} />
+                        <Route path="finance/budget" element={<BudgetPage />} />
                         <Route path="finance/analysis" element={<AnalysisPage />} />
                         <Route path="finance/expenses" element={<ExpensePage />} />
 

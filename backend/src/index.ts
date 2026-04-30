@@ -28,6 +28,7 @@ import chatRoutes from './routes/chat'
 import approvalRoutes from './routes/approval'
 import cashflowRoutes from './routes/cashflow'
 import invoiceRoutes from './routes/invoice'
+import budgetRoutes from './routes/budget'
 
 const app = new Hono()
 
@@ -71,6 +72,7 @@ app.route('/api/chat', chatRoutes)
 app.route('/api/approvals', approvalRoutes)
 app.route('/api/cashflow', cashflowRoutes)
 app.route('/api/invoices', invoiceRoutes)
+app.route('/api/budgets', budgetRoutes)
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (c) => c.json({
@@ -79,6 +81,42 @@ app.get('/api/health', (c) => c.json({
     version: '1.1.0',
     service: 'ERP MBG API',
 }))
+
+// ─── Serve Frontend (production) ──────────────────────────────────────────────
+import { readFileSync, existsSync } from 'fs'
+import { join } from 'path'
+
+const frontendDist = join(process.cwd(), '..', 'frontend', 'dist')
+
+if (existsSync(frontendDist)) {
+    // Serve static assets
+    app.get('/assets/*', async (c) => {
+        const filePath = join(frontendDist, c.req.path)
+        if (!existsSync(filePath)) return c.notFound()
+        const content = readFileSync(filePath)
+        const ext = filePath.split('.').pop()
+        const types: Record<string, string> = { js: 'application/javascript', css: 'text/css', png: 'image/png', jpg: 'image/jpeg', svg: 'image/svg+xml', ico: 'image/x-icon', woff2: 'font/woff2', woff: 'font/woff' }
+        return new Response(content, { headers: { 'Content-Type': types[ext || ''] || 'application/octet-stream', 'Cache-Control': 'public, max-age=31536000' } })
+    })
+
+    // Serve static files in root (logo.png, etc)
+    app.get('/logo.png', (c) => {
+        const filePath = join(frontendDist, 'logo.png')
+        if (!existsSync(filePath)) return c.notFound()
+        return new Response(readFileSync(filePath), { headers: { 'Content-Type': 'image/png' } })
+    })
+
+    // SPA fallback — serve index.html for all non-API routes
+    app.get('*', (c) => {
+        if (c.req.path.startsWith('/api/') || c.req.path.startsWith('/ws')) return c.notFound()
+        const indexPath = join(frontendDist, 'index.html')
+        if (!existsSync(indexPath)) return c.notFound()
+        const html = readFileSync(indexPath, 'utf-8')
+        return new Response(html, { headers: { 'Content-Type': 'text/html' } })
+    })
+
+    console.log('📁 Serving frontend from', frontendDist)
+}
 
 // ─── Start Server with WebSocket ──────────────────────────────────────────────
 const port = parseInt(process.env.PORT || '3000')

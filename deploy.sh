@@ -1,27 +1,42 @@
 #!/bin/bash
-# 🚀 ERP MBG Auto-Deployment Script
-# Run this on your VPS inside the /home/indotech/SystemSaas directory
+# 🚀 ERP MBG Deploy Script
+# Jalankan di VPS dalam folder project: /home/deploy/reneombg
 
-echo "📥 pulling latest changes from git..."
+set -e
+echo "═══════════════════════════════════════════"
+echo "  🚀 ERP MBG — Deploy to Production"
+echo "═══════════════════════════════════════════"
+
+# 1. Pull latest
+echo ""
+echo "📥 Pulling latest from GitHub..."
 git pull origin main
 
-# 1. Backend Setup
-echo "🏗️ setting up backend..."
+# 2. Backend
+echo ""
+echo "🏗️  Building backend..."
 cd backend
-npm install
-npm run build 
+npm install --production=false
+npx tsc
+echo "✅ Backend built"
 
-# 2. Frontend Setup
-echo "🏗️ setting up frontend..."
+# 3. Frontend
+echo ""
+echo "🏗️  Building frontend..."
 cd ../frontend
-npm install
-# VITE_API_URL helps frontend know where to call the backend in production
-VITE_API_URL=https://reneo.manggalautama.web.id/api npm run build
+npm install --production=false
+npm run build
+echo "✅ Frontend built"
 
-# 3. Restart Processes (assuming PM2 is used)
-echo "🔄 restarting PM2 processes..."
+# 4. Restart PM2
+echo ""
+echo "🔄 Restarting PM2..."
 cd ..
-pm2 restart all || pm2 start backend/dist/index.js --name "erp-backend"
+pm2 restart erp-backend 2>/dev/null || pm2 start backend/dist/index.js --name "erp-backend" --env production
+pm2 save
 
-echo "✅ Deployment Successful!"
-echo "🌐 Site: https://reneo.manggalautama.web.id"
+echo ""
+echo "═══════════════════════════════════════════"
+echo "  ✅ Deploy selesai!"
+echo "  🌐 https://rmb.manggalautama.web.id"
+echo "═══════════════════════════════════════════"

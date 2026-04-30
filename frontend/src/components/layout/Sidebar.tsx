@@ -87,9 +87,14 @@ function buildNav(role: string): NavItem[] {
         items.push({ label: 'Laporan', path: '/reports', icon: FileBarChart })
     }
 
-    // kitchen_admin gets Invoice Dapur (their own dapur only)
+    // kitchen_admin gets Invoice Dapur & Anggaran (their own dapur only)
     if (role === 'kitchen_admin') {
-        items.push({ label: 'Invoice Dapur', path: '/finance/invoices', icon: FileText })
+        items.push({
+            label: 'Keuangan Dapur', icon: Wallet, children: [
+                { label: 'Invoice Dapur', path: '/finance/invoices', icon: FileText },
+                { label: 'Anggaran Dapur', path: '/finance/budget', icon: PieChart },
+            ],
+        })
     }
 
     if (access.finance) {
@@ -97,6 +102,7 @@ function buildNav(role: string): NavItem[] {
             label: 'Arus Kas', icon: Wallet, children: [
                 { label: 'Pembayaran Vendor', path: '/finance/cashflow', icon: DollarSign },
                 { label: 'Invoice Dapur', path: '/finance/invoices', icon: FileText },
+                { label: 'Anggaran Dapur', path: '/finance/budget', icon: PieChart },
                 { label: 'Pengeluaran', path: '/finance/expenses', icon: TrendingUp },
                 { label: 'Dashboard Finance', path: '/finance/dashboard', icon: Activity },
                 { label: 'Laporan Keuangan', path: '/finance/reports', icon: FileText },

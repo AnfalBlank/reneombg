@@ -14,8 +14,8 @@ export const auth = betterAuth({
         },
     }),
 
-    secret: process.env.AUTH_SECRET || 'erp-mbg-secret-fallback',
-    baseURL: process.env.BASE_URL || 'http://localhost:3000/api/auth',
+    secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET || 'erp-mbg-secret-fallback',
+    baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
 
     // Enable email & password authentication
     emailAndPassword: {

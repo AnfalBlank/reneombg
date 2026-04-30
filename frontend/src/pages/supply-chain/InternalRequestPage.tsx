@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Plus, Search, X, CheckCircle, Eye, Edit2, Download } from 'lucide-react'
+import { Plus, Search, X, CheckCircle, Eye, Edit2, Download, AlertTriangle } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -9,7 +10,7 @@ import styles from '../shared.module.css'
 import { useToast } from '../../components/ui/Toast'
 import { useInternalRequests, useCreateInternalRequest, useUpdateInternalRequest, useApproveInternalRequest, useDapur, useGudang, useItems, useRecipes } from '../../hooks/useApi'
 import { api } from '../../lib/api'
-import { fmtDate } from '../../lib/utils'
+import { fmtDate, fmtRp } from '../../lib/utils'
 import { downloadPDF, pdfFmt } from '../../lib/pdf'
 import { useSession } from '../../lib/auth-client'
 
@@ -58,6 +59,15 @@ export default function InternalRequestPage() {
     const [targetPorsi, setTargetPorsi] = useState<number>(1000)
     const [templateParsing, setTemplateParsing] = useState(false)
     const [templateInfo, setTemplateInfo] = useState<{ menuName: string; totalPorsi: number } | null>(null)
+
+    // Budget check for selected dapur
+    const activeDapurId = form.dapurId || userDapurId
+    const { data: budgetCheck } = useQuery({
+        queryKey: ['budget-check', activeDapurId],
+        queryFn: () => api.get<any>(`/budgets/check/${activeDapurId}`),
+        enabled: !!activeDapurId && showForm,
+    })
+    const budgetInfo = budgetCheck?.data || null
 
     const filtered = requests.filter((r: any) => {
         const matchSearch = (r.dapur?.name || '').toLowerCase().includes(search.toLowerCase()) || (r.irNumber || '').toLowerCase().includes(search.toLowerCase())
@@ -197,6 +207,21 @@ export default function InternalRequestPage() {
                         <div><label style={labelStyle}>Dapur Peminta *</label><select style={inputStyle} value={form.dapurId} onChange={e => setForm({ ...form, dapurId: e.target.value })} disabled={isKitchenAdmin}><option value="">-- Pilih Dapur --</option>{dapurs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>{isKitchenAdmin && <span style={{ fontSize: 10, color: 'var(--color-text-dim)' }}>Otomatis sesuai dapur Anda</span>}</div>
                         <div><label style={labelStyle}>Gudang Sumber *</label><select style={inputStyle} value={form.gudangId} onChange={e => setForm({ ...form, gudangId: e.target.value })}><option value="">-- Pilih Gudang --</option>{gudangs.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
                     </div>
+
+                    {/* Budget Warning */}
+                    {budgetInfo && (
+                        <div style={{
+                            padding: '10px 14px', borderRadius: 8, fontSize: 12,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            background: budgetInfo.percentage >= 100 ? 'rgba(239,68,68,0.06)' : budgetInfo.percentage >= 80 ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.06)',
+                            border: `1px solid ${budgetInfo.percentage >= 100 ? 'rgba(239,68,68,0.2)' : budgetInfo.percentage >= 80 ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'}`,
+                        }}>
+                            <AlertTriangle size={14} style={{ color: budgetInfo.percentage >= 100 ? '#ef4444' : budgetInfo.percentage >= 80 ? '#f59e0b' : '#22c55e', flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                                <strong>Anggaran Dapur:</strong> {fmtRp(budgetInfo.budgetAmount)} — Terpakai: {fmtRp(budgetInfo.usedAmount)} ({budgetInfo.percentage}%) — Sisa: <strong style={{ color: budgetInfo.remaining >= 0 ? '#22c55e' : '#ef4444' }}>{fmtRp(budgetInfo.remaining)}</strong>
+                            </div>
+                        </div>
+                    )}
                     <div><label style={labelStyle}>Catatan</label><textarea style={{ ...inputStyle, height: 56, resize: 'vertical' }} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Opsional..." /></div>
 
                     {/* BOM Loader - only for create */}
