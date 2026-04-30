@@ -116,36 +116,50 @@ export default function NotificationDropdown({ userId }: Props) {
 
             {open && (
                 <div style={{
-                    position: 'absolute', top: 44, right: 0, width: 380,
+                    position: 'fixed', top: 0, right: 0, bottom: 0,
+                    width: '100%', maxWidth: 400,
                     background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+                    boxShadow: 'var(--shadow-lg)',
                     zIndex: 1000, overflow: 'hidden',
                     animation: 'fadeIn 200ms ease',
+                    display: 'flex', flexDirection: 'column',
                 }}>
                     {/* Header */}
                     <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '14px 16px', borderBottom: '1px solid var(--color-border)',
+                        flexShrink: 0,
                     }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>
                             Notifikasi {unreadCount > 0 && <span style={{ color: 'var(--color-primary)', fontSize: 12 }}>({unreadCount} baru)</span>}
                         </div>
-                        {unreadCount > 0 && (
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={() => markAllRead()}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 4,
+                                        background: 'none', border: 'none', color: 'var(--color-primary)',
+                                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                    }}
+                                >
+                                    <CheckCheck size={14} /> Semua dibaca
+                                </button>
+                            )}
                             <button
-                                onClick={() => markAllRead()}
+                                onClick={() => setOpen(false)}
                                 style={{
-                                    display: 'flex', alignItems: 'center', gap: 4,
-                                    background: 'none', border: 'none', color: 'var(--color-primary)',
-                                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                    background: 'none', border: 'none', color: 'var(--color-text-muted)',
+                                    cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center',
                                 }}
                             >
-                                <CheckCheck size={14} /> Tandai semua dibaca
+                                <X size={18} />
                             </button>
-                        )}
+                        </div>
                     </div>
 
                     {/* List */}
-                    <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
                         {items.length === 0 && (
                             <div style={{ padding: 32, textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 13 }}>
                                 Belum ada notifikasi

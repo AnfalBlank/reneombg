@@ -138,9 +138,11 @@ export default function ChatPanel({ userId }: { userId?: string }) {
             {/* Chat Panel */}
             {open && (
                 <div style={{
-                    position: 'fixed', bottom: 16, right: 16, width: 380, height: 520,
+                    position: 'fixed', bottom: 0, right: 0,
+                    width: '100%', maxWidth: 400, height: '100%', maxHeight: 560,
                     background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-                    borderRadius: 16, boxShadow: 'var(--shadow-lg)', zIndex: 1001,
+                    borderRadius: typeof window !== 'undefined' && window.innerWidth <= 768 ? 0 : 16,
+                    boxShadow: 'var(--shadow-lg)', zIndex: 1001,
                     display: 'flex', flexDirection: 'column', overflow: 'hidden',
                     animation: 'fadeIn 200ms ease',
                 }}>
