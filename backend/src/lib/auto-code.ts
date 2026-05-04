@@ -1,8 +1,27 @@
 /**
- * Auto-generate sequential codes like ITM-0001, VND-0001, DPR-0001, GDG-0001
+ * Auto-generate sequential codes like BB-0001, PT-0001, VND-0001, etc.
  */
 import { db } from '../db/index'
-import { items, vendors, dapur, gudang } from '../db/schema/index'
+
+// ─── Category → SKU Prefix Mapping ───────────────────────────────────────────
+export const CATEGORY_PREFIX: Record<string, string> = {
+    'Bahan Baku':     'BB',
+    'Protein':        'PT',
+    'Bumbu & Rempah': 'BM',
+    'Sayuran':        'SY',
+    'Minuman':        'MN',
+    'Packaging':      'PK',
+    'Peralatan':      'PR',
+    'Lainnya':        'LN',
+}
+
+// All valid categories (for frontend dropdown)
+export const ITEM_CATEGORIES = Object.keys(CATEGORY_PREFIX)
+
+/** Get prefix for a category, fallback to 'LN' */
+export function getCategoryPrefix(category: string): string {
+    return CATEGORY_PREFIX[category] || 'LN'
+}
 
 async function getNextCode(prefix: string, table: 'items' | 'vendors' | 'dapur' | 'gudang'): Promise<string> {
     let allCodes: string[] = []
@@ -21,7 +40,7 @@ async function getNextCode(prefix: string, table: 'items' | 'vendors' | 'dapur' 
         allCodes = all.map(r => r.code)
     }
 
-    // Extract numbers from codes matching the prefix
+    // Extract numbers from codes matching the prefix (e.g. "BB-" → numbers after "BB-")
     const numbers = allCodes
         .filter(c => c.startsWith(prefix))
         .map(c => {
@@ -33,7 +52,17 @@ async function getNextCode(prefix: string, table: 'items' | 'vendors' | 'dapur' 
     return `${prefix}${String(maxNum + 1).padStart(4, '0')}`
 }
 
-export async function nextItemSku() { return getNextCode('ITM-', 'items') }
+/** Generate SKU based on category — e.g. "Protein" → "PT-0001" */
+export async function nextItemSkuByCategory(category: string): Promise<string> {
+    const prefix = getCategoryPrefix(category) + '-'
+    return getNextCode(prefix, 'items')
+}
+
+/** Legacy fallback — used when category unknown */
+export async function nextItemSku(): Promise<string> {
+    return getNextCode('LN-', 'items')
+}
+
 export async function nextVendorCode() { return getNextCode('VND-', 'vendors') }
 export async function nextDapurCode() { return getNextCode('DPR-', 'dapur') }
 export async function nextGudangCode() { return getNextCode('GDG-', 'gudang') }

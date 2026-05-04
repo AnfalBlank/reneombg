@@ -4,7 +4,7 @@ import { items } from '../db/schema/index'
 import { eq, like, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
-import { nextItemSku } from '../lib/auto-code'
+import { nextItemSkuByCategory } from '../lib/auto-code'
 import { z } from 'zod'
 
 const app = new Hono()
@@ -58,7 +58,7 @@ app.post('/', requireAuth, requireRole('super_admin', 'admin'), async (c) => {
 
     const id = randomUUID()
     const now = new Date()
-    const sku = parsed.data.sku?.trim() || await nextItemSku()
+    const sku = parsed.data.sku?.trim() || await nextItemSkuByCategory(parsed.data.category)
     await db.insert(items).values({ id, ...parsed.data, sku, isActive: true, createdAt: now, updatedAt: now })
 
     const created = await db.query.items.findFirst({ where: eq(items.id, id) })

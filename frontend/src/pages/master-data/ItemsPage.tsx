@@ -12,6 +12,19 @@ import { useToast } from '../../components/ui/Toast'
 
 const fmt = (n: number) => 'Rp ' + (n || 0).toLocaleString('id-ID')
 
+// Category → SKU prefix mapping (mirrors backend)
+const CATEGORY_PREFIX: Record<string, string> = {
+    'Bahan Baku':     'BB',
+    'Protein':        'PT',
+    'Bumbu & Rempah': 'BM',
+    'Sayuran':        'SY',
+    'Minuman':        'MN',
+    'Packaging':      'PK',
+    'Peralatan':      'PR',
+    'Lainnya':        'LN',
+}
+const CATEGORIES = Object.keys(CATEGORY_PREFIX)
+
 export default function ItemsPage() {
     const [search, setSearch] = useState('')
     const [category, setCategory] = useState('Semua Kategori')
@@ -28,7 +41,7 @@ export default function ItemsPage() {
     const deleteItem = useDeleteItem()
 
     const items = itemsRes?.data || []
-    const categories = ['Semua Kategori', ...Array.from(new Set(items.map(i => i.category)))]
+    const filterCategories = ['Semua Kategori', ...CATEGORIES]
 
     const filtered = items.filter(item =>
         (category === 'Semua Kategori' || item.category === category) &&
@@ -99,7 +112,7 @@ export default function ItemsPage() {
                             <input className={styles.searchInput} placeholder="Cari item atau SKU..." value={search} onChange={e => setSearch(e.target.value)} />
                         </div>
                         <select className={styles.filterSelect} value={category} onChange={e => setCategory(e.target.value)}>
-                            {categories.map(c => <option key={c}>{c}</option>)}
+                            {filterCategories.map(c => <option key={c}>{c}</option>)}
                         </select>
                     </div>
                 </div>
@@ -149,20 +162,56 @@ export default function ItemsPage() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Edit Item' : 'Tambah Item Baru'}>
                 <form onSubmit={handleSubmit}>
                     <div className={modalStyles.formGroup}>
+                        <label className={modalStyles.formLabel}>Kategori *</label>
+                        <select
+                            required
+                            className={modalStyles.formInput}
+                            value={formData.category}
+                            onChange={e => setFormData({ ...formData, category: e.target.value, sku: '' })}
+                        >
+                            <option value="">-- Pilih Kategori --</option>
+                            {CATEGORIES.map(c => (
+                                <option key={c} value={c}>{c} ({CATEGORY_PREFIX[c]}-XXXX)</option>
+                            ))}
+                        </select>
+                        {formData.category && !editingId && (
+                            <div style={{ marginTop: 6, fontSize: 11, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span>SKU akan di-generate:</span>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--color-primary)', background: 'var(--color-surface-2)', padding: '2px 8px', borderRadius: 4 }}>
+                                    {CATEGORY_PREFIX[formData.category]}-XXXX
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <div className={modalStyles.formGroup}>
                         <label className={modalStyles.formLabel}>SKU Code <span style={{ color: 'var(--color-text-dim)', fontWeight: 400 }}>(otomatis jika kosong)</span></label>
-                        <input className={modalStyles.formInput} value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} placeholder="Auto: ITM-0001" />
+                        <input
+                            className={modalStyles.formInput}
+                            value={formData.sku}
+                            onChange={e => setFormData({ ...formData, sku: e.target.value })}
+                            placeholder={formData.category ? `Auto: ${CATEGORY_PREFIX[formData.category] || 'LN'}-0001` : 'Pilih kategori dulu'}
+                        />
                     </div>
                     <div className={modalStyles.formGroup}>
-                        <label className={modalStyles.formLabel}>Nama Item</label>
-                        <input required className={modalStyles.formInput} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Cth: Beras Pandan Wangi" />
+                        <label className={modalStyles.formLabel}>Nama Item *</label>
+                        <input required className={modalStyles.formInput} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Cth: Daging Sapi Segar" />
                     </div>
                     <div className={modalStyles.formGroup}>
-                        <label className={modalStyles.formLabel}>Kategori</label>
-                        <input required className={modalStyles.formInput} value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} placeholder="Cth: Bahan Pokok" />
-                    </div>
-                    <div className={modalStyles.formGroup}>
-                        <label className={modalStyles.formLabel}>Unit of Measure (UOM)</label>
-                        <input required className={modalStyles.formInput} value={formData.uom} onChange={e => setFormData({ ...formData, uom: e.target.value })} placeholder="Cth: KG, Ltr, Pcs" />
+                        <label className={modalStyles.formLabel}>Unit of Measure (UOM) *</label>
+                        <select required className={modalStyles.formInput} value={formData.uom} onChange={e => setFormData({ ...formData, uom: e.target.value })}>
+                            <option value="">-- Pilih UOM --</option>
+                            <option value="kg">kg</option>
+                            <option value="gram">gram</option>
+                            <option value="liter">liter</option>
+                            <option value="ml">ml</option>
+                            <option value="pcs">pcs</option>
+                            <option value="pack">pack</option>
+                            <option value="box">box</option>
+                            <option value="karung">karung</option>
+                            <option value="botol">botol</option>
+                            <option value="lusin">lusin</option>
+                            <option value="porsi">porsi</option>
+                        </select>
                     </div>
                     <div className={modalStyles.formGroup}>
                         <label className={modalStyles.formLabel}>Min Stock</label>

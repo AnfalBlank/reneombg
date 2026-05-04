@@ -443,8 +443,8 @@ async function parseTemplate(lines: string[]) {
                 // Auto-create missing item
                 if (!itemMatch) {
                     const newId = randomUUID()
-                    const maxNum = allItems.filter(i => i.sku.startsWith('ITM-')).map(i => parseInt(i.sku.replace('ITM-', '')) || 0).reduce((a, b) => Math.max(a, b), 0)
-                    const newSku = `ITM-${String(maxNum + 1 + items.filter(i => i.isNew).length).padStart(4, '0')}`
+                    const { nextItemSkuByCategory } = await import('./auto-code')
+                    const newSku = await nextItemSkuByCategory('Bahan Baku')
                     const now = new Date()
                     await db.insert(itemsTable).values({ id: newId, sku: newSku, name: itemName, category: 'Bahan Baku', uom: uom || 'kg', minStock: 0, isActive: true, createdAt: now, updatedAt: now })
                     itemMatch = { id: newId, name: itemName, sku: newSku } as any
