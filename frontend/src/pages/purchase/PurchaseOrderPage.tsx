@@ -28,7 +28,8 @@ interface POItem {
     unitPrice: number
     activePrice?: number | null   // from price list
     priceSource?: 'price_list' | 'manual'
-    directDapurId?: string        // per-item override
+    directDapurId?: string        // per-item direct delivery dapur
+    isDirect?: boolean            // per-item direct delivery toggle
 }
 
 export default function PurchaseOrderPage() {
@@ -67,9 +68,8 @@ export default function PurchaseOrderPage() {
     const [form, setForm] = useState({ vendorId: '', gudangId: '', orderDate: '', expectedDate: '', notes: '' })
     const [poItems, setPoItems] = useState<POItem[]>([{ itemId: '', qtyOrdered: 1, unitPrice: 0 }])
 
-    // Direct delivery state
-    const [isDirectDelivery, setIsDirectDelivery] = useState(false)
-    const [directDapurId, setDirectDapurId] = useState('')
+    // Direct delivery — now per-item, no global toggle needed
+    // isDirectDelivery on PO = true if any item has isDirect=true
 
     // Price deviation confirmation dialog
     const [showDeviationConfirm, setShowDeviationConfirm] = useState(false)
@@ -85,9 +85,7 @@ export default function PurchaseOrderPage() {
     const openCreate = () => {
         setEditPO(null)
         setForm({ vendorId: '', gudangId: '', orderDate: '', expectedDate: '', notes: '' })
-        setPoItems([{ itemId: '', qtyOrdered: 1, unitPrice: 0 }])
-        setIsDirectDelivery(false)
-        setDirectDapurId('')
+        setPoItems([{ itemId: '', qtyOrdered: 1, unitPrice: 0, isDirect: false }])
         setShowCreate(true)
     }
 
@@ -99,9 +97,12 @@ export default function PurchaseOrderPage() {
             expectedDate: po.expectedDate ? new Date(po.expectedDate).toISOString().split('T')[0] : '',
             notes: po.notes || '',
         })
-        setPoItems((po.items || []).map((i: any) => ({ itemId: i.itemId, qtyOrdered: i.qtyOrdered, unitPrice: i.unitPrice, activePrice: i.activePrice ?? null, priceSource: i.priceSource || 'manual' })))
-        setIsDirectDelivery(po.isDirectDelivery || false)
-        setDirectDapurId(po.directDapurId || '')
+        setPoItems((po.items || []).map((i: any) => ({
+            itemId: i.itemId, qtyOrdered: i.qtyOrdered, unitPrice: i.unitPrice,
+            activePrice: i.activePrice ?? null, priceSource: i.priceSource || 'manual',
+            directDapurId: i.directDapurId || '',
+            isDirect: !!(i.directDapurId),
+        })))
         setShowCreate(true)
     }
 
@@ -151,10 +152,12 @@ export default function PurchaseOrderPage() {
         if (!form.vendorId) return toastError('Vendor wajib dipilih!')
         if (!form.gudangId) return toastError('Gudang tujuan wajib dipilih!')
         if (!form.orderDate) return toastError('Tanggal order wajib diisi!')
-        if (isDirectDelivery && !directDapurId) return toastError('Dapur tujuan wajib dipilih untuk pengiriman langsung!')
         const validItems = poItems.filter(i => i.itemId)
         if (validItems.length === 0) return toastError('Minimal 1 item harus dipilih!')
         if (validItems.some(i => i.qtyOrdered <= 0 || i.unitPrice <= 0)) return toastError('Qty dan harga harus > 0!')
+        // Validate: direct items must have dapur selected
+        const directWithoutDapur = validItems.filter(i => i.isDirect && !i.directDapurId)
+        if (directWithoutDapur.length > 0) return toastError('Item yang direct delivery harus pilih dapur tujuan!')
 
         // Check if any item has deviation > 10%
         if (!confirmed) {
@@ -168,17 +171,19 @@ export default function PurchaseOrderPage() {
             }
         }
 
+        const hasDirectItem = validItems.some(i => i.isDirect && i.directDapurId)
+
         try {
             const payload = {
                 ...form,
-                isDirectDelivery,
-                directDapurId: isDirectDelivery ? directDapurId : undefined,
+                isDirectDelivery: hasDirectItem,
+                directDapurId: undefined, // no global dapur anymore
                 items: validItems.map(i => ({
                     itemId: i.itemId,
                     qtyOrdered: i.qtyOrdered,
                     unitPrice: i.unitPrice,
                     priceSource: i.priceSource || 'manual',
-                    directDapurId: i.directDapurId || undefined,
+                    directDapurId: i.isDirect ? (i.directDapurId || undefined) : undefined,
                 })),
                 confirmPriceDeviation: confirmed || undefined,
             }
@@ -194,7 +199,7 @@ export default function PurchaseOrderPage() {
         } catch (e: any) { toastError(e?.message || 'Gagal menyimpan PO.') }
     }
 
-    const addItem = () => setPoItems(prev => [...prev, { itemId: '', qtyOrdered: 1, unitPrice: 0, activePrice: undefined, priceSource: 'manual' }])
+    const addItem = () => setPoItems(prev => [...prev, { itemId: '', qtyOrdered: 1, unitPrice: 0, activePrice: undefined, priceSource: 'manual', isDirect: false }])
     const removeItem = (idx: number) => setPoItems(prev => prev.filter((_, i) => i !== idx))
     const updateItem = (idx: number, field: keyof POItem, value: any) => {
         setPoItems(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item))
@@ -356,28 +361,7 @@ export default function PurchaseOrderPage() {
                         <textarea style={{ ...inputStyle, height: 56, resize: 'vertical' }} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Opsional..." />
                     </div>
 
-                    {/* Direct Delivery Section */}
-                    <div style={{ background: 'var(--color-surface-2)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--color-border)' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-                            <input
-                                type="checkbox"
-                                checked={isDirectDelivery}
-                                onChange={e => { setIsDirectDelivery(e.target.checked); if (!e.target.checked) setDirectDapurId('') }}
-                                style={{ width: 15, height: 15, cursor: 'pointer' }}
-                            />
-                            <Truck size={14} style={{ color: '#6366f1' }} />
-                            Pengiriman Langsung ke Dapur
-                        </label>
-                        {isDirectDelivery && (
-                            <div style={{ marginTop: 10 }}>
-                                <label style={labelStyle}>Dapur Tujuan *</label>
-                                <select style={inputStyle} value={directDapurId} onChange={e => setDirectDapurId(e.target.value)}>
-                                    <option value="">-- Pilih Dapur --</option>
-                                    {dapurs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                </select>
-                            </div>
-                        )}
-                    </div>
+                    {/* Direct Delivery — removed global toggle, now per-item below */}
 
                     <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -422,20 +406,29 @@ export default function PurchaseOrderPage() {
                                             </span>
                                         )}
                                     </div>
-                                    {/* Per-item dapur override when direct delivery is enabled */}
-                                    {isDirectDelivery && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Override dapur item ini:</span>
+                                    {/* Per-item direct delivery checkbox + dapur */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 11, color: '#6366f1', fontWeight: 600, userSelect: 'none' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!item.isDirect}
+                                                onChange={e => updateItem(idx, 'isDirect', e.target.checked)}
+                                                style={{ width: 13, height: 13, cursor: 'pointer', accentColor: '#6366f1' }}
+                                            />
+                                            <Truck size={11} />
+                                            Direct ke Dapur
+                                        </label>
+                                        {item.isDirect && (
                                             <select
-                                                style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer' }}
+                                                style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, border: '1px solid #6366f1', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', minWidth: 140 }}
                                                 value={item.directDapurId || ''}
-                                                onChange={e => updateItem(idx, 'directDapurId', e.target.value || undefined)}
+                                                onChange={e => updateItem(idx, 'directDapurId', e.target.value)}
                                             >
-                                                <option value="">-- Gunakan default ({dapurs.find((d: any) => d.id === directDapurId)?.name || 'belum dipilih'}) --</option>
+                                                <option value="">-- Pilih Dapur --</option>
                                                 {dapurs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                                             </select>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             )
                         })}
