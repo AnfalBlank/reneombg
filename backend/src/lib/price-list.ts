@@ -51,8 +51,12 @@ export function resolveActivePricePure<T extends PriceEntryLike>(
     entries: T[],
     queryDate: Date,
 ): T | null {
+    // Normalize to end-of-day so entries set for "today" are always active
+    const normalized = new Date(queryDate)
+    normalized.setHours(23, 59, 59, 999)
+
     const validEntries = entries.filter(
-        (e) => e.effectiveDate.getTime() <= queryDate.getTime(),
+        (e) => e.effectiveDate.getTime() <= normalized.getTime(),
     )
 
     if (validEntries.length === 0) {
@@ -80,13 +84,17 @@ export async function resolveActivePrice(
     itemId: string,
     queryDate: Date,
 ): Promise<PriceListEntry | null> {
+    // Normalize to end-of-day so entries set for "today" are always active
+    const normalized = new Date(queryDate)
+    normalized.setHours(23, 59, 59, 999)
+
     const result = await db
         .select()
         .from(priceListEntries)
         .where(
             and(
                 eq(priceListEntries.itemId, itemId),
-                lte(priceListEntries.effectiveDate, queryDate),
+                lte(priceListEntries.effectiveDate, normalized),
             ),
         )
         .orderBy(desc(priceListEntries.effectiveDate))

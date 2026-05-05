@@ -102,7 +102,12 @@ function useDeletePriceListEntry() {
 }
 
 function isUpcoming(effectiveDate: string): boolean {
-    return new Date(effectiveDate) > new Date()
+    // Normalize both to start-of-day (local) to avoid timezone offset issues
+    const effective = new Date(effectiveDate)
+    effective.setHours(0, 0, 0, 0)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return effective > today
 }
 
 // ─── Price History Row ────────────────────────────────────────────────────────
