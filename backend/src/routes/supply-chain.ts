@@ -617,6 +617,21 @@ app.patch('/delivery-orders/:id', requireAuth, requireRole('super_admin', 'admin
 app.post('/delivery-orders', requireAuth, requireRole('super_admin', 'admin'), async (c) => {
     const body = await c.req.json()
     const user = (c as any).get('user') as { id: string }
+
+    // ── Prevent duplicate DO for the same IR ──────────────────────
+    if (body.irId) {
+        const existingDO = await db.query.deliveryOrders.findFirst({
+            where: eq(deliveryOrders.irId, body.irId),
+        })
+        if (existingDO) {
+            return c.json({
+                error: `IR ini sudah memiliki Delivery Order (${existingDO.doNumber}). Tidak bisa membuat DO duplikat untuk IR yang sama.`,
+                existingDoNumber: existingDO.doNumber,
+                existingDoId: existingDO.id,
+            }, 400)
+        }
+    }
+
     const doId = randomUUID()
     const now = new Date()
 

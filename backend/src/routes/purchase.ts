@@ -36,13 +36,14 @@ const createPoSchema = z.object({
     expectedDate: z.string().optional(),
     notes: z.string().optional(),
     isDirectDelivery: z.boolean().optional().default(false),
-    directDapurId: z.string().optional(),
+    directDapurId: z.string().optional().nullable(),
+    confirmPriceDeviation: z.boolean().optional(),
     items: z.array(z.object({
         itemId: z.string(),
         qtyOrdered: z.number().positive(),
         unitPrice: z.number().positive(),
-        directDapurId: z.string().optional(),
-        priceListEntryId: z.string().optional(),
+        directDapurId: z.string().optional().nullable(),
+        priceListEntryId: z.string().optional().nullable(),
         priceSource: z.enum(['price_list', 'manual']).optional().default('manual'),
     })),
 })
@@ -52,10 +53,8 @@ app.post('/orders', requireAuth, requireRole('super_admin', 'admin'), async (c) 
     const parsed = createPoSchema.safeParse(body)
     if (!parsed.success) return c.json({ error: parsed.error.format() }, 400)
 
-    // Validate: if isDirectDelivery=true, directDapurId must be provided
-    if (parsed.data.isDirectDelivery && !parsed.data.directDapurId) {
-        return c.json({ error: 'directDapurId is required when isDirectDelivery is true' }, 400)
-    }
+    // isDirectDelivery=true is valid even without a global directDapurId
+    // (per-item directDapurId is used instead)
 
     const user = (c as any).get('user') as { id: string; role: string }
     const poId = randomUUID()

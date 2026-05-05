@@ -27,7 +27,9 @@ export default function DeliveryOrderPage() {
     const { data: gRes } = useGudang()
     const { data: iRes } = useItems()
     const dos = doRes?.data || []
-    const irs = (irRes?.data || []).filter((r: any) => r.status === 'approved')
+    // IRs that already have a DO (any status) — prevent duplicate
+    const irIdsWithDO = new Set(dos.filter((d: any) => d.irId).map((d: any) => d.irId))
+    const irs = (irRes?.data || []).filter((r: any) => r.status === 'approved' && !irIdsWithDO.has(r.id))
     const dapurs = dRes?.data || []
     const gudangs = gRes?.data || []
     const items = iRes?.data || []
@@ -67,23 +69,29 @@ export default function DeliveryOrderPage() {
 
     // When IR is selected, auto-fill dapur/gudang and items  
     useEffect(() => {
-        if (form.irId) {
-            const ir = irs.find((r: any) => r.id === form.irId)
-            if (ir) {
-                setForm(f => ({ ...f, dapurId: ir.dapurId, gudangId: ir.gudangId }))
-                const newItems = (ir.items || []).map((i: any) => ({ itemId: i.itemId, qty: i.qtyRequested - i.qtyFulfilled, sellPrice: 0 }))
-                setDoItems(newItems)
-                // Auto-fetch sell prices for all IR items
-                newItems.forEach(async (it: { itemId: string; qty: number; sellPrice: number }, idx: number) => {
-                    if (it.itemId) {
-                        const price = await fetchSellPrice(it.itemId)
-                        if (price > 0) {
-                            setDoItems(prev => prev.map((p, i) => i === idx ? { ...p, sellPrice: price } : p))
-                        }
-                    }
-                })
+        if (!form.irId) return
+        const ir = irs.find((r: any) => r.id === form.irId)
+        if (!ir) return
+
+        setForm(f => ({ ...f, dapurId: ir.dapurId, gudangId: ir.gudangId }))
+        const newItems = (ir.items || []).map((i: any) => ({
+            itemId: i.itemId,
+            qty: Math.max(0, i.qtyRequested - (i.qtyFulfilled || 0)),
+            sellPrice: 0,
+        }))
+        setDoItems(newItems)
+
+        // Fetch sell prices sequentially to avoid stale closure issues
+        ;(async () => {
+            const updated = [...newItems]
+            for (let idx = 0; idx < updated.length; idx++) {
+                if (updated[idx].itemId) {
+                    const price = await fetchSellPrice(updated[idx].itemId)
+                    if (price > 0) updated[idx] = { ...updated[idx], sellPrice: price }
+                }
             }
-        }
+            setDoItems(updated)
+        })()
     }, [form.irId])
 
     const filteredDos = dos.filter((d: any) => {
