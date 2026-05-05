@@ -119,7 +119,8 @@ export default function Dashboard() {
         { label: 'Lihat Jurnal', icon: Receipt, path: '/accounting/journal', color: '#a680d0', show: access.accounting },
         { label: 'Finance', icon: TrendingUp, path: '/finance/dashboard', color: '#f59e0b', show: access.finance },
         { label: 'Laporan', icon: BarChart3, path: '/reports', color: '#38bdf8', show: access.reports },
-    ]    const quickActions = allQuickActions.filter(a => a.show)
+    ]
+    const quickActions = allQuickActions.filter(a => a.show)
 
     return (
         <div className={styles.page}>
