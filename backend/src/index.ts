@@ -105,11 +105,13 @@ if (existsSync(frontendDist)) {
         return new Response(content, { headers: { 'Content-Type': types[ext || ''] || 'application/octet-stream', 'Cache-Control': 'public, max-age=31536000' } })
     })
 
-    // Serve static files in root (logo.png, etc)
-    app.get('/logo.png', (c) => {
-        const filePath = join(frontendDist, 'logo.png')
+    // Serve static files in root (logo.png, cs.png, favicon, etc)
+    app.get('/:file{.+\\.(png|jpg|jpeg|svg|ico|webp|gif|woff2|woff|ttf)}', (c) => {
+        const filePath = join(frontendDist, c.req.param('file'))
         if (!existsSync(filePath)) return c.notFound()
-        return new Response(readFileSync(filePath), { headers: { 'Content-Type': 'image/png' } })
+        const ext = filePath.split('.').pop() || ''
+        const types: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', svg: 'image/svg+xml', ico: 'image/x-icon', webp: 'image/webp', gif: 'image/gif', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf' }
+        return new Response(readFileSync(filePath), { headers: { 'Content-Type': types[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=86400' } })
     })
 
     // SPA fallback — serve index.html for all non-API routes
