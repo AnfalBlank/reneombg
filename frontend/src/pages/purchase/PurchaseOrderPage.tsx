@@ -207,7 +207,11 @@ export default function PurchaseOrderPage() {
 
     // PDF generation for completed PO
     const generatePOPdf = (po: any) => {
-        const itemsHtml = (po.items || []).map((i: any, idx: number) => `
+        const itemsHtml = (po.items || []).map((i: any, idx: number) => {
+            const dapurName = i.directDapurId
+                ? (dapurs.find((d: any) => d.id === i.directDapurId)?.name || i.directDapurId)
+                : '-'
+            return `
             <tr>
                 <td>${idx + 1}</td>
                 <td>${i.item?.name || '-'}</td>
@@ -216,8 +220,13 @@ export default function PurchaseOrderPage() {
                 <td class="right">${i.qtyReceived}</td>
                 <td class="right">${pdfFmt(i.unitPrice)}</td>
                 <td class="right bold">${pdfFmt(i.totalPrice)}</td>
+                ${po.isDirectDelivery ? `<td>${i.directDapurId ? dapurName : '(gudang)'}</td>` : ''}
             </tr>
-        `).join('')
+        `}).join('')
+
+        const directInfo = po.isDirectDelivery
+            ? `<div><strong>Tipe:</strong> <span style="color:#6366f1;font-weight:700">DIRECT DELIVERY ke Dapur</span></div>`
+            : ''
 
         downloadPDF(`
             <div class="header">
@@ -232,16 +241,17 @@ export default function PurchaseOrderPage() {
             </div>
             <div class="info-grid">
                 <div><strong>Vendor:</strong> ${po.vendor?.name || '-'}</div>
-                <div><strong>Gudang Tujuan:</strong> ${po.gudang?.name || po.gudangId}</div>
+                <div><strong>Gudang Tujuan:</strong> ${po.gudang?.name || '-'}</div>
                 <div><strong>Tanggal Order:</strong> ${po.orderDate ? new Date(po.orderDate).toLocaleDateString('id-ID') : '-'}</div>
                 <div><strong>Jatuh Tempo:</strong> ${po.expectedDate ? new Date(po.expectedDate).toLocaleDateString('id-ID') : '-'}</div>
+                ${directInfo}
                 ${po.notes ? `<div style="grid-column:1/-1"><strong>Catatan:</strong> ${po.notes}</div>` : ''}
             </div>
             <table>
-                <thead><tr><th>No</th><th>Item</th><th>SKU</th><th class="right">Dipesan</th><th class="right">Diterima</th><th class="right">Harga</th><th class="right">Total</th></tr></thead>
+                <thead><tr><th>No</th><th>Item</th><th>SKU</th><th class="right">Dipesan</th><th class="right">Diterima</th><th class="right">Harga</th><th class="right">Total</th>${po.isDirectDelivery ? '<th>Tujuan Dapur</th>' : ''}</tr></thead>
                 <tbody>
                     ${itemsHtml}
-                    <tr class="total-row"><td colspan="6">GRAND TOTAL</td><td class="right" style="font-size:14px">${pdfFmt(po.totalAmount)}</td></tr>
+                    <tr class="total-row"><td colspan="${po.isDirectDelivery ? 7 : 6}">GRAND TOTAL</td><td class="right" style="font-size:14px">${pdfFmt(po.totalAmount)}</td></tr>
                 </tbody>
             </table>
             <div class="signatures">

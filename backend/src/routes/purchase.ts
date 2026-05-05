@@ -14,7 +14,7 @@ const app = new Hono()
 // ─── Purchase Orders ──────────────────────────────────────────────────────────
 app.get('/orders', requireAuth, async (c) => {
     const all = await db.query.purchaseOrders.findMany({
-        with: { vendor: true, items: { with: { item: true } } },
+        with: { vendor: true, gudang: true, items: { with: { item: true } } },
         orderBy: (po, { desc }) => [desc(po.createdAt)],
     })
     return c.json({ data: all, total: all.length })
@@ -23,7 +23,7 @@ app.get('/orders', requireAuth, async (c) => {
 app.get('/orders/:id', requireAuth, async (c) => {
     const po = await db.query.purchaseOrders.findFirst({
         where: eq(purchaseOrders.id, c.req.param('id') as string),
-        with: { vendor: true, items: { with: { item: true } } },
+        with: { vendor: true, gudang: true, items: { with: { item: true } } },
     })
     if (!po) return c.json({ error: 'Purchase Order not found' }, 404)
     return c.json({ data: po })
@@ -169,7 +169,7 @@ app.patch('/orders/:id', requireAuth, requireRole('super_admin', 'admin', 'finan
 
     const updated = await db.query.purchaseOrders.findFirst({
         where: eq(purchaseOrders.id, poId),
-        with: { vendor: true, items: { with: { item: true } } },
+        with: { vendor: true, gudang: true, items: { with: { item: true } } },
     })
     return c.json({ data: updated })
 })
