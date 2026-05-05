@@ -12,7 +12,7 @@
 
 import { db } from '../db/index'
 import { priceListEntries, poItems } from '../db/schema/index'
-import { eq, and, lte, desc } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { PriceListEntry } from '../db/schema/price-list'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,6 +47,17 @@ export interface PriceListEntryInput {
  * Property 1: Active price resolution returns latest valid entry
  * Validates: Requirements 2.3, 2.4, 9.2, 9.3
  */
+// Helper: normalize effectiveDate from DB (could be Date, ms number, or seconds number)
+function toMs(val: any): number {
+    if (val instanceof Date) return val.getTime()
+    const n = Number(val)
+    if (isNaN(n)) return new Date(val).getTime()
+    // If number is < 1e10, it's likely Unix seconds (not ms)
+    // Unix seconds for year 2000+ are ~9.4e8 to ~2e9
+    // Unix ms for year 2000+ are ~9.4e11 to ~2e12
+    return n < 1e10 ? n * 1000 : n
+}
+
 export function resolveActivePricePure<T extends PriceEntryLike>(
     entries: T[],
     queryDate: Date,
@@ -56,27 +67,15 @@ export function resolveActivePricePure<T extends PriceEntryLike>(
     normalized.setHours(23, 59, 59, 999)
     const normalizedMs = normalized.getTime()
 
-    const validEntries = entries.filter((e) => {
-        // effectiveDate may come back as Date, number (ms), or string from Turso
-        const ed = e.effectiveDate instanceof Date
-            ? e.effectiveDate
-            : new Date(e.effectiveDate as any)
-        return ed.getTime() <= normalizedMs
-    })
+    const validEntries = entries.filter((e) => toMs(e.effectiveDate) <= normalizedMs)
 
     if (validEntries.length === 0) {
         return null
     }
 
-    return validEntries.reduce((best, current) => {
-        const bestMs = (best.effectiveDate instanceof Date
-            ? best.effectiveDate
-            : new Date(best.effectiveDate as any)).getTime()
-        const currMs = (current.effectiveDate instanceof Date
-            ? current.effectiveDate
-            : new Date(current.effectiveDate as any)).getTime()
-        return currMs > bestMs ? current : best
-    })
+    return validEntries.reduce((best, current) =>
+        toMs(current.effectiveDate) > toMs(best.effectiveDate) ? current : best
+    )
 }
 
 // ─── resolveActivePrice ───────────────────────────────────────────────────────
@@ -93,8 +92,6 @@ export async function resolveActivePrice(
     itemId: string,
     queryDate: Date,
 ): Promise<PriceListEntry | null> {
-    // Fetch all entries for this item and filter in-memory
-    // (avoids Drizzle lte() Date→integer conversion issues with Turso)
     const entries = await db
         .select()
         .from(priceListEntries)
@@ -102,25 +99,16 @@ export async function resolveActivePrice(
 
     if (entries.length === 0) return null
 
-    // Normalize to end-of-day
     const normalized = new Date(queryDate)
     normalized.setHours(23, 59, 59, 999)
     const normalizedMs = normalized.getTime()
 
-    const valid = entries.filter(e => {
-        const ed = e.effectiveDate instanceof Date
-            ? e.effectiveDate
-            : new Date(e.effectiveDate as any)
-        return ed.getTime() <= normalizedMs
-    })
-
+    const valid = entries.filter(e => toMs(e.effectiveDate) <= normalizedMs)
     if (valid.length === 0) return null
 
-    return valid.reduce((best, cur) => {
-        const bestMs = (best.effectiveDate instanceof Date ? best.effectiveDate : new Date(best.effectiveDate as any)).getTime()
-        const curMs = (cur.effectiveDate instanceof Date ? cur.effectiveDate : new Date(cur.effectiveDate as any)).getTime()
-        return curMs > bestMs ? cur : best
-    })
+    return valid.reduce((best, cur) =>
+        toMs(cur.effectiveDate) > toMs(best.effectiveDate) ? cur : best
+    )
 }
 
 // ─── validatePriceListEntry ───────────────────────────────────────────────────
