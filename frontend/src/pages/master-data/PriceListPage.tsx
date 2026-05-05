@@ -44,6 +44,15 @@ interface ImportResult {
     success: number
     failed: number
     errors?: Array<{ row: number; sku: string; reason: string }>
+    changedItems?: Array<{
+        itemName: string
+        sku: string
+        oldPurchasePrice: number | null
+        newPurchasePrice: number
+        oldSellPrice: number | null
+        newSellPrice: number
+        effectiveDate: string
+    }>
 }
 
 function usePriceList(search: string, category: string, dateFrom: string, dateTo: string) {
@@ -739,6 +748,46 @@ export default function PriceListPage() {
                                             : {err.reason}
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {importResult.changedItems && importResult.changedItems.length > 0 && (
+                                <div style={{ marginTop: 12 }}>
+                                    <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: 'var(--color-text)' }}>Perubahan Harga:</p>
+                                    <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 8 }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                                            <thead>
+                                                <tr style={{ background: 'var(--color-surface-2)' }}>
+                                                    <th style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--color-text-muted)', fontWeight: 600 }}>Item</th>
+                                                    <th style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--color-text-muted)', fontWeight: 600 }}>Harga Beli Lama</th>
+                                                    <th style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--color-text-muted)', fontWeight: 600 }}>Harga Beli Baru</th>
+                                                    <th style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--color-text-muted)', fontWeight: 600 }}>Harga Jual Lama</th>
+                                                    <th style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--color-text-muted)', fontWeight: 600 }}>Harga Jual Baru</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {importResult.changedItems.map((ci, i) => (
+                                                    <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                        <td style={{ padding: '5px 10px', fontWeight: 500 }}>
+                                                            {ci.itemName} <span style={{ color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>({ci.sku})</span>
+                                                        </td>
+                                                        <td style={{ padding: '5px 10px', textAlign: 'right', color: 'var(--color-text-muted)' }}>
+                                                            {ci.oldPurchasePrice != null ? fmtRp(ci.oldPurchasePrice) : '-'}
+                                                        </td>
+                                                        <td style={{ padding: '5px 10px', textAlign: 'right', fontWeight: 700, color: '#22c55e' }}>
+                                                            {fmtRp(ci.newPurchasePrice)}
+                                                        </td>
+                                                        <td style={{ padding: '5px 10px', textAlign: 'right', color: 'var(--color-text-muted)' }}>
+                                                            {ci.oldSellPrice != null ? fmtRp(ci.oldSellPrice) : '-'}
+                                                        </td>
+                                                        <td style={{ padding: '5px 10px', textAlign: 'right', fontWeight: 700, color: '#22c55e' }}>
+                                                            {fmtRp(ci.newSellPrice)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
                         </div>

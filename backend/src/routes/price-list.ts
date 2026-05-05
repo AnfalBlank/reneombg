@@ -18,7 +18,7 @@
 
 import { Hono } from 'hono'
 import { db } from '../db/index'
-import { priceListEntries, items } from '../db/schema/index'
+import { priceListEntries, items, inventoryStock } from '../db/schema/index'
 import { eq, and, lte, gte, like, or, asc, desc } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
@@ -129,6 +129,18 @@ app.get('/template', requireAuth, requireRole('super_admin', 'admin', 'finance')
         orderBy: (i, { asc }) => [asc(i.category), asc(i.name)],
     })
 
+    // Fetch gudang stocks to auto-fill avg cost — Requirement 3.1, 3.2
+    const gudangStocks = await db.query.inventoryStock.findMany({
+        where: eq(inventoryStock.locationType, 'gudang'),
+    })
+    // Build map: itemId → avgCost (first gudang with avgCost > 0)
+    const avgCostMap = new Map<string, number>()
+    for (const s of gudangStocks) {
+        if (s.avgCost > 0 && !avgCostMap.has(s.itemId)) {
+            avgCostMap.set(s.itemId, s.avgCost)
+        }
+    }
+
     // Build worksheet data
     const headers = ['SKU', 'Nama Item', 'Kategori', 'Harga Pembelian', 'Harga Jual', 'Tanggal Berlaku']
 
@@ -136,7 +148,7 @@ app.get('/template', requireAuth, requireRole('super_admin', 'admin', 'finance')
         item.sku,
         item.name,
         item.category,
-        '',  // Harga Pembelian — to be filled
+        avgCostMap.get(item.id) || '',  // Harga Pembelian — auto-filled from avg cost
         '',  // Harga Jual — to be filled
         '',  // Tanggal Berlaku — to be filled (format: YYYY-MM-DD)
     ])
@@ -436,6 +448,16 @@ app.post('/import', requireAuth, requireRole('super_admin', 'admin', 'finance'),
     let failedCount = 0
     const errors: Array<{ row: number; sku: string; error: string }> = []
 
+    const changedItems: Array<{
+        itemName: string
+        sku: string
+        oldPurchasePrice: number | null
+        newPurchasePrice: number
+        oldSellPrice: number | null
+        newSellPrice: number
+        effectiveDate: string
+    }> = []
+
     for (let i = 0; i < dataRows.length; i++) {
         const rowNum = i + 2 // 1-indexed, +1 for header
         const row = dataRows[i]
@@ -511,6 +533,13 @@ app.post('/import', requireAuth, requireRole('super_admin', 'admin', 'finance'),
 
         // Insert entry — Requirement 3.5
         try {
+            // Get current active price for comparison before inserting
+            const existingEntries = await db.query.priceListEntries.findMany({
+                where: eq(priceListEntries.itemId, item.id),
+                orderBy: (e, { desc }) => [desc(e.effectiveDate)],
+            })
+            const currentActive = existingEntries.find(e => new Date(e.effectiveDate) <= now)
+
             await db.insert(priceListEntries).values({
                 id: randomUUID(),
                 itemId: item.id,
@@ -523,6 +552,17 @@ app.post('/import', requireAuth, requireRole('super_admin', 'admin', 'finance'),
                 updatedAt: now,
             })
             successCount++
+
+            // Record changed item for comparison display
+            changedItems.push({
+                itemName: item.name,
+                sku: item.sku,
+                oldPurchasePrice: currentActive?.purchasePrice ?? null,
+                newPurchasePrice: purchasePrice,
+                oldSellPrice: currentActive?.sellPrice ?? null,
+                newSellPrice: sellPrice,
+                effectiveDate: effectiveDate.toISOString().split('T')[0],
+            })
         } catch (err: any) {
             failedCount++
             errors.push({ row: rowNum, sku, error: `Gagal menyimpan: ${err?.message ?? 'Unknown error'}` })
@@ -549,6 +589,7 @@ app.post('/import', requireAuth, requireRole('super_admin', 'admin', 'finance'),
         success: successCount,
         failed: failedCount,
         errors,
+        changedItems,
     }, successCount > 0 ? 200 : 400)
 })
 

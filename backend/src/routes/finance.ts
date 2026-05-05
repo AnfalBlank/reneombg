@@ -511,7 +511,9 @@ app.get('/dashboard-summary', requireAuth, async (c) => {
     if (isKitchen) stocks = stocks.filter(s => s.locationType === 'dapur' && s.dapurId === user.dapurId)
     const totalStockValue = stocks.reduce((a, s) => a + s.totalValue, 0)
     const totalSkuActive = new Set(stocks.map(s => s.itemId)).size
-    const lowStockItems = stocks.filter(s => s.item && s.qty < (s.item.minStock ?? 0))
+    // lowStockCount only counts gudang stock (not dapur) for executive dashboard accuracy
+    const gudangStocks = stocks.filter(s => s.locationType === 'gudang')
+    const lowStockItems = (isKitchen ? stocks : gudangStocks).filter(s => s.item && s.qty < (s.item.minStock ?? 0))
 
     // Journals — kitchen_admin only sees their dapur journals
     let journals = currentPeriod?.id

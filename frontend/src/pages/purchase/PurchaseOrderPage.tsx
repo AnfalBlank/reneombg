@@ -422,6 +422,20 @@ export default function PurchaseOrderPage() {
                                             </span>
                                         )}
                                     </div>
+                                    {/* Per-item dapur override when direct delivery is enabled */}
+                                    {isDirectDelivery && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Override dapur item ini:</span>
+                                            <select
+                                                style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer' }}
+                                                value={item.directDapurId || ''}
+                                                onChange={e => updateItem(idx, 'directDapurId', e.target.value || undefined)}
+                                            >
+                                                <option value="">-- Gunakan default ({dapurs.find((d: any) => d.id === directDapurId)?.name || 'belum dipilih'}) --</option>
+                                                {dapurs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
                             )
                         })}

@@ -4,7 +4,6 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
-import CurrencyInput from '../../components/ui/CurrencyInput'
 import PeriodFilter from '../../components/ui/PeriodFilter'
 import styles from '../shared.module.css'
 import { useToast } from '../../components/ui/Toast'
@@ -47,6 +46,19 @@ export default function DeliveryOrderPage() {
     const [form, setForm] = useState({ irId: '', dapurId: '', gudangId: '', notes: '' })
     const [doItems, setDoItems] = useState<{ itemId: string; qty: number; sellPrice: number }[]>([{ itemId: '', qty: 1, sellPrice: 0 }])
 
+    // Auto-fetch sell price from price list for a given item
+    const fetchSellPrice = async (itemId: string): Promise<number> => {
+        try {
+            const today = new Date().toISOString().split('T')[0]
+            const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+            const res = await fetch(`${BASE_URL}/price-list/active?itemId=${itemId}&date=${today}`, { credentials: 'include' })
+            const data = await res.json()
+            return data.data?.sellPrice ?? 0
+        } catch {
+            return 0
+        }
+    }
+
     useEffect(() => {
         if (printingDo) {
             setTimeout(() => { window.print(); setPrintingDo(null) }, 500)
@@ -59,7 +71,17 @@ export default function DeliveryOrderPage() {
             const ir = irs.find((r: any) => r.id === form.irId)
             if (ir) {
                 setForm(f => ({ ...f, dapurId: ir.dapurId, gudangId: ir.gudangId }))
-                setDoItems((ir.items || []).map((i: any) => ({ itemId: i.itemId, qty: i.qtyRequested - i.qtyFulfilled, sellPrice: 0 })))
+                const newItems = (ir.items || []).map((i: any) => ({ itemId: i.itemId, qty: i.qtyRequested - i.qtyFulfilled, sellPrice: 0 }))
+                setDoItems(newItems)
+                // Auto-fetch sell prices for all IR items
+                newItems.forEach(async (it, idx) => {
+                    if (it.itemId) {
+                        const price = await fetchSellPrice(it.itemId)
+                        if (price > 0) {
+                            setDoItems(prev => prev.map((p, i) => i === idx ? { ...p, sellPrice: price } : p))
+                        }
+                    }
+                })
             }
         }
     }, [form.irId])
@@ -214,14 +236,25 @@ export default function DeliveryOrderPage() {
                                 <button onClick={() => setDoItems(p => [...p, { itemId: '', qty: 1, sellPrice: 0 }])} style={{ fontSize: 12, color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}>+ Tambah Baris</button>
                             </div>
                             {doItems.map((item, idx) => (
-                                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, marginBottom: 8 }}>
-                                    <select style={inputStyle} value={item.itemId} onChange={e => setDoItems(p => p.map((it, i) => i === idx ? { ...it, itemId: e.target.value } : it))}>
-                                        <option value="">-- Pilih Item --</option>
-                                        {items.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}
-                                    </select>
-                                    <input style={inputStyle} type="number" placeholder="Qty" min={1} value={item.qty} onChange={e => setDoItems(p => p.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
-                                    <CurrencyInput value={item.sellPrice} onChange={v => setDoItems(p => p.map((it, i) => i === idx ? { ...it, sellPrice: v } : it))} placeholder="Harga Jual" />
-                                    <button onClick={() => setDoItems(p => p.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)' }}><X size={14} /></button>
+                                <div key={idx} style={{ marginBottom: 8 }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
+                                        <select style={inputStyle} value={item.itemId} onChange={async e => {
+                                            const newItemId = e.target.value
+                                            setDoItems(p => p.map((it, i) => i === idx ? { ...it, itemId: newItemId, sellPrice: 0 } : it))
+                                            if (newItemId) {
+                                                const price = await fetchSellPrice(newItemId)
+                                                setDoItems(p => p.map((it, i) => i === idx ? { ...it, sellPrice: price } : it))
+                                            }
+                                        }}>
+                                            <option value="">-- Pilih Item --</option>
+                                            {items.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}
+                                        </select>
+                                        <input style={inputStyle} type="number" placeholder="Qty" min={1} value={item.qty} onChange={e => setDoItems(p => p.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
+                                        <div style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', fontSize: 13, color: 'var(--color-text-muted)', minWidth: 120, display: 'flex', alignItems: 'center' }}>
+                                            {item.sellPrice > 0 ? fmtRp(item.sellPrice) : <span style={{ color: 'var(--color-text-dim)', fontSize: 12 }}>Belum ada harga</span>}
+                                        </div>
+                                        <button onClick={() => setDoItems(p => p.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)' }}><X size={14} /></button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
