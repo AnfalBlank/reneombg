@@ -109,7 +109,10 @@ export default function PurchaseOrderPage() {
     // Fetch active price from price list for a given item and date
     const fetchActivePrice = async (itemId: string, orderDate: string): Promise<number | null> => {
         try {
-            const date = orderDate || new Date().toISOString().split('T')[0]
+            // Use local date if orderDate not provided
+            const now = new Date()
+            const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+            const date = orderDate || localToday
             const BASE_URL = import.meta.env.VITE_API_URL || '/api'
             const res = await fetch(`${BASE_URL}/price-list/active?itemId=${itemId}&date=${date}`, { credentials: 'include' })
             const data = await res.json()

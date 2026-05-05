@@ -93,7 +93,8 @@ export default function InternalRequestPage() {
     const fetchItemPrice = useCallback(async (itemId: string) => {
         if (!itemId || itemId in itemPrices) return
         try {
-            const today = new Date().toISOString().split('T')[0]
+            const now = new Date()
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
             const res = await api.get<any>(`/price-list/active?itemId=${itemId}&date=${today}`)
             const price = res?.data?.purchasePrice ?? null
             setItemPrices(prev => ({ ...prev, [itemId]: price }))

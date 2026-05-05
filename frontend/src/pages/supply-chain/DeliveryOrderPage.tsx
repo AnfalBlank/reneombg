@@ -52,9 +52,11 @@ export default function DeliveryOrderPage() {
     const fetchSellPrice = async (itemId: string): Promise<number> => {
         if (!itemId) return 0
         try {
-            const today = new Date().toISOString().split('T')[0]
+            // Use local date (not UTC) to avoid timezone offset issues
+            const now = new Date()
+            const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
             const BASE_URL = import.meta.env.VITE_API_URL || '/api'
-            const res = await fetch(`${BASE_URL}/price-list/active?itemId=${encodeURIComponent(itemId)}&date=${today}`, { credentials: 'include' })
+            const res = await fetch(`${BASE_URL}/price-list/active?itemId=${encodeURIComponent(itemId)}&date=${localDate}`, { credentials: 'include' })
             if (!res.ok) return 0
             const data = await res.json()
             return data.data?.sellPrice ?? 0
