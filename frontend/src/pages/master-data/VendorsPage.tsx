@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plus, Search, Edit2, Trash2, Building2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -9,8 +10,17 @@ import modalStyles from '../../components/ui/Modal.module.css'
 
 import { useVendors, useCreateVendor, useUpdateVendor, useDeleteVendor } from '../../hooks/useApi'
 import { useToast } from '../../components/ui/Toast'
+import { api } from '../../lib/api'
 
 const fmt = (n: number) => 'Rp ' + (n || 0).toLocaleString('id-ID')
+
+function useVendorSummary() {
+    return useQuery({
+        queryKey: ['cashflow', 'vendor-summary'],
+        queryFn: () => api.get<{ data: Array<{ vendorName: string; totalUnpaid: number; totalPending: number }> }>('/cashflow/vendor-summary'),
+        staleTime: 30_000,
+    })
+}
 
 export default function VendorsPage() {
     const [search, setSearch] = useState('')
@@ -22,11 +32,18 @@ export default function VendorsPage() {
     const [formData, setFormData] = useState({ code: '', name: '', contactPerson: '', phone: '', email: '', address: '', category: '' })
 
     const { data: vendorsRes, isLoading, error } = useVendors()
+    const { data: summaryRes } = useVendorSummary()
     const createVendor = useCreateVendor()
     const updateVendor = useUpdateVendor()
     const deleteVendor = useDeleteVendor()
 
     const vendors = vendorsRes?.data || []
+    // Build map: vendorName → outstanding (unpaid + pending)
+    const outstandingMap = new Map<string, number>()
+    for (const s of (summaryRes?.data || [])) {
+        outstandingMap.set(s.vendorName, (s.totalUnpaid || 0) + (s.totalPending || 0))
+    }
+    const totalOutstanding = Array.from(outstandingMap.values()).reduce((a, b) => a + b, 0)
 
     const filtered = vendors.filter(v =>
         v.name.toLowerCase().includes(search.toLowerCase()) || v.code.toLowerCase().includes(search.toLowerCase())
@@ -88,7 +105,7 @@ export default function VendorsPage() {
             <div className={styles.summaryBar}>
                 <div className={styles.summaryItem}><span className={styles.summaryLabel}>Total Vendor</span><span className={styles.summaryValue}>{vendors.length}</span></div>
                 <div className={styles.summaryItem}><span className={styles.summaryLabel}>Aktif</span><span className={styles.summaryValue} style={{ color: 'var(--color-success)' }}>{vendors.filter(v => v.isActive).length}</span></div>
-                <div className={styles.summaryItem}><span className={styles.summaryLabel}>Total Hutang</span><span className={styles.summaryValue}>{fmt(0)}</span></div>
+                <div className={styles.summaryItem}><span className={styles.summaryLabel}>Total Hutang</span><span className={styles.summaryValue}>{fmt(totalOutstanding)}</span></div>
             </div>
 
             <Card noPadding>
@@ -119,7 +136,16 @@ export default function VendorsPage() {
                                     </td>
                                     <td><div style={{ fontWeight: 500 }}>{v.contactPerson}</div><div className={styles.muted}>{v.phone}</div></td>
                                     <td><span className={styles.muted}>{v.category}</span></td>
-                                    <td><span style={{ fontWeight: 600, color: 'var(--color-text-muted)' }}>{fmt(0)}</span></td>
+                                    <td>
+                                        {(() => {
+                                            const outstanding = outstandingMap.get(v.name) || 0
+                                            return (
+                                                <span style={{ fontWeight: 600, color: outstanding > 0 ? 'var(--color-danger)' : 'var(--color-text-muted)' }}>
+                                                    {fmt(outstanding)}
+                                                </span>
+                                            )
+                                        })()}
+                                    </td>
                                     <td><Badge label={v.isActive ? 'Aktif' : 'Nonaktif'} color={v.isActive ? 'green' : 'gray'} /></td>
                                     <td>
                                         <div className={styles.rowActions}>
