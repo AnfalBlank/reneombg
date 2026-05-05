@@ -24,9 +24,10 @@ if (existing.rows.length > 0) {
 
 // Step 2: Create via better-auth signup API
 console.log('Creating admin via better-auth signup...')
+const frontendUrl = process.env.FRONTEND_URL || 'https://rmb.manggalautama.web.id'
 const res = await fetch('http://localhost:3000/api/auth/sign-up/email', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:5173' },
+    headers: { 'Content-Type': 'application/json', 'Origin': frontendUrl },
     body: JSON.stringify({ name: ADMIN_NAME, email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
 })
 const data = await res.json()
