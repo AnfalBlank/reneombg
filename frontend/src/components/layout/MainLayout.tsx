@@ -57,6 +57,7 @@ export default function MainLayout() {
     const location = useLocation()
     const { data: session } = useSession()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [csExpanded, setCsExpanded] = useState(false)
     const segments = location.pathname.split('/').filter(Boolean)
     const breadcrumbs = segments.map((s) => breadcrumbMap[s] ?? s)
 
@@ -97,11 +98,7 @@ export default function MainLayout() {
             <BottomNav onMoreClick={() => setIsMobileMenuOpen(true)} />
 
             {/* Floating CS Button */}
-            <a
-                href={`https://wa.me/${CS_WHATSAPP}?text=${CS_MESSAGE}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Butuh bantuan? Chat kami di WhatsApp"
+            <div
                 style={{
                     position: 'fixed',
                     bottom: 80,
@@ -110,40 +107,81 @@ export default function MainLayout() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
-                    background: '#25D366',
-                    color: '#fff',
-                    borderRadius: 50,
-                    padding: '10px 18px 10px 10px',
-                    boxShadow: '0 4px 20px rgba(37,211,102,0.45)',
-                    textDecoration: 'none',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    transition: 'all 200ms ease',
-                    whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => {
-                    const el = e.currentTarget
-                    el.style.transform = 'translateY(-2px)'
-                    el.style.boxShadow = '0 6px 24px rgba(37,211,102,0.6)'
-                }}
-                onMouseLeave={e => {
-                    const el = e.currentTarget
-                    el.style.transform = 'none'
-                    el.style.boxShadow = '0 4px 20px rgba(37,211,102,0.45)'
+                    justifyContent: 'flex-end',
                 }}
             >
-                <img
-                    src="/cs.png"
-                    alt="CS"
-                    style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#fff', flexShrink: 0 }}
-                    onError={e => {
-                        // Fallback to WA icon if cs.png not found
-                        const img = e.target as HTMLImageElement
-                        img.style.display = 'none'
+                {/* Popup bubble — muncul saat expanded */}
+                {csExpanded && (
+                    <a
+                        href={`https://wa.me/${CS_WHATSAPP}?text=${CS_MESSAGE}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setCsExpanded(false)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            background: '#25D366',
+                            color: '#fff',
+                            borderRadius: 50,
+                            padding: '10px 18px',
+                            boxShadow: '0 4px 20px rgba(37,211,102,0.45)',
+                            textDecoration: 'none',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            animation: 'csSlideIn 200ms ease',
+                        }}
+                    >
+                        Butuh bantuan? Chat kami
+                    </a>
+                )}
+
+                {/* CS Logo button */}
+                <button
+                    onClick={() => setCsExpanded(prev => !prev)}
+                    title="Customer Support"
+                    style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: '50%',
+                        border: 'none',
+                        padding: 0,
+                        cursor: 'pointer',
+                        background: 'transparent',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                        flexShrink: 0,
+                        transition: 'transform 200ms ease',
+                        transform: csExpanded ? 'scale(1.1)' : 'scale(1)',
                     }}
-                />
-                <span>Butuh bantuan?</span>
-            </a>
+                >
+                    <img
+                        src="/cs.png"
+                        alt="CS"
+                        style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            display: 'block',
+                        }}
+                        onError={e => {
+                            const img = e.target as HTMLImageElement
+                            img.style.display = 'none'
+                            const btn = img.parentElement!
+                            btn.style.background = '#25D366'
+                            btn.innerHTML = '<span style="color:#fff;font-size:22px">💬</span>'
+                        }}
+                    />
+                </button>
+            </div>
+
+            <style>{`
+                @keyframes csSlideIn {
+                    from { opacity: 0; transform: translateX(12px); }
+                    to   { opacity: 1; transform: translateX(0); }
+                }
+            `}</style>
         </div>
     )
 }
