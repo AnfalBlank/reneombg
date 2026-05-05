@@ -14,6 +14,7 @@ import { requireAuth, requireRole } from '../middleware/auth'
 import { journalDistribution, journalConsumption, journalWaste } from '../lib/journal'
 import { createNotification } from '../lib/notify'
 import { validateIRBudget, createBudgetLog, reverseBudgetLog, checkBudgetWarning, findActiveBudget } from '../lib/budget'
+import { nextItemSkuByCategory } from '../lib/auto-code'
 import { z } from 'zod'
 
 const app = new Hono()
@@ -137,9 +138,7 @@ app.post('/requests/parse-template', requireAuth, async (c) => {
     for (const item of items) {
         if (!item.matched || !item.itemId) {
             const newId = randomUUID()
-            const allExisting = await db.query.items.findMany()
-            const maxNum = allExisting.filter(i => i.sku.startsWith('ITM-')).map(i => parseInt(i.sku.replace('ITM-', '')) || 0).reduce((a, b) => Math.max(a, b), 0)
-            const newSku = `ITM-${String(maxNum + 1 + autoCreated).padStart(4, '0')}`
+            const newSku = await nextItemSkuByCategory('Bahan Baku')
             await db.insert(itemsTable).values({
                 id: newId, sku: newSku, name: item.itemName,
                 category: 'Bahan Baku', uom: item.uom || 'kg',
