@@ -50,10 +50,12 @@ export default function DeliveryOrderPage() {
 
     // Auto-fetch sell price from price list for a given item
     const fetchSellPrice = async (itemId: string): Promise<number> => {
+        if (!itemId) return 0
         try {
             const today = new Date().toISOString().split('T')[0]
             const BASE_URL = import.meta.env.VITE_API_URL || '/api'
-            const res = await fetch(`${BASE_URL}/price-list/active?itemId=${itemId}&date=${today}`, { credentials: 'include' })
+            const res = await fetch(`${BASE_URL}/price-list/active?itemId=${encodeURIComponent(itemId)}&date=${today}`, { credentials: 'include' })
+            if (!res.ok) return 0
             const data = await res.json()
             return data.data?.sellPrice ?? 0
         } catch {
@@ -130,8 +132,20 @@ export default function DeliveryOrderPage() {
     const openEditDO = (d: any) => {
         setEditingDO(d)
         setForm({ irId: d.irId || '', dapurId: d.dapurId, gudangId: d.gudangId, notes: d.notes || '' })
-        setDoItems((d.items || []).map((i: any) => ({ itemId: i.itemId, qty: i.qtyDelivered, sellPrice: i.sellPrice || 0 })))
+        const items = (d.items || []).map((i: any) => ({ itemId: i.itemId, qty: i.qtyDelivered, sellPrice: i.sellPrice || 0 }))
+        setDoItems(items)
         setShowCreate(true)
+        // Re-fetch sell prices from price list (in case they were 0 or outdated)
+        ;(async () => {
+            const updated = [...items]
+            for (let idx = 0; idx < updated.length; idx++) {
+                if (updated[idx].itemId) {
+                    const price = await fetchSellPrice(updated[idx].itemId)
+                    if (price > 0) updated[idx] = { ...updated[idx], sellPrice: price }
+                }
+            }
+            setDoItems(updated)
+        })()
     }
 
     const generateDOPdf = (d: any) => {
