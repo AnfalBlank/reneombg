@@ -133,15 +133,32 @@ app.post('/requests/parse-template', requireAuth, async (c) => {
     }
 
     // ── Auto-create missing items ──────────────────────────────────
+    // If newItemCategories provided in body, use them; otherwise return pending items for confirmation
+    const newItemCategories: Record<string, string> = body.newItemCategories || {}
+    const pendingNewItems: Array<{ itemName: string; uom: string; suggestedCategory: string }> = []
+
     const now = new Date()
     let autoCreated = 0
     for (const item of items) {
         if (!item.matched || !item.itemId) {
+            const category = newItemCategories[item.itemName] || null
+
+            if (!category) {
+                // No category provided yet — collect for frontend confirmation
+                pendingNewItems.push({
+                    itemName: item.itemName,
+                    uom: item.uom || 'kg',
+                    suggestedCategory: 'Bahan Baku',
+                })
+                continue
+            }
+
+            // Category confirmed — create item
             const newId = randomUUID()
-            const newSku = await nextItemSkuByCategory('Bahan Baku')
+            const newSku = await nextItemSkuByCategory(category)
             await db.insert(itemsTable).values({
                 id: newId, sku: newSku, name: item.itemName,
-                category: 'Bahan Baku', uom: item.uom || 'kg',
+                category, uom: item.uom || 'kg',
                 minStock: 0, isActive: true, createdAt: now, updatedAt: now,
             })
             item.itemId = newId
@@ -149,6 +166,23 @@ app.post('/requests/parse-template', requireAuth, async (c) => {
             item.itemName = item.itemName + ' ✨'
             autoCreated++
         }
+    }
+
+    // If there are pending new items (no category yet), return them for frontend confirmation
+    if (pendingNewItems.length > 0) {
+        return c.json({
+            data: {
+                dapurId,
+                dapurName: dapurName || '(tidak terdeteksi)',
+                menuName: menuName || '(tidak terdeteksi)',
+                totalPorsi,
+                items: items.filter(i => i.matched), // only matched items so far
+                recipeId: null,
+                autoCreatedItems: 0,
+            },
+            pendingNewItems, // frontend must confirm categories for these
+            unmatched: pendingNewItems.length,
+        })
     }
 
     // ── Auto-create BOM/recipe if menu detected ────────────────────

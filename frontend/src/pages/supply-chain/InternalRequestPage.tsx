@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Plus, Search, X, CheckCircle, Eye, Edit2, Download, AlertTriangle, TrendingDown } from 'lucide-react'
+import { Plus, Search, X, CheckCircle, Eye, Edit2, Download, AlertTriangle, TrendingDown, Tag } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -79,6 +79,10 @@ export default function InternalRequestPage() {
     const [targetPorsi, setTargetPorsi] = useState<number>(1000)
     const [templateParsing, setTemplateParsing] = useState(false)
     const [templateInfo, setTemplateInfo] = useState<{ menuName: string; totalPorsi: number } | null>(null)
+    // Pending new items that need category confirmation before IR can be created
+    const [pendingNewItems, setPendingNewItems] = useState<Array<{ itemName: string; uom: string; suggestedCategory: string }>>([])
+    const [pendingCategories, setPendingCategories] = useState<Record<string, string>>({})
+    const [pendingLines, setPendingLines] = useState<string[]>([])
 
     // Item prices: itemId → purchasePrice (null = no active price)
     const [itemPrices, setItemPrices] = useState<Record<string, number | null>>({})
@@ -393,6 +397,23 @@ export default function InternalRequestPage() {
                                             const d = res.data
                                             if (!d) { toastError('Gagal parse template'); return }
 
+                                            // If there are new items needing category confirmation
+                                            if (res.pendingNewItems && res.pendingNewItems.length > 0) {
+                                                setPendingNewItems(res.pendingNewItems)
+                                                // Pre-fill categories with suggested values
+                                                const cats: Record<string, string> = {}
+                                                res.pendingNewItems.forEach((ni: any) => { cats[ni.itemName] = ni.suggestedCategory })
+                                                setPendingCategories(cats)
+                                                setPendingLines(lines)
+                                                // Still fill matched items
+                                                if (d.dapurId) setForm(f => ({ ...f, dapurId: d.dapurId }))
+                                                if (d.items?.length > 0) {
+                                                    setIrItems(d.items.map((i: any) => ({ itemId: i.itemId, qtyRequested: i.qtyRequested, notes: '' })))
+                                                }
+                                                setTemplateInfo({ menuName: d.menuName, totalPorsi: d.totalPorsi })
+                                                return // wait for category confirmation
+                                            }
+
                                             // Auto-fill dapur
                                             if (d.dapurId) setForm(f => ({ ...f, dapurId: d.dapurId }))
 
@@ -447,6 +468,67 @@ export default function InternalRequestPage() {
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
                         <Button variant="secondary" onClick={() => setShowForm(false)}>Batal</Button>
                         <Button onClick={handleSubmit} disabled={createIR.isPending || updateIR.isPending || budgetExceeded}>{(createIR.isPending || updateIR.isPending) ? 'Menyimpan...' : editingIR ? 'Update IR' : 'Simpan Request'}</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* New Item Category Confirmation Modal */}
+            <Modal isOpen={pendingNewItems.length > 0} onClose={() => setPendingNewItems([])} title="🆕 Item Baru Ditemukan — Pilih Kategori" wide>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(79,124,255,0.06)', border: '1px solid rgba(79,124,255,0.2)', fontSize: 12, color: 'var(--color-primary)' }}>
+                        <Tag size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                        <strong>{pendingNewItems.length} item</strong> dari template belum terdaftar di sistem. Pilih kategori untuk setiap item agar SKU-nya ter-generate dengan benar.
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {pendingNewItems.map((ni, idx) => (
+                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px', gap: 10, alignItems: 'center', padding: '8px 12px', background: 'var(--color-surface-2)', borderRadius: 8, border: '1px solid var(--color-border)' }}>
+                                <div>
+                                    <div style={{ fontWeight: 600, fontSize: 13 }}>{ni.itemName}</div>
+                                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>UOM: {ni.uom || 'kg'}</div>
+                                </div>
+                                <select
+                                    style={{ ...inputStyle, fontSize: 12 }}
+                                    value={pendingCategories[ni.itemName] || ni.suggestedCategory}
+                                    onChange={e => setPendingCategories(prev => ({ ...prev, [ni.itemName]: e.target.value }))}
+                                >
+                                    {['Bahan Baku', 'Protein', 'Bumbu & Rempah', 'Sayuran', 'Minuman', 'Packaging', 'Peralatan', 'Lainnya'].map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                                    {/* Preview SKU prefix */}
+                                    {({ 'Bahan Baku': 'BB', 'Protein': 'PT', 'Bumbu & Rempah': 'BM', 'Sayuran': 'SY', 'Minuman': 'MN', 'Packaging': 'PK', 'Peralatan': 'PR', 'Lainnya': 'LN' } as Record<string, string>)[pendingCategories[ni.itemName] || ni.suggestedCategory] || 'LN'}-xxxx
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
+                        <Button variant="secondary" onClick={() => setPendingNewItems([])}>Batal</Button>
+                        <Button onClick={async () => {
+                            setTemplateParsing(true)
+                            try {
+                                const res = await api.post<any>('/supply-chain/requests/parse-template', {
+                                    lines: pendingLines,
+                                    newItemCategories: pendingCategories,
+                                })
+                                const d = res.data
+                                if (!d) { toastError('Gagal parse template'); return }
+                                if (d.dapurId) setForm(f => ({ ...f, dapurId: d.dapurId }))
+                                if (d.items?.length > 0) {
+                                    setIrItems(d.items.map((i: any) => ({ itemId: i.itemId, qtyRequested: i.qtyRequested, notes: '' })))
+                                }
+                                setTemplateInfo({ menuName: d.menuName, totalPorsi: d.totalPorsi })
+                                setPendingNewItems([])
+                                setPendingLines([])
+                                success(`✅ ${d.items?.length || 0} item dimuat. 🆕 ${d.autoCreatedItems || 0} item baru dibuat dengan SKU kategori yang benar.`)
+                            } catch (err: any) {
+                                toastError(err?.message || 'Gagal membuat item baru')
+                            } finally {
+                                setTemplateParsing(false)
+                            }
+                        }} disabled={templateParsing}>
+                            {templateParsing ? 'Memproses...' : `Konfirmasi & Buat ${pendingNewItems.length} Item Baru`}
+                        </Button>
                     </div>
                 </div>
             </Modal>
