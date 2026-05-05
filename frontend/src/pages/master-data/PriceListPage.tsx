@@ -217,6 +217,24 @@ export default function PriceListPage() {
     const entries = priceListRes?.data || []
     const items = itemsRes?.data || []
 
+    // Group entries by itemId — show only the latest active entry per item in the table
+    // (full history shown in the expandable row)
+    const latestByItem = new Map<string, PriceListEntry>()
+    for (const entry of entries) {
+        const existing = latestByItem.get(entry.itemId)
+        if (!existing) {
+            latestByItem.set(entry.itemId, entry)
+        } else {
+            // Keep the one with the latest effectiveDate
+            const existingDate = new Date(existing.effectiveDate).getTime()
+            const entryDate = new Date(entry.effectiveDate).getTime()
+            if (entryDate > existingDate) {
+                latestByItem.set(entry.itemId, entry)
+            }
+        }
+    }
+    const dedupedEntries = Array.from(latestByItem.values())
+
     const sellPriceWarning = formData.sellPrice && formData.purchasePrice &&
         parseFloat(formData.sellPrice) < parseFloat(formData.purchasePrice)
 
@@ -431,7 +449,7 @@ export default function PriceListPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {entries.length === 0 ? (
+                            {dedupedEntries.length === 0 ? (
                                 <tr>
                                     <td colSpan={9}>
                                         <div className={styles.emptyState}>
@@ -444,7 +462,7 @@ export default function PriceListPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                entries.map(entry => (
+                                dedupedEntries.map(entry => (
                                     <>
                                         <tr
                                             key={entry.id}
@@ -525,9 +543,9 @@ export default function PriceListPage() {
                     </table>
                 </div>
 
-                {entries.length > 0 && (
+                {dedupedEntries.length > 0 && (
                     <div style={{ padding: '10px 16px', borderTop: '1px solid var(--color-border)' }}>
-                        <span className={styles.muted}>{entries.length} entri harga ditemukan</span>
+                        <span className={styles.muted}>{dedupedEntries.length} item dengan harga ({entries.length} total entri)</span>
                     </div>
                 )}
             </Card>
