@@ -6,6 +6,9 @@ import BottomNav from './BottomNav'
 import styles from './MainLayout.module.css'
 import { useSession } from '../../lib/auth-client'
 
+const CS_WHATSAPP = '6281234567890' // Ganti dengan nomor WA CS yang sebenarnya
+const CS_MESSAGE = encodeURIComponent('Halo, saya butuh bantuan dengan sistem ERP MBG.')
+
 const breadcrumbMap: Record<string, string> = {
     dashboard: 'Dashboard',
     executive: 'Executive Dashboard',
@@ -92,6 +95,55 @@ export default function MainLayout() {
 
             {/* Bottom Navigation — Mobile */}
             <BottomNav onMoreClick={() => setIsMobileMenuOpen(true)} />
+
+            {/* Floating CS Button */}
+            <a
+                href={`https://wa.me/${CS_WHATSAPP}?text=${CS_MESSAGE}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Butuh bantuan? Chat kami di WhatsApp"
+                style={{
+                    position: 'fixed',
+                    bottom: 80,
+                    right: 20,
+                    zIndex: 1000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    background: '#25D366',
+                    color: '#fff',
+                    borderRadius: 50,
+                    padding: '10px 18px 10px 10px',
+                    boxShadow: '0 4px 20px rgba(37,211,102,0.45)',
+                    textDecoration: 'none',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    transition: 'all 200ms ease',
+                    whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => {
+                    const el = e.currentTarget
+                    el.style.transform = 'translateY(-2px)'
+                    el.style.boxShadow = '0 6px 24px rgba(37,211,102,0.6)'
+                }}
+                onMouseLeave={e => {
+                    const el = e.currentTarget
+                    el.style.transform = 'none'
+                    el.style.boxShadow = '0 4px 20px rgba(37,211,102,0.45)'
+                }}
+            >
+                <img
+                    src="/cs.png"
+                    alt="CS"
+                    style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#fff', flexShrink: 0 }}
+                    onError={e => {
+                        // Fallback to WA icon if cs.png not found
+                        const img = e.target as HTMLImageElement
+                        img.style.display = 'none'
+                    }}
+                />
+                <span>Butuh bantuan?</span>
+            </a>
         </div>
     )
 }

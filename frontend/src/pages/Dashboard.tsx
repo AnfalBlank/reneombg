@@ -1,7 +1,7 @@
 import {
     TrendingUp, Package, Truck, Receipt, ArrowUp, ArrowDown,
     AlertTriangle, CheckCircle, Activity, ShoppingCart, UtensilsCrossed,
-    BarChart3, ChevronRight, Clock, Zap, Eye
+    BarChart3, ChevronRight, Clock, Zap, Eye, ClipboardList
 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -77,10 +77,10 @@ export default function Dashboard() {
     if (error) return <div className={styles.page}>Error loading dashboard: {error.message}</div>
 
     const stats = userRole === 'kitchen_admin' ? [
-        { label: 'Stok Dapur Saya', value: `${summary?.totalSkuActive ?? 0} SKU`, sub: 'Item tersedia', icon: Package, color: '#22c55e' },
-        { label: 'Nilai Stok', value: fmtShort(summary?.totalStockValue), sub: 'Total inventori dapur', icon: BarChart3, color: '#f59e0b' },
-        { label: 'Total COGS', value: fmt(summary?.totalCogs), sub: 'Pemakaian bahan', icon: Receipt, color: '#ef4444' },
-        { label: 'Stok Rendah', value: `${summary?.lowStockCount ?? 0} Item`, sub: 'Perlu restock', icon: AlertTriangle, color: '#f59e0b' },
+        { label: 'IR Saya', value: `${summary?.pendingIR ?? 0} Pending`, sub: 'Internal Request aktif', icon: ClipboardList, color: '#f59e0b' },
+        { label: 'Total COGS', value: fmt(summary?.totalCogs), sub: 'Pemakaian bahan dapur', icon: Receipt, color: '#ef4444' },
+        { label: 'Jurnal', value: `${summary?.journalCount ?? 0}`, sub: 'Tercatat periode ini', icon: Zap, color: '#a680d0' },
+        { label: 'Anggaran Dapur', value: fmtShort(summary?.totalStockValue), sub: 'Nilai stok dapur', icon: BarChart3, color: '#22c55e' },
     ] : userRole === 'finance' ? [
         { label: 'Total Pembelian', value: fmt(summary?.totalPurchase), sub: 'Periode ini', icon: ShoppingCart, color: '#4f7cff' },
         { label: 'Total COGS', value: fmt(summary?.totalCogs), sub: 'Harga Pokok', icon: Receipt, color: '#ef4444' },
@@ -119,8 +119,7 @@ export default function Dashboard() {
         { label: 'Lihat Jurnal', icon: Receipt, path: '/accounting/journal', color: '#a680d0', show: access.accounting },
         { label: 'Finance', icon: TrendingUp, path: '/finance/dashboard', color: '#f59e0b', show: access.finance },
         { label: 'Laporan', icon: BarChart3, path: '/reports', color: '#38bdf8', show: access.reports },
-    ]
-    const quickActions = allQuickActions.filter(a => a.show)
+    ]    const quickActions = allQuickActions.filter(a => a.show)
 
     return (
         <div className={styles.page}>

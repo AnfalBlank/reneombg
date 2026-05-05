@@ -21,13 +21,13 @@ function buildNav(role: string): NavItem[] {
 
     items.push({ label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard })
 
-    // Executive Dashboard — owner only
+    // Executive Dashboard — owner & super_admin only
     if (role === 'owner' || role === 'super_admin') {
         items.push({ label: 'Executive Dashboard', path: '/executive', icon: Crown })
     }
 
-    // Approval Center — visible for admin, finance, super_admin, owner
-    if (role !== 'kitchen_admin') {
+    // Approval Center — only roles that can approve: owner, super_admin, admin
+    if (access.approval) {
         items.push({ label: 'Approval', path: '/approvals', icon: CheckCircle })
     }
 
@@ -70,7 +70,7 @@ function buildNav(role: string): NavItem[] {
         const scChildren: NavItem[] = [
             { label: 'Internal Request', path: '/supply-chain/requests', icon: ClipboardList },
         ]
-        // kitchen_admin: only IR + KR + Consumption (no DO create)
+        // Only non-kitchen_admin can create/view Delivery Orders
         if (role !== 'kitchen_admin') {
             scChildren.push({ label: 'Delivery Order', path: '/supply-chain/delivery-orders', icon: Truck })
         }
@@ -93,7 +93,7 @@ function buildNav(role: string): NavItem[] {
         items.push({ label: 'Laporan', path: '/reports', icon: FileBarChart })
     }
 
-    // kitchen_admin gets Invoice Dapur & Anggaran (their own dapur only)
+    // kitchen_admin gets Tagihan Dapur & Anggaran (their own dapur only)
     if (role === 'kitchen_admin') {
         items.push({
             label: 'Keuangan Dapur', icon: Wallet, children: [

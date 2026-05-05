@@ -175,8 +175,8 @@ app.patch('/orders/:id', requireAuth, requireRole('super_admin', 'admin', 'finan
     return c.json({ data: updated })
 })
 
-// ─── PO Approval (Finance) ───────────────────────────────────────────────────
-app.patch('/orders/:id/approve', requireAuth, requireRole('super_admin', 'finance'), async (c) => {
+// ─── PO Approval ─────────────────────────────────────────────────────────────
+app.patch('/orders/:id/approve', requireAuth, requireRole('owner', 'super_admin', 'admin', 'finance'), async (c) => {
     const user = (c as any).get('user') as { id: string }
     const poId = c.req.param('id') as string
 
@@ -201,7 +201,7 @@ app.patch('/orders/:id/approve', requireAuth, requireRole('super_admin', 'financ
 })
 
 // ─── PO Rejection ─────────────────────────────────────────────────────────────
-app.patch('/orders/:id/reject', requireAuth, requireRole('super_admin', 'finance'), async (c) => {
+app.patch('/orders/:id/reject', requireAuth, requireRole('owner', 'super_admin', 'admin', 'finance'), async (c) => {
     const user = (c as any).get('user') as { id: string }
     const poId = c.req.param('id') as string
 

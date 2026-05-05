@@ -322,7 +322,7 @@ app.post('/requests', requireAuth, requireRole('super_admin', 'kitchen_admin', '
 })
 
 // Approve IR
-app.patch('/requests/:id/approve', requireAuth, requireRole('super_admin', 'admin'), async (c) => {
+app.patch('/requests/:id/approve', requireAuth, requireRole('owner', 'super_admin', 'admin'), async (c) => {
     const user = (c as any).get('user') as { id: string }
     const irId = c.req.param('id') as string
 
@@ -433,7 +433,7 @@ app.patch('/requests/:id/approve', requireAuth, requireRole('super_admin', 'admi
 })
 
 // ─── Cancel IR ────────────────────────────────────────────────────────────────
-app.patch('/requests/:id/cancel', requireAuth, requireRole('super_admin', 'admin', 'kitchen_admin'), async (c) => {
+app.patch('/requests/:id/cancel', requireAuth, requireRole('owner', 'super_admin', 'admin', 'kitchen_admin'), async (c) => {
     const irId = c.req.param('id') as string
 
     const ir = await db.query.internalRequests.findFirst({

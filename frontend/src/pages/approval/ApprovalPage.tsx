@@ -13,6 +13,8 @@ import { useToast } from '../../components/ui/Toast'
 import { api, ApiResponse } from '../../lib/api'
 import { fmtDate } from '../../lib/utils'
 import { useApprovePO, useRejectPO, useApproveInternalRequest } from '../../hooks/useApi'
+import { useSession } from '../../lib/auth-client'
+import { canApprove } from '../../lib/roles'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected'
 type TypeFilter = 'all' | 'ir' | 'po'
@@ -32,6 +34,9 @@ export default function ApprovalPage() {
     const { success, error: toastError } = useToast()
     const navigate = useNavigate()
     const qc = useQueryClient()
+    const { data: session } = useSession()
+    const userRole = (session?.user as any)?.role || ''
+    const userCanApprove = canApprove(userRole)
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
     const [search, setSearch] = useState('')
@@ -183,13 +188,18 @@ export default function ApprovalPage() {
 
                                 {/* Actions */}
                                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                                    {item.status === 'pending' && (
+                                    {item.status === 'pending' && userCanApprove && (
                                         <>
                                             <Button size="sm" icon={<CheckCircle size={13} />} variant="success" onClick={() => handleApprove(item)}
                                                 disabled={approveIR.isPending || approvePO.isPending}>Setujui</Button>
                                             <Button size="sm" icon={<XCircle size={13} />} variant="danger" onClick={() => handleReject(item)}
                                                 disabled={rejectPO.isPending}>Tolak</Button>
                                         </>
+                                    )}
+                                    {item.status === 'pending' && !userCanApprove && (
+                                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)', padding: '6px 10px', background: 'var(--color-surface-2)', borderRadius: 6 }}>
+                                            Menunggu persetujuan
+                                        </span>
                                     )}
                                     <button className={styles.actionBtn} onClick={() => navigate(item.link)} style={{ fontSize: 11 }}>
                                         Detail <ChevronRight size={11} />
