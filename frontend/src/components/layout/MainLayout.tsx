@@ -6,7 +6,7 @@ import BottomNav from './BottomNav'
 import styles from './MainLayout.module.css'
 import { useSession } from '../../lib/auth-client'
 
-const CS_WHATSAPP = '6281234567890' // Ganti dengan nomor WA CS yang sebenarnya
+const CS_WHATSAPP = '6281290903004'
 const CS_MESSAGE = encodeURIComponent('Halo, saya butuh bantuan dengan sistem ERP MBG.')
 
 const breadcrumbMap: Record<string, string> = {
