@@ -425,11 +425,35 @@ app.post('/orders/:poId/receive-direct', requireAuth, requireRole('super_admin',
 
 // GET goods receipts
 app.get('/receipts', requireAuth, async (c) => {
+    const { type } = c.req.query() // type=direct | type=gudang | (all)
     const all = await db.query.goodsReceipts.findMany({
-        with: { items: { with: { item: true } } },
+        with: {
+            po: { with: { vendor: true, gudang: true } },
+            items: { with: { item: true } },
+        },
         orderBy: (g, { desc }) => [desc(g.createdAt)],
     })
-    return c.json({ data: all, total: all.length })
+
+    let filtered = all
+    if (type === 'direct') filtered = all.filter(g => g.isDirectDelivery)
+    else if (type === 'gudang') filtered = all.filter(g => !g.isDirectDelivery)
+
+    // Enrich direct delivery GRNs with dapur name
+    const { dapur: dapurTable } = await import('../db/schema/index')
+    const { eq: eqFn } = await import('drizzle-orm')
+    const dapurs = await db.query.dapur.findMany()
+    const dapurMap = new Map(dapurs.map(d => [d.id, d.name]))
+
+    return c.json({
+        data: filtered.map(g => ({
+            ...g,
+            dapurName: g.directDapurId ? (dapurMap.get(g.directDapurId) || g.directDapurId) : null,
+            vendorName: (g as any).po?.vendor?.name || '-',
+            gudangName: (g as any).po?.gudang?.name || '-',
+            poNumber: (g as any).po?.poNumber || '-',
+        })),
+        total: filtered.length,
+    })
 })
 
 // ─── Average price per item (for DO sell price reference) ─────────────────────
