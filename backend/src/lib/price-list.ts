@@ -54,20 +54,29 @@ export function resolveActivePricePure<T extends PriceEntryLike>(
     // Normalize to end-of-day so entries set for "today" are always active
     const normalized = new Date(queryDate)
     normalized.setHours(23, 59, 59, 999)
+    const normalizedMs = normalized.getTime()
 
-    const validEntries = entries.filter(
-        (e) => e.effectiveDate.getTime() <= normalized.getTime(),
-    )
+    const validEntries = entries.filter((e) => {
+        // effectiveDate may come back as Date, number (ms), or string from Turso
+        const ed = e.effectiveDate instanceof Date
+            ? e.effectiveDate
+            : new Date(e.effectiveDate as any)
+        return ed.getTime() <= normalizedMs
+    })
 
     if (validEntries.length === 0) {
         return null
     }
 
-    return validEntries.reduce((best, current) =>
-        current.effectiveDate.getTime() > best.effectiveDate.getTime()
-            ? current
-            : best,
-    )
+    return validEntries.reduce((best, current) => {
+        const bestMs = (best.effectiveDate instanceof Date
+            ? best.effectiveDate
+            : new Date(best.effectiveDate as any)).getTime()
+        const currMs = (current.effectiveDate instanceof Date
+            ? current.effectiveDate
+            : new Date(current.effectiveDate as any)).getTime()
+        return currMs > bestMs ? current : best
+    })
 }
 
 // ─── resolveActivePrice ───────────────────────────────────────────────────────
@@ -84,23 +93,34 @@ export async function resolveActivePrice(
     itemId: string,
     queryDate: Date,
 ): Promise<PriceListEntry | null> {
-    // Normalize to end-of-day so entries set for "today" are always active
-    const normalized = new Date(queryDate)
-    normalized.setHours(23, 59, 59, 999)
-
-    const result = await db
+    // Fetch all entries for this item and filter in-memory
+    // (avoids Drizzle lte() Date→integer conversion issues with Turso)
+    const entries = await db
         .select()
         .from(priceListEntries)
-        .where(
-            and(
-                eq(priceListEntries.itemId, itemId),
-                lte(priceListEntries.effectiveDate, normalized),
-            ),
-        )
-        .orderBy(desc(priceListEntries.effectiveDate))
-        .limit(1)
+        .where(eq(priceListEntries.itemId, itemId))
 
-    return result[0] ?? null
+    if (entries.length === 0) return null
+
+    // Normalize to end-of-day
+    const normalized = new Date(queryDate)
+    normalized.setHours(23, 59, 59, 999)
+    const normalizedMs = normalized.getTime()
+
+    const valid = entries.filter(e => {
+        const ed = e.effectiveDate instanceof Date
+            ? e.effectiveDate
+            : new Date(e.effectiveDate as any)
+        return ed.getTime() <= normalizedMs
+    })
+
+    if (valid.length === 0) return null
+
+    return valid.reduce((best, cur) => {
+        const bestMs = (best.effectiveDate instanceof Date ? best.effectiveDate : new Date(best.effectiveDate as any)).getTime()
+        const curMs = (cur.effectiveDate instanceof Date ? cur.effectiveDate : new Date(cur.effectiveDate as any)).getTime()
+        return curMs > bestMs ? cur : best
+    })
 }
 
 // ─── validatePriceListEntry ───────────────────────────────────────────────────
