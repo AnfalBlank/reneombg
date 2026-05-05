@@ -74,7 +74,7 @@ export default function DeliveryOrderPage() {
                 const newItems = (ir.items || []).map((i: any) => ({ itemId: i.itemId, qty: i.qtyRequested - i.qtyFulfilled, sellPrice: 0 }))
                 setDoItems(newItems)
                 // Auto-fetch sell prices for all IR items
-                newItems.forEach(async (it, idx) => {
+                newItems.forEach(async (it: { itemId: string; qty: number; sellPrice: number }, idx: number) => {
                     if (it.itemId) {
                         const price = await fetchSellPrice(it.itemId)
                         if (price > 0) {
