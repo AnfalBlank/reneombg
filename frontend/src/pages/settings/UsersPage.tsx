@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Search, Edit2, ShieldAlert, UserCog, Eye, EyeOff, Key } from 'lucide-react'
+import { Plus, Search, Edit2, ShieldAlert, UserCog, Eye, EyeOff, Key, Trash2, AlertTriangle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -40,6 +40,9 @@ export default function UsersPage() {
     const [newPassword, setNewPassword] = useState('')
     const [showNewPw, setShowNewPw] = useState(false)
 
+    // Delete confirmation modal
+    const [deleteTarget, setDeleteTarget] = useState<any>(null)
+
     const { data: usersRes, isLoading, error } = useQuery<any>({ queryKey: ['users'], queryFn: () => api.get('/users') })
     const { data: dapurRes } = useDapur()
     const users = usersRes?.data || []
@@ -59,7 +62,8 @@ export default function UsersPage() {
 
     const deleteUser = useMutation({
         mutationFn: (id: string) => api.delete<any>(`/users/${id}`),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); success('User dihapus.') },
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); setDeleteTarget(null); success('User berhasil dihapus.') },
+        onError: (e: any) => toastError(e?.message || 'Gagal menghapus user'),
     })
 
     const resetPassword = useMutation({
@@ -143,7 +147,7 @@ export default function UsersPage() {
                                             <div className={styles.rowActions}>
                                                 <button className={styles.actionBtn} onClick={() => { setEditUser(u); setEditForm({ name: u.name, email: u.email, role: u.role, dapurId: u.dapurId || '' }) }}><Edit2 size={12} /> Edit</button>
                                                 <button className={styles.actionBtn} onClick={() => { setResetPwUser(u); setNewPassword(''); setShowNewPw(false) }}><Key size={12} /> Reset PW</button>
-                                                <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => { if (confirm(`Hapus user "${u.name}"?`)) deleteUser.mutate(u.id) }}><ShieldAlert size={12} /></button>
+                                                <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => setDeleteTarget(u)}><Trash2 size={12} /> Hapus</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -256,6 +260,43 @@ export default function UsersPage() {
                         }} disabled={resetPassword.isPending}>{resetPassword.isPending ? 'Mereset...' : 'Reset Password'}</Button>
                     </div>
                 </div>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hapus User">
+                {deleteTarget && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '14px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                            <AlertTriangle size={22} style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }} />
+                            <div>
+                                <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)', marginBottom: 6 }}>
+                                    Yakin ingin menghapus user ini?
+                                </div>
+                                <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
+                                    User <strong>{deleteTarget.name}</strong> ({deleteTarget.email}) akan dihapus permanen dari sistem.
+                                    Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13, padding: '10px 14px', background: 'var(--color-surface-2)', borderRadius: 8 }}>
+                            <div><span style={{ color: 'var(--color-text-muted)' }}>Nama:</span> <strong>{deleteTarget.name}</strong></div>
+                            <div><span style={{ color: 'var(--color-text-muted)' }}>Email:</span> {deleteTarget.email}</div>
+                            <div><span style={{ color: 'var(--color-text-muted)' }}>Role:</span> <Badge label={getRoleInfo(deleteTarget.role).label} color={getRoleInfo(deleteTarget.role).color} /></div>
+                            <div><span style={{ color: 'var(--color-text-muted)' }}>Dibuat:</span> {fmtDate(deleteTarget.createdAt)}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
+                            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Batal</Button>
+                            <Button
+                                variant="danger"
+                                icon={<Trash2 size={14} />}
+                                onClick={() => deleteUser.mutate(deleteTarget.id)}
+                                disabled={deleteUser.isPending}
+                            >
+                                {deleteUser.isPending ? 'Menghapus...' : 'Ya, Hapus User'}
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     )

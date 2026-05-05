@@ -33,12 +33,13 @@ app.get('/stock', requireAuth, async (c) => {
     return c.json({ data: filtered, total: filtered.length })
 })
 
-// GET /api/inventory/stock/low — items below minimum stock
+// GET /api/inventory/stock/low — items below minimum stock (gudang only)
 app.get('/stock/low', requireAuth, async (c) => {
     const all = await db.query.inventoryStock.findMany({
         with: { item: true, gudang: true, dapur: true },
     })
-    const low = all.filter(s => s.item && s.qty < (s.item.minStock ?? 0))
+    // Only gudang stock — dapur stock not monitored
+    const low = all.filter(s => s.locationType === 'gudang' && s.item && s.qty < (s.item.minStock ?? 0))
     return c.json({ data: low, total: low.length })
 })
 
