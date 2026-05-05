@@ -61,6 +61,9 @@ console.log('')
 console.log('📊 Data saat ini:')
 console.log(`   internal_requests : ${await count('internal_requests')}`)
 console.log(`   ir_items          : ${await count('ir_items')}`)
+console.log(`   purchase_orders   : ${await count('purchase_orders')}`)
+console.log(`   goods_receipts    : ${await count('goods_receipts')}`)
+console.log(`   cashflow_payments : ${await count('cashflow_payments')}`)
 console.log(`   items             : ${await count('items')}`)
 console.log(`   recipes           : ${await count('recipes')}`)
 console.log(`   recipe_ingredients: ${await count('recipe_ingredients')}`)
@@ -93,6 +96,13 @@ if (doIR) {
     await del('delivery_orders', 'Delivery Orders')
     await del('kr_items', 'KR Items')
     await del('kitchen_receivings', 'Kitchen Receivings')
+    // Clear cashflow payments (outstanding hutang)
+    await del('cashflow_payments', 'Cashflow Payments')
+    // Clear purchase data
+    await del('gr_items', 'GR Items')
+    await del('goods_receipts', 'Goods Receipts')
+    await del('po_items', 'PO Items')
+    await del('purchase_orders', 'Purchase Orders')
 }
 
 if (doStock) {
