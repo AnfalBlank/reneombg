@@ -22,7 +22,7 @@ import { priceListEntries, items, inventoryStock } from '../db/schema/index'
 import { eq, and, lte, gte, like, or, asc, desc } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
-import { resolveActivePricePure, validatePriceListEntry, checkPriceEntryInUse } from '../lib/price-list'
+import { resolveActivePricePure, resolveActivePrice, validatePriceListEntry, checkPriceEntryInUse } from '../lib/price-list'
 import { logAudit, auditFromContext } from '../lib/audit'
 import * as XLSX from 'xlsx'
 
@@ -92,13 +92,7 @@ app.get('/active', requireAuth, async (c) => {
 
     const queryDate = date ? new Date(date) : new Date()
 
-    // Fetch all entries for this item
-    const entries = await db.query.priceListEntries.findMany({
-        where: eq(priceListEntries.itemId, itemId),
-        with: { item: true },
-    })
-
-    const active = resolveActivePricePure(entries, queryDate)
+    const active = await resolveActivePrice(itemId, queryDate)
 
     if (!active) {
         return c.json({

@@ -11,9 +11,46 @@
  */
 
 import { db } from '../db/index'
-import { priceListEntries, poItems } from '../db/schema/index'
+import { priceListEntries, poItems, systemSettings } from '../db/schema/index'
 import { eq } from 'drizzle-orm'
 import type { PriceListEntry } from '../db/schema/price-list'
+
+// ─── Timezone helper ──────────────────────────────────────────────────────────
+let _cachedTimezone: string | null = null
+let _cacheExpiry = 0
+
+async function getSystemTimezone(): Promise<string> {
+    const now = Date.now()
+    if (_cachedTimezone && now < _cacheExpiry) return _cachedTimezone
+    try {
+        const setting = await db.query.systemSettings.findFirst({
+            where: eq(systemSettings.key, 'timezone'),
+        })
+        _cachedTimezone = setting?.value || 'Asia/Jakarta'
+        _cacheExpiry = now + 60_000 // cache 1 minute
+    } catch {
+        _cachedTimezone = 'Asia/Jakarta'
+    }
+    return _cachedTimezone!
+}
+
+/** Convert a date to start-of-day in the given timezone, return as UTC ms */
+function startOfDayInTz(date: Date, tz: string): number {
+    // Format date in target timezone to get YYYY-MM-DD
+    const dateStr = date.toLocaleDateString('en-CA', { timeZone: tz }) // en-CA = YYYY-MM-DD
+    // Parse as midnight in that timezone
+    const midnight = new Date(`${dateStr}T00:00:00`)
+    // Adjust for timezone offset
+    const tzOffset = new Date(date.toLocaleString('en-US', { timeZone: tz })).getTime() - date.getTime()
+    return new Date(`${dateStr}T00:00:00`).getTime() - tzOffset
+}
+
+/** Convert a date to end-of-day in the given timezone, return as UTC ms */
+function endOfDayInTz(date: Date, tz: string): number {
+    const dateStr = date.toLocaleDateString('en-CA', { timeZone: tz })
+    const tzOffset = new Date(date.toLocaleString('en-US', { timeZone: tz })).getTime() - date.getTime()
+    return new Date(`${dateStr}T23:59:59.999`).getTime() - tzOffset
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -111,10 +148,9 @@ export async function resolveActivePrice(
 
     if (entries.length === 0) return null
 
-    // Normalize queryDate to end of UTC day
-    const normalized = new Date(queryDate)
-    normalized.setUTCHours(23, 59, 59, 999)
-    const normalizedMs = normalized.getTime()
+    const tz = await getSystemTimezone()
+    // End of day in configured timezone
+    const normalizedMs = endOfDayInTz(queryDate, tz)
 
     const valid = entries.filter(e => toMs(e.effectiveDate) <= normalizedMs)
     if (valid.length === 0) return null
