@@ -68,7 +68,15 @@ app.get('/', requireAuth, async (c) => {
         )
     }
 
-    return c.json({ data: filtered, total: filtered.length })
+    return c.json({
+        data: filtered.map(e => ({
+            ...e,
+            itemName: e.item?.name ?? '',
+            itemSku: e.item?.sku ?? '',
+            itemCategory: e.item?.category ?? '',
+        })),
+        total: filtered.length,
+    })
 })
 
 // ─── GET /api/price-list/active ───────────────────────────────────────────────
