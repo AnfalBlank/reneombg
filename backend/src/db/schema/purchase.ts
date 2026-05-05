@@ -21,6 +21,8 @@ export const purchaseOrders = sqliteTable('purchase_orders', {
     expectedDate: integer('expected_date', { mode: 'timestamp' }),
     notes: text('notes'),
     totalAmount: real('total_amount').notNull().default(0),
+    isDirectDelivery: integer('is_direct_delivery', { mode: 'boolean' }).notNull().default(false),
+    directDapurId: text('direct_dapur_id'),
     createdBy: text('created_by').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
@@ -39,6 +41,9 @@ export const poItems = sqliteTable('po_items', {
     qtyReceived: real('qty_received').notNull().default(0),
     unitPrice: real('unit_price').notNull(),
     totalPrice: real('total_price').notNull(),
+    directDapurId: text('direct_dapur_id'),          // per-item override for direct delivery dapur
+    priceListEntryId: text('price_list_entry_id'),   // reference to price_list_entries used
+    priceSource: text('price_source', { enum: ['price_list', 'manual'] }).default('manual'),
 })
 
 // ─── Goods Receipts (GRN) ────────────────────────────────────────────────────
@@ -56,6 +61,9 @@ export const goodsReceipts = sqliteTable('goods_receipts', {
     notes: text('notes'),
     journalId: text('journal_id'), // ref to journal_entries after auto-journal
     totalAmount: real('total_amount').notNull().default(0),
+    isDirectDelivery: integer('is_direct_delivery', { mode: 'boolean' }).notNull().default(false),
+    directDapurId: text('direct_dapur_id'),     // destination dapur for direct delivery
+    vendorInvoiceId: text('vendor_invoice_id'), // NULL = not yet billed, filled = included in invoice
     receivedBy: text('received_by').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),

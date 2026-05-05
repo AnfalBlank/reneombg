@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Search, Eye, CheckCircle, X, Edit2, Printer, Download, AlertTriangle, Package } from 'lucide-react'
+import { Plus, Search, Eye, CheckCircle, X, Edit2, Printer, Download, AlertTriangle, Package, Truck } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -8,7 +8,7 @@ import CurrencyInput from '../../components/ui/CurrencyInput'
 import PeriodFilter from '../../components/ui/PeriodFilter'
 import styles from '../shared.module.css'
 import { useToast } from '../../components/ui/Toast'
-import { usePurchaseOrders, useCreatePurchaseOrder, useReceivePurchaseOrder, useUpdatePurchaseOrder, useApprovePO, useRejectPO, useVendors, useItems, useGudang, useInternalRequests } from '../../hooks/useApi'
+import { usePurchaseOrders, useCreatePurchaseOrder, useReceivePurchaseOrder, useUpdatePurchaseOrder, useApprovePO, useRejectPO, useVendors, useItems, useGudang, useInternalRequests, useDapur } from '../../hooks/useApi'
 import { fmtDate, fmtRp, fmtDateOnly } from '../../lib/utils'
 import { downloadPDF, pdfFmt } from '../../lib/pdf'
 import { api } from '../../lib/api'
@@ -22,7 +22,14 @@ const statusMap: Record<string, { label: string; color: 'blue' | 'yellow' | 'gre
     draft: { label: 'Draft', color: 'gray' },
 }
 
-interface POItem { itemId: string; qtyOrdered: number; unitPrice: number }
+interface POItem {
+    itemId: string
+    qtyOrdered: number
+    unitPrice: number
+    activePrice?: number | null   // from price list
+    priceSource?: 'price_list' | 'manual'
+    directDapurId?: string        // per-item override
+}
 
 export default function PurchaseOrderPage() {
     const { success, error: toastError } = useToast()
@@ -31,10 +38,12 @@ export default function PurchaseOrderPage() {
     const { data: itemRes } = useItems()
     const { data: gudangRes } = useGudang()
     const { data: irRes } = useInternalRequests()
+    const { data: dapurRes } = useDapur()
     const pos = poRes?.data || []
     const vendors = vendorRes?.data || []
     const items = itemRes?.data || []
     const gudangs = gudangRes?.data || []
+    const dapurs = dapurRes?.data || []
     const approvedIRs = (irRes?.data || []).filter((r: any) => r.status === 'approved')
 
     const createPO = useCreatePurchaseOrder()
@@ -58,6 +67,13 @@ export default function PurchaseOrderPage() {
     const [form, setForm] = useState({ vendorId: '', gudangId: '', orderDate: '', expectedDate: '', notes: '' })
     const [poItems, setPoItems] = useState<POItem[]>([{ itemId: '', qtyOrdered: 1, unitPrice: 0 }])
 
+    // Direct delivery state
+    const [isDirectDelivery, setIsDirectDelivery] = useState(false)
+    const [directDapurId, setDirectDapurId] = useState('')
+
+    // Price deviation confirmation dialog
+    const [showDeviationConfirm, setShowDeviationConfirm] = useState(false)
+
     const filtered = pos.filter((p: any) => {
         const matchSearch = (p.vendor?.name || '').toLowerCase().includes(search.toLowerCase()) || p.poNumber.toLowerCase().includes(search.toLowerCase())
         const matchStatus = statusFilter === 'Semua' || p.status === statusFilter?.toLowerCase()
@@ -70,6 +86,8 @@ export default function PurchaseOrderPage() {
         setEditPO(null)
         setForm({ vendorId: '', gudangId: '', orderDate: '', expectedDate: '', notes: '' })
         setPoItems([{ itemId: '', qtyOrdered: 1, unitPrice: 0 }])
+        setIsDirectDelivery(false)
+        setDirectDapurId('')
         setShowCreate(true)
     }
 
@@ -81,31 +99,102 @@ export default function PurchaseOrderPage() {
             expectedDate: po.expectedDate ? new Date(po.expectedDate).toISOString().split('T')[0] : '',
             notes: po.notes || '',
         })
-        setPoItems((po.items || []).map((i: any) => ({ itemId: i.itemId, qtyOrdered: i.qtyOrdered, unitPrice: i.unitPrice })))
+        setPoItems((po.items || []).map((i: any) => ({ itemId: i.itemId, qtyOrdered: i.qtyOrdered, unitPrice: i.unitPrice, activePrice: i.activePrice ?? null, priceSource: i.priceSource || 'manual' })))
+        setIsDirectDelivery(po.isDirectDelivery || false)
+        setDirectDapurId(po.directDapurId || '')
         setShowCreate(true)
     }
 
-    const handleSubmitPO = async () => {
+    // Fetch active price from price list for a given item and date
+    const fetchActivePrice = async (itemId: string, orderDate: string): Promise<number | null> => {
+        try {
+            const date = orderDate || new Date().toISOString().split('T')[0]
+            const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+            const res = await fetch(`${BASE_URL}/price-list/active?itemId=${itemId}&date=${date}`, { credentials: 'include' })
+            const data = await res.json()
+            return data.data?.purchasePrice ?? null
+        } catch {
+            return null
+        }
+    }
+
+    // When item is selected in the form, auto-fill price from price list
+    const handleItemSelect = async (idx: number, itemId: string) => {
+        setPoItems(prev => prev.map((item, i) => i === idx ? { ...item, itemId, activePrice: undefined, priceSource: 'manual' } : item))
+        if (!itemId) return
+        const orderDate = form.orderDate || new Date().toISOString().split('T')[0]
+        const activePrice = await fetchActivePrice(itemId, orderDate)
+        setPoItems(prev => prev.map((item, i) => {
+            if (i !== idx) return item
+            if (activePrice !== null) {
+                return { ...item, itemId, unitPrice: activePrice, activePrice, priceSource: 'price_list' }
+            }
+            return { ...item, itemId, activePrice: null, priceSource: 'manual' }
+        }))
+    }
+
+    // When user manually changes unit price
+    const handlePriceChange = (idx: number, value: number) => {
+        setPoItems(prev => prev.map((item, i) => {
+            if (i !== idx) return item
+            return { ...item, unitPrice: value, priceSource: 'manual' }
+        }))
+    }
+
+    // Calculate deviation percent for an item
+    const getDeviationPercent = (item: POItem): number | null => {
+        if (item.activePrice == null || item.activePrice === 0) return null
+        return ((item.unitPrice - item.activePrice) / item.activePrice) * 100
+    }
+
+    const handleSubmitPO = async (confirmed = false) => {
         if (!form.vendorId) return toastError('Vendor wajib dipilih!')
         if (!form.gudangId) return toastError('Gudang tujuan wajib dipilih!')
         if (!form.orderDate) return toastError('Tanggal order wajib diisi!')
+        if (isDirectDelivery && !directDapurId) return toastError('Dapur tujuan wajib dipilih untuk pengiriman langsung!')
         const validItems = poItems.filter(i => i.itemId)
         if (validItems.length === 0) return toastError('Minimal 1 item harus dipilih!')
         if (validItems.some(i => i.qtyOrdered <= 0 || i.unitPrice <= 0)) return toastError('Qty dan harga harus > 0!')
 
+        // Check if any item has deviation > 10%
+        if (!confirmed) {
+            const hasHighDeviation = validItems.some(i => {
+                const dev = getDeviationPercent(i)
+                return dev !== null && dev > 10
+            })
+            if (hasHighDeviation) {
+                setShowDeviationConfirm(true)
+                return
+            }
+        }
+
         try {
+            const payload = {
+                ...form,
+                isDirectDelivery,
+                directDapurId: isDirectDelivery ? directDapurId : undefined,
+                items: validItems.map(i => ({
+                    itemId: i.itemId,
+                    qtyOrdered: i.qtyOrdered,
+                    unitPrice: i.unitPrice,
+                    priceSource: i.priceSource || 'manual',
+                    directDapurId: i.directDapurId || undefined,
+                })),
+                confirmPriceDeviation: confirmed || undefined,
+            }
             if (editPO) {
-                await updatePO.mutateAsync({ id: editPO.id, data: { ...form, items: validItems } })
+                await updatePO.mutateAsync({ id: editPO.id, data: payload })
                 success(`PO ${editPO.poNumber} berhasil diperbarui!`)
             } else {
-                await createPO.mutateAsync({ ...form, items: validItems })
+                await createPO.mutateAsync(payload)
                 success('Purchase Order berhasil dibuat!')
             }
             setShowCreate(false)
+            setShowDeviationConfirm(false)
         } catch (e: any) { toastError(e?.message || 'Gagal menyimpan PO.') }
     }
 
-    const addItem = () => setPoItems(prev => [...prev, { itemId: '', qtyOrdered: 1, unitPrice: 0 }])
+    const addItem = () => setPoItems(prev => [...prev, { itemId: '', qtyOrdered: 1, unitPrice: 0, activePrice: undefined, priceSource: 'manual' }])
     const removeItem = (idx: number) => setPoItems(prev => prev.filter((_, i) => i !== idx))
     const updateItem = (idx: number, field: keyof POItem, value: any) => {
         setPoItems(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item))
@@ -201,7 +290,14 @@ export default function PurchaseOrderPage() {
                             {filtered.length === 0 && (<tr><td colSpan={9}><div className={styles.emptyState}>Belum ada data Purchase Order.</div></td></tr>)}
                             {filtered.map((po: any) => (
                                 <tr key={po.id}>
-                                    <td><span className={styles.mono}>{po.poNumber}</span></td>
+                                    <td>
+                                        <span className={styles.mono}>{po.poNumber}</span>
+                                        {po.isDirectDelivery && (
+                                            <span style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 2, background: 'rgba(99,102,241,0.12)', color: '#6366f1', borderRadius: 4, padding: '1px 6px', fontSize: 10, fontWeight: 700, verticalAlign: 'middle' }}>
+                                                <Truck size={9} /> DIRECT
+                                            </span>
+                                        )}
+                                    </td>
                                     <td className={styles.muted}>{fmtDate(po.createdAt)}</td>
                                     <td style={{ fontWeight: 500 }}>{po.vendor?.name}</td>
                                     <td style={{ textAlign: 'center' }}>{po.items?.length || 0}</td>
@@ -229,7 +325,7 @@ export default function PurchaseOrderPage() {
             </Card>
 
             {/* Create / Edit PO Modal */}
-            <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={editPO ? `Edit PO: ${editPO.poNumber}` : 'Buat Purchase Order Baru'} wide>
+            <Modal isOpen={showCreate} onClose={() => { setShowCreate(false); setShowDeviationConfirm(false) }} title={editPO ? `Edit PO: ${editPO.poNumber}` : 'Buat Purchase Order Baru'} wide>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div>
@@ -259,34 +355,111 @@ export default function PurchaseOrderPage() {
                         <label style={labelStyle}>Catatan</label>
                         <textarea style={{ ...inputStyle, height: 56, resize: 'vertical' }} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Opsional..." />
                     </div>
+
+                    {/* Direct Delivery Section */}
+                    <div style={{ background: 'var(--color-surface-2)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--color-border)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                            <input
+                                type="checkbox"
+                                checked={isDirectDelivery}
+                                onChange={e => { setIsDirectDelivery(e.target.checked); if (!e.target.checked) setDirectDapurId('') }}
+                                style={{ width: 15, height: 15, cursor: 'pointer' }}
+                            />
+                            <Truck size={14} style={{ color: '#6366f1' }} />
+                            Pengiriman Langsung ke Dapur
+                        </label>
+                        {isDirectDelivery && (
+                            <div style={{ marginTop: 10 }}>
+                                <label style={labelStyle}>Dapur Tujuan *</label>
+                                <select style={inputStyle} value={directDapurId} onChange={e => setDirectDapurId(e.target.value)}>
+                                    <option value="">-- Pilih Dapur --</option>
+                                    {dapurs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                </select>
+                            </div>
+                        )}
+                    </div>
+
                     <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                             <label style={labelStyle}>Item Pembelian *</label>
                             <button onClick={addItem} style={{ fontSize: 12, color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>+ Tambah Baris</button>
                         </div>
-                        {poItems.map((item, idx) => (
-                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, marginBottom: 8 }}>
-                                <select style={inputStyle} value={item.itemId} onChange={e => updateItem(idx, 'itemId', e.target.value)}>
-                                    <option value="">-- Pilih Item --</option>
-                                    {items.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}
-                                </select>
-                                <input style={inputStyle} type="number" placeholder="Qty" min={1} value={item.qtyOrdered} onChange={e => updateItem(idx, 'qtyOrdered', Number(e.target.value))} />
-                                <CurrencyInput value={item.unitPrice} onChange={v => updateItem(idx, 'unitPrice', v)} placeholder="Harga Satuan" />
-                                <button onClick={() => removeItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)' }}><X size={14} /></button>
-                            </div>
-                        ))}
+                        {poItems.map((item, idx) => {
+                            const deviation = getDeviationPercent(item)
+                            const hasDeviation = deviation !== null && deviation > 0
+                            const hasHighDeviation = deviation !== null && deviation > 10
+                            return (
+                                <div key={idx} style={{ marginBottom: 10 }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
+                                        <select style={inputStyle} value={item.itemId} onChange={e => handleItemSelect(idx, e.target.value)}>
+                                            <option value="">-- Pilih Item --</option>
+                                            {items.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}
+                                        </select>
+                                        <input style={inputStyle} type="number" placeholder="Qty" min={1} value={item.qtyOrdered} onChange={e => updateItem(idx, 'qtyOrdered', Number(e.target.value))} />
+                                        <CurrencyInput value={item.unitPrice} onChange={v => handlePriceChange(idx, v)} placeholder="Harga Satuan" />
+                                        <button onClick={() => removeItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)' }}><X size={14} /></button>
+                                    </div>
+                                    {/* Price source & deviation indicators */}
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+                                        {item.activePrice != null && item.priceSource === 'price_list' && (
+                                            <span style={{ fontSize: 11, color: 'var(--color-success)', fontWeight: 500 }}>
+                                                ✓ Harga dari price list: {fmtRp(item.activePrice)}
+                                            </span>
+                                        )}
+                                        {item.activePrice === null && item.itemId && (
+                                            <span style={{ fontSize: 11, color: 'var(--color-warning)', fontWeight: 500 }}>
+                                                ⚠ Harga tidak ada di price list — input manual
+                                            </span>
+                                        )}
+                                        {item.priceSource === 'manual' && item.activePrice != null && hasDeviation && (
+                                            <span style={{
+                                                fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 4,
+                                                background: hasHighDeviation ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)',
+                                                color: hasHighDeviation ? 'var(--color-danger)' : 'var(--color-warning)',
+                                                border: `1px solid ${hasHighDeviation ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`,
+                                            }}>
+                                                {hasHighDeviation ? '🔴' : '🟡'} Deviasi: +{deviation!.toFixed(1)}% dari price list ({fmtRp(item.activePrice)})
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })}
                         {poItems.length > 0 && (
                             <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: 'var(--color-text)', marginTop: 4 }}>
                                 Total: {fmtRp(poItems.reduce((a, i) => a + i.qtyOrdered * i.unitPrice, 0))}
                             </div>
                         )}
                     </div>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
-                        <Button variant="secondary" onClick={() => setShowCreate(false)}>Batal</Button>
-                        <Button onClick={handleSubmitPO} disabled={createPO.isPending || updatePO.isPending}>
-                            {(createPO.isPending || updatePO.isPending) ? 'Menyimpan...' : editPO ? 'Update PO' : 'Simpan PO'}
-                        </Button>
-                    </div>
+
+                    {/* Deviation confirmation dialog (inline) */}
+                    {showDeviationConfirm && (
+                        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '12px 14px' }}>
+                            <div style={{ fontWeight: 700, color: 'var(--color-danger)', marginBottom: 6, fontSize: 13 }}>
+                                ⚠ Konfirmasi Deviasi Harga &gt; 10%
+                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 10 }}>
+                                Satu atau lebih item memiliki harga yang melebihi price list lebih dari 10%. Apakah Anda yakin ingin melanjutkan?
+                            </div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <Button variant="danger" onClick={() => handleSubmitPO(true)} disabled={createPO.isPending || updatePO.isPending}>
+                                    Ya, Simpan dengan Harga Ini
+                                </Button>
+                                <Button variant="secondary" onClick={() => { setShowDeviationConfirm(false) }}>
+                                    Batal, Koreksi Harga
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {!showDeviationConfirm && (
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
+                            <Button variant="secondary" onClick={() => { setShowCreate(false) }}>Batal</Button>
+                            <Button onClick={() => handleSubmitPO(false)} disabled={createPO.isPending || updatePO.isPending}>
+                                {(createPO.isPending || updatePO.isPending) ? 'Menyimpan...' : editPO ? 'Update PO' : 'Simpan PO'}
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </Modal>
 

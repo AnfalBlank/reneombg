@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { journalPurchaseReceiving, recalcMovingAverage } from '../lib/journal'
 import { createNotification } from '../lib/notify'
+import { deductDapurBudget } from '../lib/budget'
 import { z } from 'zod'
 
 const app = new Hono()
@@ -34,10 +35,15 @@ const createPoSchema = z.object({
     orderDate: z.string(),
     expectedDate: z.string().optional(),
     notes: z.string().optional(),
+    isDirectDelivery: z.boolean().optional().default(false),
+    directDapurId: z.string().optional(),
     items: z.array(z.object({
         itemId: z.string(),
         qtyOrdered: z.number().positive(),
         unitPrice: z.number().positive(),
+        directDapurId: z.string().optional(),
+        priceListEntryId: z.string().optional(),
+        priceSource: z.enum(['price_list', 'manual']).optional().default('manual'),
     })),
 })
 
@@ -45,6 +51,11 @@ app.post('/orders', requireAuth, requireRole('super_admin', 'admin'), async (c) 
     const body = await c.req.json()
     const parsed = createPoSchema.safeParse(body)
     if (!parsed.success) return c.json({ error: parsed.error.format() }, 400)
+
+    // Validate: if isDirectDelivery=true, directDapurId must be provided
+    if (parsed.data.isDirectDelivery && !parsed.data.directDapurId) {
+        return c.json({ error: 'directDapurId is required when isDirectDelivery is true' }, 400)
+    }
 
     const user = (c as any).get('user') as { id: string; role: string }
     const poId = randomUUID()
@@ -64,6 +75,8 @@ app.post('/orders', requireAuth, requireRole('super_admin', 'admin'), async (c) 
         expectedDate: parsed.data.expectedDate ? new Date(parsed.data.expectedDate) : undefined,
         notes: parsed.data.notes,
         totalAmount,
+        isDirectDelivery: parsed.data.isDirectDelivery,
+        directDapurId: parsed.data.directDapurId,
         createdBy: user.id,
         createdAt: now,
         updatedAt: now,
@@ -78,6 +91,9 @@ app.post('/orders', requireAuth, requireRole('super_admin', 'admin'), async (c) 
             qtyReceived: 0,
             unitPrice: item.unitPrice,
             totalPrice: item.qtyOrdered * item.unitPrice,
+            directDapurId: item.directDapurId,
+            priceListEntryId: item.priceListEntryId,
+            priceSource: item.priceSource,
         })
 
         // Record price history
@@ -290,6 +306,122 @@ app.post('/orders/:poId/receive', requireAuth, requireRole('super_admin', 'admin
 
     const grn = await db.query.goodsReceipts.findFirst({ where: eq(goodsReceipts.id, grnId) })
     return c.json({ data: grn, journalId }, 201)
+})
+
+// ─── Direct Delivery Goods Receipt ────────────────────────────────────────────
+// POST /orders/:poId/receive-direct
+// Handles GR for POs with isDirectDelivery=true.
+// Barang diterima langsung di dapur — stok gudang TIDAK berubah.
+// Requirements: 12.2, 12.3, 12.4, 12.5, 12.7
+
+const receiveDirectSchema = z.object({
+    items: z.array(z.object({
+        itemId: z.string(),
+        poItemId: z.string(),
+        qtyReceived: z.number().positive(),
+        unitPrice: z.number().positive(),
+        batchNumber: z.string().optional(),
+        expiryDate: z.string().optional(),
+    })),
+    notes: z.string().optional(),
+    directDapurId: z.string().optional(), // optional override; falls back to PO.directDapurId
+})
+
+app.post('/orders/:poId/receive-direct', requireAuth, requireRole('super_admin', 'admin'), async (c) => {
+    const poId = c.req.param('poId') as string
+    const body = await c.req.json()
+    const parsed = receiveDirectSchema.safeParse(body)
+    if (!parsed.success) return c.json({ error: parsed.error.format() }, 400)
+
+    const user = (c as any).get('user') as { id: string; name: string }
+
+    // 1. Validate PO exists and has isDirectDelivery=true
+    const po = await db.query.purchaseOrders.findFirst({ where: eq(purchaseOrders.id, poId) })
+    if (!po) return c.json({ error: 'Purchase Order not found' }, 404)
+    if (!po.isDirectDelivery) {
+        return c.json({ error: 'PO is not marked as direct delivery. Use /receive instead.' }, 400)
+    }
+
+    // 2. Validate PO status is 'open' or 'partial'
+    if (po.status === 'received' || po.status === 'cancelled' || po.status === 'pending_approval') {
+        return c.json({ error: `PO is ${po.status}, cannot receive` }, 400)
+    }
+
+    // Resolve directDapurId: body override takes precedence, then PO-level value
+    const directDapurId = parsed.data.directDapurId ?? po.directDapurId
+    if (!directDapurId) {
+        return c.json({ error: 'directDapurId is required for direct delivery but was not found on PO or request body' }, 400)
+    }
+
+    const grnId = randomUUID()
+    const grnNumber = `GRN-DD-${Date.now().toString().slice(-6)}`
+    const now = new Date()
+    const totalAmount = parsed.data.items.reduce((s, i) => s + i.qtyReceived * i.unitPrice, 0)
+
+    // 3. Insert goods_receipts with isDirectDelivery=true
+    await db.insert(goodsReceipts).values({
+        id: grnId,
+        grnNumber,
+        poId,
+        gudangId: po.gudangId,
+        status: 'complete',
+        receivedDate: now,
+        notes: parsed.data.notes,
+        totalAmount,
+        isDirectDelivery: true,
+        directDapurId,
+        receivedBy: user.id,
+        createdAt: now,
+        updatedAt: now,
+    })
+
+    // 4. Insert gr_items for each received item
+    for (const item of parsed.data.items) {
+        await db.insert(grItems).values({
+            id: randomUUID(),
+            grnId,
+            itemId: item.itemId,
+            qtyReceived: item.qtyReceived,
+            unitPrice: item.unitPrice,
+            totalPrice: item.qtyReceived * item.unitPrice,
+            batchNumber: item.batchNumber,
+            expiryDate: item.expiryDate ? new Date(item.expiryDate) : undefined,
+        })
+
+        // Update qtyReceived on the PO item
+        const existingPoItem = await db.query.poItems.findFirst({ where: eq(poItems.id, item.poItemId) })
+        const newQtyReceived = (existingPoItem?.qtyReceived ?? 0) + item.qtyReceived
+        await db.update(poItems).set({ qtyReceived: newQtyReceived }).where(eq(poItems.id, item.poItemId))
+
+        // 5. Insert inventory_movements with movementType='in_direct_delivery', locationType='dapur'
+        //    IMPORTANT: Do NOT update inventory_stock — stok gudang tidak berubah (Req 12.4)
+        await db.insert(inventoryMovements).values({
+            id: randomUUID(),
+            itemId: item.itemId,
+            movementType: 'in_direct_delivery',
+            locationType: 'dapur',
+            dapurId: directDapurId,
+            qty: item.qtyReceived,
+            unitCost: item.unitPrice,
+            totalCost: item.qtyReceived * item.unitPrice,
+            refType: 'grn',
+            refId: grnId,
+            createdAt: now,
+        })
+    }
+
+    // 6. Deduct dapur budget (Req 12.5)
+    await deductDapurBudget(directDapurId, totalAmount, 'direct_delivery', 'grn', grnId, user.id)
+
+    // 7. Update PO status: all received → 'received', partial → 'partial'
+    const updatedPoItems = await db.query.poItems.findMany({ where: eq(poItems.poId, poId) })
+    const allReceived = updatedPoItems.every(i => i.qtyReceived >= i.qtyOrdered)
+    const someReceived = updatedPoItems.some(i => i.qtyReceived > 0)
+    const newStatus = allReceived ? 'received' : someReceived ? 'partial' : 'open'
+    await db.update(purchaseOrders).set({ status: newStatus, updatedAt: now }).where(eq(purchaseOrders.id, poId))
+
+    const grn = await db.query.goodsReceipts.findFirst({ where: eq(goodsReceipts.id, grnId) })
+    return c.json({ data: grn }, 201)
 })
 
 // GET goods receipts

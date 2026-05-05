@@ -13,7 +13,7 @@ export const internalRequests = sqliteTable('internal_requests', {
     gudangId: text('gudang_id')
         .notNull()
         .references(() => gudang.id),
-    status: text('status', { enum: ['pending', 'approved', 'rejected', 'in_transit', 'fulfilled', 'partial_received'] })
+    status: text('status', { enum: ['pending', 'approved', 'rejected', 'in_transit', 'fulfilled', 'partial_received', 'cancelled'] })
         .notNull()
         .default('pending'),
     requestDate: integer('request_date', { mode: 'timestamp' }).notNull(),

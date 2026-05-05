@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-    Plus, Eye, Edit2, Download, Printer, Lock, AlertTriangle, CheckCircle, Trash2
+    Plus, Eye, Edit2, Download, Printer, Lock, AlertTriangle, CheckCircle, Trash2, Activity
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -32,6 +33,7 @@ function progressColor(pct: number) {
 }
 
 export default function BudgetPage() {
+    const navigate = useNavigate()
     const { success, error: toastError } = useToast()
     const qc = useQueryClient()
     const { data: session } = useSession()
@@ -48,7 +50,7 @@ export default function BudgetPage() {
     const [viewDetail, setViewDetail] = useState<any>(null)
 
     // Create form
-    const [form, setForm] = useState({ dapurId: '', periodStart: '', periodEnd: '', budgetAmount: 0, notes: '' })
+    const [form, setForm] = useState({ dapurId: '', periodStart: '', periodEnd: '', budgetAmount: 0, dailyBudget: 0, notes: '' })
 
     const { data: dRes } = useDapur()
     const dapurs = dRes?.data || []
@@ -107,7 +109,7 @@ export default function BudgetPage() {
         }
         setForm({
             dapurId: '', periodStart: pStart.toISOString().split('T')[0],
-            periodEnd: pEnd.toISOString().split('T')[0], budgetAmount: 0, notes: '',
+            periodEnd: pEnd.toISOString().split('T')[0], budgetAmount: 0, dailyBudget: 0, notes: '',
         })
         setShowCreate(true)
     }
@@ -118,18 +120,18 @@ export default function BudgetPage() {
             dapurId: b.dapurId,
             periodStart: new Date(b.periodStart).toISOString().split('T')[0],
             periodEnd: new Date(b.periodEnd).toISOString().split('T')[0],
-            budgetAmount: b.budgetAmount, notes: b.notes || '',
+            budgetAmount: b.budgetAmount, dailyBudget: b.dailyBudget || 0, notes: b.notes || '',
         })
     }
 
     const handleCreate = () => {
         if (!form.dapurId || !form.periodStart || !form.periodEnd || !form.budgetAmount) return toastError('Lengkapi semua field!')
-        createMut.mutate(form)
+        createMut.mutate({ ...form, dailyBudget: form.dailyBudget || 0 })
     }
 
     const handleUpdate = () => {
         if (!editBudget) return
-        updateMut.mutate({ id: editBudget.id, data: { budgetAmount: form.budgetAmount, periodStart: form.periodStart, periodEnd: form.periodEnd, notes: form.notes } })
+        updateMut.mutate({ id: editBudget.id, data: { budgetAmount: form.budgetAmount, dailyBudget: form.dailyBudget || 0, periodStart: form.periodStart, periodEnd: form.periodEnd, notes: form.notes } })
     }
 
     // Summary
@@ -229,7 +231,7 @@ export default function BudgetPage() {
                             </div>
 
                             {/* Stats row */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, fontSize: 12 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${b.dailyBudget > 0 ? 5 : 4}, 1fr)`, gap: 12, fontSize: 12 }}>
                                 <div>
                                     <div style={{ color: 'var(--color-text-muted)' }}>Anggaran</div>
                                     <div style={{ fontWeight: 700, fontSize: 14 }}>{fmtRp(b.budgetAmount)}</div>
@@ -246,6 +248,12 @@ export default function BudgetPage() {
                                     <div style={{ color: 'var(--color-text-muted)' }}>Pemakaian</div>
                                     <div style={{ fontWeight: 700, fontSize: 14, color: barColor }}>{pct}%</div>
                                 </div>
+                                {b.dailyBudget > 0 && (
+                                    <div>
+                                        <div style={{ color: 'var(--color-text-muted)' }}>Anggaran Harian</div>
+                                        <div style={{ fontWeight: 700, fontSize: 14 }}>{fmtRp(b.dailyBudget || 0)}</div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Invoice count */}
@@ -255,6 +263,7 @@ export default function BudgetPage() {
                         {/* Actions */}
                         <div style={{ padding: '10px 20px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                             <button className={styles.actionBtn} onClick={() => setViewDetail(b)}><Eye size={12} /> Detail</button>
+                            <button className={styles.actionBtn} onClick={() => navigate('/finance/budget-log?dapurId=' + b.dapurId)}><Activity size={12} /> Lihat Log</button>
                             {canManage && b.status === 'active' && (
                                 <>
                                     <button className={styles.actionBtn} onClick={() => openEdit(b)}><Edit2 size={12} /> Edit</button>
@@ -284,6 +293,11 @@ export default function BudgetPage() {
                         <div><label style={lbl}>Tanggal Akhir *</label><input type="date" style={inp} value={form.periodEnd} onChange={e => setForm({ ...form, periodEnd: e.target.value })} /></div>
                     </div>
                     <div><label style={lbl}>Anggaran (Rp) *</label><CurrencyInput value={form.budgetAmount} onChange={v => setForm({ ...form, budgetAmount: v })} placeholder="0" /></div>
+                    <div>
+                        <label style={lbl}>Anggaran Harian (Rp)</label>
+                        <CurrencyInput value={form.dailyBudget} onChange={v => setForm({ ...form, dailyBudget: v })} placeholder="0" />
+                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>Alokasi anggaran per hari (opsional)</div>
+                    </div>
                     <div><label style={lbl}>Catatan</label><input style={inp} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Opsional..." /></div>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
                         <Button variant="secondary" onClick={() => setShowCreate(false)}>Batal</Button>
@@ -300,6 +314,11 @@ export default function BudgetPage() {
                         <div><label style={lbl}>Tanggal Akhir</label><input type="date" style={inp} value={form.periodEnd} onChange={e => setForm({ ...form, periodEnd: e.target.value })} /></div>
                     </div>
                     <div><label style={lbl}>Anggaran (Rp) *</label><CurrencyInput value={form.budgetAmount} onChange={v => setForm({ ...form, budgetAmount: v })} placeholder="0" /></div>
+                    <div>
+                        <label style={lbl}>Anggaran Harian (Rp)</label>
+                        <CurrencyInput value={form.dailyBudget} onChange={v => setForm({ ...form, dailyBudget: v })} placeholder="0" />
+                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>Alokasi anggaran per hari (opsional)</div>
+                    </div>
                     <div><label style={lbl}>Catatan</label><input style={inp} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Opsional..." /></div>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
                         <Button variant="secondary" onClick={() => setEditBudget(null)}>Batal</Button>

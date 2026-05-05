@@ -4,7 +4,7 @@ import {
     ShoppingCart, Truck, BarChart3, ArrowLeftRight, ClipboardList, ChevronDown,
     ChevronRight, Receipt, BookMarked, FileText, Lock, Database, X, Settings,
     Users, TrendingUp, PieChart, Wallet, Activity, LogOut, Shield, FileBarChart,
-    DollarSign, Monitor, CheckCircle, ClipboardCheck, RotateCcw
+    DollarSign, Monitor, CheckCircle, ClipboardCheck, RotateCcw, Crown
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import styles from './Sidebar.module.css'
@@ -21,6 +21,11 @@ function buildNav(role: string): NavItem[] {
 
     items.push({ label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard })
 
+    // Executive Dashboard — owner only
+    if (role === 'owner' || role === 'super_admin') {
+        items.push({ label: 'Executive Dashboard', path: '/executive', icon: Crown })
+    }
+
     // Approval Center — visible for admin, finance, super_admin, owner
     if (role !== 'kitchen_admin') {
         items.push({ label: 'Approval', path: '/approvals', icon: CheckCircle })
@@ -35,6 +40,7 @@ function buildNav(role: string): NavItem[] {
                 { label: 'Gudang', path: '/master-data/gudang', icon: Warehouse },
                 { label: 'Chart of Accounts', path: '/master-data/coa', icon: BookOpen },
                 { label: 'Resep / BOM', path: '/master-data/recipes', icon: UtensilsCrossed },
+                { label: 'Price List', path: '/master-data/price-list', icon: DollarSign },
             ],
         })
     }
@@ -91,7 +97,7 @@ function buildNav(role: string): NavItem[] {
     if (role === 'kitchen_admin') {
         items.push({
             label: 'Keuangan Dapur', icon: Wallet, children: [
-                { label: 'Invoice Dapur', path: '/finance/invoices', icon: FileText },
+                { label: 'Tagihan Dapur', path: '/finance/tagihan-dapur', icon: Receipt },
                 { label: 'Anggaran Dapur', path: '/finance/budget', icon: PieChart },
             ],
         })
@@ -101,9 +107,10 @@ function buildNav(role: string): NavItem[] {
         items.push({
             label: 'Arus Kas', icon: Wallet, children: [
                 { label: 'Pembayaran Vendor', path: '/finance/cashflow', icon: DollarSign },
-                { label: 'Invoice Dapur', path: '/finance/invoices', icon: FileText },
+                { label: 'Tagihan Dapur', path: '/finance/tagihan-dapur', icon: Receipt },
                 { label: 'Anggaran Dapur', path: '/finance/budget', icon: PieChart },
-                { label: 'Pengeluaran', path: '/finance/expenses', icon: TrendingUp },
+                { label: 'Log Anggaran', path: '/finance/budget-log', icon: Activity },
+                { label: 'Pengeluaran Operasional', path: '/finance/expenses', icon: TrendingUp },
                 { label: 'Dashboard Finance', path: '/finance/dashboard', icon: Activity },
                 { label: 'Laporan Keuangan', path: '/finance/reports', icon: FileText },
                 { label: 'Analisis', path: '/finance/analysis', icon: PieChart },

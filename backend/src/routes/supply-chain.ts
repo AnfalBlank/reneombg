@@ -13,6 +13,7 @@ import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { journalDistribution, journalConsumption, journalWaste } from '../lib/journal'
 import { createNotification } from '../lib/notify'
+import { validateIRBudget, createBudgetLog, reverseBudgetLog, checkBudgetWarning, findActiveBudget } from '../lib/budget'
 import { z } from 'zod'
 
 const app = new Hono()
@@ -220,9 +221,36 @@ app.post('/requests', requireAuth, requireRole('super_admin', 'kitchen_admin', '
     const id = randomUUID()
     const now = new Date()
 
+    // ── Budget Validation ──────────────────────────────────────────
+    const dapurId: string = body.dapurId
+    const irItemsForValidation = (body.items || []).map((i: any) => ({
+        itemId: i.itemId,
+        qty: i.qtyRequested,
+    }))
+
+    const budgetResult = await validateIRBudget(dapurId, irItemsForValidation)
+
+    if (budgetResult.allowed === false) {
+        // Reject IR — budget exceeded
+        return c.json({
+            error: 'BUDGET_EXCEEDED',
+            message: 'Estimasi nilai IR melebihi sisa anggaran dapur',
+            detail: {
+                dapurId,
+                remaining: budgetResult.remaining,
+                estimatedValue: budgetResult.estimatedValue,
+                deficit: budgetResult.deficit,
+                alternatives: budgetResult.alternatives ?? [],
+            },
+        }, 400)
+    }
+
+    // ── Insert IR ──────────────────────────────────────────────────
+    const irNumber = `IR-${Date.now().toString().slice(-6)}`
+
     await db.insert(internalRequests).values({
         id,
-        irNumber: `IR-${Date.now().toString().slice(-6)}`,
+        irNumber,
         dapurId: body.dapurId,
         gudangId: body.gudangId,
         status: 'pending',
@@ -244,6 +272,31 @@ app.post('/requests', requireAuth, requireRole('super_admin', 'kitchen_admin', '
         })
     }
 
+    // ── Budget Log (only if budget exists and IR is allowed) ───────
+    let budgetWarning: string | undefined
+    if (budgetResult.warning === 'NO_ACTIVE_BUDGET') {
+        budgetWarning = 'NO_ACTIVE_BUDGET'
+    } else {
+        // Budget exists and IR is allowed — create budget log
+        const today = new Date()
+        const activeBudget = await findActiveBudget(dapurId, today)
+        if (activeBudget) {
+            await createBudgetLog({
+                budgetId: activeBudget.id,
+                dapurId,
+                transactionType: 'ir_reserved',
+                refType: 'ir',
+                refId: id,
+                refNumber: irNumber,
+                amount: budgetResult.estimatedValue,
+                notes: `IR reserved: ${irNumber}`,
+                createdBy: user.id,
+            })
+            // Check budget warning after reservation
+            await checkBudgetWarning(dapurId).catch(err => console.warn('Budget warning check skipped:', err.message))
+        }
+    }
+
     const created = await db.query.internalRequests.findFirst({ where: eq(internalRequests.id, id) })
 
     // Notify warehouse admins for approval
@@ -251,11 +304,19 @@ app.post('/requests', requireAuth, requireRole('super_admin', 'kitchen_admin', '
         role: 'admin',
         type: 'ir_pending_approval',
         title: 'IR Menunggu Approval',
-        message: `Internal Request IR-${Date.now().toString().slice(-6)} dari dapur menunggu persetujuan.`,
+        message: `Internal Request ${irNumber} dari dapur menunggu persetujuan.`,
         link: '/supply-chain/requests',
         refType: 'ir',
         refId: id,
     }).catch(err => console.warn('Notif skipped:', err.message))
+
+    if (budgetWarning === 'NO_ACTIVE_BUDGET') {
+        return c.json({
+            data: created,
+            warning: 'NO_ACTIVE_BUDGET',
+            message: 'Anggaran belum ditetapkan untuk dapur ini. IR dibuat tanpa validasi anggaran.',
+        }, 201)
+    }
 
     return c.json({ data: created }, 201)
 })
@@ -363,7 +424,53 @@ app.patch('/requests/:id/approve', requireAuth, requireRole('super_admin', 'admi
     const { notifyIRApproved } = await import('../lib/telegram')
     await notifyIRApproved(ir.requestedBy, ir.irNumber, doNumber, doId, shortages.length > 0).catch(e => console.warn('[TG] notifyIRApproved error:', e.message))
 
+    // ── Check budget warning after approval ────────────────────────
+    if (ir.dapurId) {
+        await checkBudgetWarning(ir.dapurId).catch(err => console.warn('Budget warning check skipped:', err.message))
+    }
+
     return c.json({ success: true, shortages, doId, doNumber })
+})
+
+// ─── Cancel IR ────────────────────────────────────────────────────────────────
+app.patch('/requests/:id/cancel', requireAuth, requireRole('super_admin', 'admin', 'kitchen_admin'), async (c) => {
+    const irId = c.req.param('id') as string
+
+    const ir = await db.query.internalRequests.findFirst({
+        where: eq(internalRequests.id, irId),
+    })
+    if (!ir) return c.json({ error: 'IR not found' }, 404)
+    if (ir.status === 'cancelled') return c.json({ error: 'IR sudah dibatalkan' }, 400)
+    if (!['pending', 'approved'].includes(ir.status)) {
+        return c.json({ error: 'IR tidak dapat dibatalkan pada status ini' }, 400)
+    }
+
+    const now = new Date()
+    await db.update(internalRequests).set({
+        status: 'cancelled' as any,
+        updatedAt: now,
+    }).where(eq(internalRequests.id, irId))
+
+    // Reverse budget reservation if one exists
+    await reverseBudgetLog('ir', irId).catch(err => console.warn('Budget reversal skipped:', err.message))
+
+    // Check budget warning after reversal
+    if (ir.dapurId) {
+        await checkBudgetWarning(ir.dapurId).catch(err => console.warn('Budget warning check skipped:', err.message))
+    }
+
+    // Notify requester that IR was rejected/cancelled
+    await createNotification({
+        userId: ir.requestedBy,
+        type: 'ir_rejected',
+        title: 'IR Ditolak',
+        message: `Internal Request ${ir.irNumber} telah ditolak/dibatalkan.`,
+        link: '/supply-chain/requests',
+        refType: 'ir',
+        refId: irId,
+    }).catch(err => console.warn('Notif skipped:', err.message))
+
+    return c.json({ success: true })
 })
 
 // ─── Update IR (only if pending) ──────────────────────────────────────────────

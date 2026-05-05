@@ -33,7 +33,7 @@ app.get('/', requireAuth, async (c) => {
     for (const ir of irs) {
         const isPending = ir.status === 'pending'
         const isApproved = ir.status === 'approved' || ir.status === 'in_transit' || ir.status === 'fulfilled' || ir.status === 'partial_received'
-        const isRejected = ir.status === 'rejected'
+        const isRejected = ir.status === 'rejected' || ir.status === 'cancelled'
         items.push({
             id: ir.id,
             type: 'ir',

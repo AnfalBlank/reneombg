@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Plus, Search, X, CheckCircle, Eye, Edit2, Download, AlertTriangle } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { Plus, Search, X, CheckCircle, Eye, Edit2, Download, AlertTriangle, TrendingDown } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -24,6 +24,26 @@ const statusMap: Record<string, { label: string; color: 'yellow' | 'blue' | 'gre
 }
 
 interface IRItem { itemId: string; qtyRequested: number; notes: string }
+
+interface BudgetExceededDetail {
+    dapurId: string
+    dapurName: string
+    budgetId: string
+    budgetAmount: number
+    usedAmount: number
+    remaining: number
+    estimatedValue: number
+    deficit: number
+    alternatives: Array<{
+        originalItemId: string
+        originalItemName: string
+        originalPrice: number
+        alternativeItemId: string
+        alternativeItemName: string
+        alternativePrice: number
+        savings: number
+    }>
+}
 
 export default function InternalRequestPage() {
     const { success, error: toastError } = useToast()
@@ -60,6 +80,24 @@ export default function InternalRequestPage() {
     const [templateParsing, setTemplateParsing] = useState(false)
     const [templateInfo, setTemplateInfo] = useState<{ menuName: string; totalPorsi: number } | null>(null)
 
+    // Item prices: itemId → purchasePrice (null = no active price)
+    const [itemPrices, setItemPrices] = useState<Record<string, number | null>>({})
+    // Budget exceeded error detail for modal
+    const [budgetExceededError, setBudgetExceededError] = useState<BudgetExceededDetail | null>(null)
+
+    // Fetch active price for an item and cache in itemPrices state
+    const fetchItemPrice = useCallback(async (itemId: string) => {
+        if (!itemId || itemId in itemPrices) return
+        try {
+            const today = new Date().toISOString().split('T')[0]
+            const res = await api.get<any>(`/price-list/active?itemId=${itemId}&date=${today}`)
+            const price = res?.data?.purchasePrice ?? null
+            setItemPrices(prev => ({ ...prev, [itemId]: price }))
+        } catch {
+            setItemPrices(prev => ({ ...prev, [itemId]: null }))
+        }
+    }, [itemPrices])
+
     // Budget check for selected dapur
     const activeDapurId = form.dapurId || userDapurId
     const { data: budgetCheck } = useQuery({
@@ -68,6 +106,17 @@ export default function InternalRequestPage() {
         enabled: !!activeDapurId && showForm,
     })
     const budgetInfo = budgetCheck?.data || null
+
+    // Estimated IR value = Σ(qty × purchasePrice)
+    const estimatedValue = irItems.reduce((sum, item) => {
+        if (!item.itemId) return sum
+        const price = itemPrices[item.itemId]
+        return sum + item.qtyRequested * (price ?? 0)
+    }, 0)
+
+    // Budget status derived values
+    const hasNoBudget = showForm && !!activeDapurId && budgetCheck !== undefined && !budgetInfo
+    const budgetExceeded = budgetInfo !== null && budgetInfo !== undefined && estimatedValue > budgetInfo.remaining
 
     const filtered = requests.filter((r: any) => {
         const matchSearch = (r.dapur?.name || '').toLowerCase().includes(search.toLowerCase()) || (r.irNumber || '').toLowerCase().includes(search.toLowerCase())
@@ -110,7 +159,44 @@ export default function InternalRequestPage() {
                 success('Internal Request berhasil dibuat!')
             }
             setShowForm(false); setTemplateInfo(null)
-        } catch (e: any) { toastError(e?.message || 'Gagal menyimpan IR.') }
+        } catch (e: any) {
+            const msg: string = e?.message || ''
+            if (msg.includes('BUDGET_EXCEEDED')) {
+                // Try to parse detail from error message or fall back to budgetInfo
+                let detail: BudgetExceededDetail | null = null
+                try {
+                    // The API client throws Error with message = data.error or data.message
+                    // Try to extract JSON detail embedded in the message
+                    const jsonMatch = msg.match(/\{.*\}/)
+                    if (jsonMatch) {
+                        const parsed = JSON.parse(jsonMatch[0])
+                        detail = parsed.detail || parsed
+                    }
+                } catch { /* ignore parse errors */ }
+
+                if (!detail && budgetInfo) {
+                    // Fallback: construct detail from budgetInfo + estimatedValue
+                    detail = {
+                        dapurId: activeDapurId,
+                        dapurName: dapurs.find((d: any) => d.id === activeDapurId)?.name || activeDapurId,
+                        budgetId: budgetInfo.budgetId || '',
+                        budgetAmount: budgetInfo.budgetAmount,
+                        usedAmount: budgetInfo.usedAmount,
+                        remaining: budgetInfo.remaining,
+                        estimatedValue,
+                        deficit: estimatedValue - budgetInfo.remaining,
+                        alternatives: [],
+                    }
+                }
+                if (detail) {
+                    setBudgetExceededError(detail)
+                } else {
+                    toastError('Anggaran dapur tidak mencukupi untuk IR ini.')
+                }
+            } else {
+                toastError(msg || 'Gagal menyimpan IR.')
+            }
+        }
     }
 
     const handleLoadBOM = () => {
@@ -222,6 +308,43 @@ export default function InternalRequestPage() {
                             </div>
                         </div>
                     )}
+                    {/* No active budget banner */}
+                    {hasNoBudget && (
+                        <div style={{
+                            padding: '10px 14px', borderRadius: 8, fontSize: 12,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            background: 'rgba(245,158,11,0.06)',
+                            border: '1px solid rgba(245,158,11,0.2)',
+                        }}>
+                            <AlertTriangle size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />
+                            <span>Anggaran belum ditetapkan untuk dapur ini. IR dapat dibuat tanpa validasi anggaran.</span>
+                        </div>
+                    )}
+                    {/* Estimated IR value */}
+                    {estimatedValue > 0 && (
+                        <div style={{
+                            padding: '10px 14px', borderRadius: 8, fontSize: 12,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            background: budgetExceeded ? 'rgba(239,68,68,0.06)' : 'rgba(34,197,94,0.06)',
+                            border: `1px solid ${budgetExceeded ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}`,
+                        }}>
+                            <TrendingDown size={14} style={{ color: budgetExceeded ? '#ef4444' : '#22c55e', flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                                <strong>Estimasi Nilai IR:</strong>{' '}
+                                <strong style={{ color: budgetExceeded ? '#ef4444' : '#22c55e' }}>{fmtRp(estimatedValue)}</strong>
+                                {budgetExceeded && budgetInfo && (
+                                    <span style={{ color: '#ef4444', marginLeft: 8 }}>
+                                        — Melebihi sisa anggaran sebesar <strong>{fmtRp(estimatedValue - budgetInfo.remaining)}</strong>
+                                    </span>
+                                )}
+                                {!budgetExceeded && budgetInfo && (
+                                    <span style={{ color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                                        (Sisa setelah IR: {fmtRp(budgetInfo.remaining - estimatedValue)})
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     <div><label style={labelStyle}>Catatan</label><textarea style={{ ...inputStyle, height: 56, resize: 'vertical' }} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Opsional..." /></div>
 
                     {/* BOM Loader - only for create */}
@@ -311,7 +434,11 @@ export default function InternalRequestPage() {
                         </div>
                         {irItems.map((item, idx) => (
                             <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: 8, marginBottom: 8 }}>
-                                <select style={inputStyle} value={item.itemId} onChange={e => setIrItems(p => p.map((it, i) => i === idx ? { ...it, itemId: e.target.value } : it))}><option value="">-- Pilih Item --</option>{allItems.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}</select>
+                                <select style={inputStyle} value={item.itemId} onChange={e => {
+                                    const newItemId = e.target.value
+                                    setIrItems(p => p.map((it, i) => i === idx ? { ...it, itemId: newItemId } : it))
+                                    if (newItemId) fetchItemPrice(newItemId)
+                                }}><option value="">-- Pilih Item --</option>{allItems.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}</select>
                                 <input style={inputStyle} type="number" placeholder="Qty" min={1} value={item.qtyRequested} onChange={e => setIrItems(p => p.map((it, i) => i === idx ? { ...it, qtyRequested: Number(e.target.value) } : it))} />
                                 <button onClick={() => setIrItems(p => p.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)' }}><X size={14} /></button>
                             </div>
@@ -319,9 +446,82 @@ export default function InternalRequestPage() {
                     </div>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
                         <Button variant="secondary" onClick={() => setShowForm(false)}>Batal</Button>
-                        <Button onClick={handleSubmit} disabled={createIR.isPending || updateIR.isPending}>{(createIR.isPending || updateIR.isPending) ? 'Menyimpan...' : editingIR ? 'Update IR' : 'Simpan Request'}</Button>
+                        <Button onClick={handleSubmit} disabled={createIR.isPending || updateIR.isPending || budgetExceeded}>{(createIR.isPending || updateIR.isPending) ? 'Menyimpan...' : editingIR ? 'Update IR' : 'Simpan Request'}</Button>
                     </div>
                 </div>
+            </Modal>
+
+            {/* Budget Exceeded Modal */}
+            <Modal isOpen={!!budgetExceededError} onClose={() => setBudgetExceededError(null)} title="⚠️ Anggaran Tidak Mencukupi" wide>
+                {budgetExceededError && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', fontSize: 13 }}>
+                            <p style={{ fontWeight: 600, marginBottom: 8, color: '#ef4444' }}>IR tidak dapat dibuat karena estimasi nilai melebihi sisa anggaran dapur.</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                                <div style={{ textAlign: 'center', padding: '10px 8px', background: 'var(--color-surface)', borderRadius: 8 }}>
+                                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>Sisa Anggaran</div>
+                                    <div style={{ fontWeight: 700, color: '#22c55e', fontSize: 15 }}>{fmtRp(budgetExceededError.remaining)}</div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '10px 8px', background: 'var(--color-surface)', borderRadius: 8 }}>
+                                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>Estimasi Nilai IR</div>
+                                    <div style={{ fontWeight: 700, color: '#ef4444', fontSize: 15 }}>{fmtRp(budgetExceededError.estimatedValue)}</div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '10px 8px', background: 'var(--color-surface)', borderRadius: 8 }}>
+                                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>Kekurangan</div>
+                                    <div style={{ fontWeight: 700, color: '#ef4444', fontSize: 15 }}>{fmtRp(budgetExceededError.deficit)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {budgetExceededError.alternatives.length > 0 && (
+                            <div>
+                                <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>💡 Saran Alternatif Item</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    {budgetExceededError.alternatives.map((alt, idx) => (
+                                        <div key={idx} style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.15)', fontSize: 12 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                                <span style={{ color: '#ef4444', fontWeight: 600 }}>{alt.originalItemName}</span>
+                                                <span style={{ color: 'var(--color-text-muted)' }}>({fmtRp(alt.originalPrice)}/unit)</span>
+                                                <span style={{ color: 'var(--color-text-muted)' }}>→</span>
+                                                <span style={{ color: '#22c55e', fontWeight: 600 }}>{alt.alternativeItemName}</span>
+                                                <span style={{ color: 'var(--color-text-muted)' }}>({fmtRp(alt.alternativePrice)}/unit)</span>
+                                                <span style={{ marginLeft: 'auto', color: '#22c55e', fontWeight: 700 }}>hemat {fmtRp(alt.savings)}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {budgetExceededError.alternatives.length === 0 && (
+                            <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: 12 }}>
+                                <strong>Tidak ada alternatif item yang tersedia.</strong> Pertimbangkan untuk mengurangi kuantitas item agar total nilai IR sesuai dengan sisa anggaran ({fmtRp(budgetExceededError.remaining)}).
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
+                            <Button variant="secondary" onClick={() => setBudgetExceededError(null)}>Tutup</Button>
+                            {budgetExceededError.alternatives.length > 0 && (
+                                <Button onClick={() => {
+                                    // Replace original items with alternatives in irItems
+                                    setIrItems(prev => prev.map(item => {
+                                        const alt = budgetExceededError.alternatives.find(a => a.originalItemId === item.itemId)
+                                        if (alt) {
+                                            // Pre-fetch price for the alternative item
+                                            fetchItemPrice(alt.alternativeItemId)
+                                            return { ...item, itemId: alt.alternativeItemId }
+                                        }
+                                        return item
+                                    }))
+                                    setBudgetExceededError(null)
+                                    success('Item diganti dengan alternatif yang lebih hemat.')
+                                }}>
+                                    Gunakan Alternatif
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
             </Modal>
 
             {/* Detail Modal */}

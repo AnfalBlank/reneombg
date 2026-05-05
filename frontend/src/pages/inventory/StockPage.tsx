@@ -43,12 +43,13 @@ export default function StockPage() {
     }))
 
     const filtered = stocks.filter((s: any) => {
+        if (s.locationType !== 'gudang') return false
         const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.sku.toLowerCase().includes(search.toLowerCase())
         const matchLocation = locationFilter === 'all' || s.locationType === locationFilter
         return matchSearch && matchLocation
     })
 
-    const lowStock = stocks.filter((s: any) => s.qty < s.minQty && s.minQty > 0)
+    const lowStock = stocks.filter((s: any) => s.locationType === 'gudang' && s.qty < s.minQty && s.minQty > 0)
 
     const fmt = (n: number) => 'Rp ' + (n || 0).toLocaleString('id-ID')
 
@@ -56,7 +57,6 @@ export default function StockPage() {
         if (!adjForm.itemId) return toastError('Item wajib dipilih!')
         if (!adjForm.reason) return toastError('Alasan penyesuaian wajib diisi!')
         if (adjForm.locationType === 'gudang' && !adjForm.gudangId) return toastError('Gudang wajib dipilih!')
-        if (adjForm.locationType === 'dapur' && !adjForm.dapurId) return toastError('Dapur wajib dipilih!')
         try {
             const result: any = await createAdj.mutateAsync(adjForm)
             success(`Stok disesuaikan: ${result.previousQty} → ${result.newQty} (selisih: ${result.difference > 0 ? '+' : ''}${result.difference})`)
@@ -85,16 +85,15 @@ export default function StockPage() {
     return (
         <div className={styles.page}>
             <div className={styles.pageHeader}>
-                <div><h1 className={styles.pageTitle}>Stok Inventori</h1><p className={styles.pageSubtitle}>Inventori real-time gudang & dapur berbasis Moving Average</p></div>
+                <div><h1 className={styles.pageTitle}>Stok Inventori</h1><p className={styles.pageSubtitle}>Inventori real-time gudang utama berbasis Moving Average</p></div>
                 <div className={styles.pageActions}>
                 </div>
             </div>
 
             <div className={styles.summaryBar}>
-                <div className={styles.summaryItem}><span className={styles.summaryLabel}>Total SKU</span><span className={styles.summaryValue}>{stocks.length}</span></div>
+                <div className={styles.summaryItem}><span className={styles.summaryLabel}>Total SKU</span><span className={styles.summaryValue}>{stocks.filter((s: any) => s.locationType === 'gudang').length}</span></div>
                 <div className={styles.summaryItem}><span className={styles.summaryLabel}>Gudang</span><span className={styles.summaryValue}>{stocks.filter((s: any) => s.locationType === 'gudang').length}</span></div>
-                <div className={styles.summaryItem}><span className={styles.summaryLabel}>Dapur</span><span className={styles.summaryValue}>{stocks.filter((s: any) => s.locationType === 'dapur').length}</span></div>
-                <div className={styles.summaryItem}><span className={styles.summaryLabel}>Nilai Total Stok</span><span className={styles.summaryValue}>{fmt(stocks.reduce((a: number, s: any) => a + s.totalValue, 0))}</span></div>
+                <div className={styles.summaryItem}><span className={styles.summaryLabel}>Nilai Total Stok</span><span className={styles.summaryValue}>{fmt(stocks.filter((s: any) => s.locationType === 'gudang').reduce((a: number, s: any) => a + s.totalValue, 0))}</span></div>
                 <div className={styles.summaryItem}><span className={styles.summaryLabel}>Stok Kritis</span><span className={styles.summaryValue} style={{ color: lowStock.length > 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>{lowStock.length}</span></div>
             </div>
 
@@ -131,7 +130,6 @@ export default function StockPage() {
                         <select className={styles.filterSelect} value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
                             <option value="all">Semua Lokasi</option>
                             <option value="gudang">Gudang</option>
-                            <option value="dapur">Dapur</option>
                         </select>
                     </div>
                 </div>
@@ -196,7 +194,6 @@ export default function StockPage() {
                         <label style={labelStyle}>Tipe Lokasi *</label>
                         <select style={inputStyle} value={adjForm.locationType} onChange={e => setAdjForm({ ...adjForm, locationType: e.target.value as any, gudangId: '', dapurId: '' })}>
                             <option value="gudang">Gudang</option>
-                            <option value="dapur">Dapur</option>
                         </select>
                     </div>
                     {adjForm.locationType === 'gudang' && (
@@ -208,24 +205,12 @@ export default function StockPage() {
                             </select>
                         </div>
                     )}
-                    {adjForm.locationType === 'dapur' && (
-                        <div>
-                            <label style={labelStyle}>Dapur *</label>
-                            <select style={inputStyle} value={adjForm.dapurId} onChange={e => setAdjForm({ ...adjForm, dapurId: e.target.value })}>
-                                <option value="">-- Pilih Dapur --</option>
-                                {dapurs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                            </select>
-                        </div>
-                    )}
                     <div>
                         <label style={labelStyle}>Item *</label>
                         <select style={inputStyle} value={adjForm.itemId} onChange={e => setAdjForm({ ...adjForm, itemId: e.target.value })}>
                             <option value="">-- Pilih Item --</option>
                             {(stocksRaw as any[])
-                                .filter((s: any) => {
-                                    if (adjForm.locationType === 'gudang') return s.locationType === 'gudang' && (!adjForm.gudangId || s.gudangId === adjForm.gudangId)
-                                    return s.locationType === 'dapur' && (!adjForm.dapurId || s.dapurId === adjForm.dapurId)
-                                })
+                                .filter((s: any) => s.locationType === 'gudang' && (!adjForm.gudangId || s.gudangId === adjForm.gudangId))
                                 .map((s: any) => <option key={s.id} value={s.itemId}>{s.item?.name} ({s.item?.sku}) — Stok: {s.qty}</option>)}
                         </select>
                     </div>

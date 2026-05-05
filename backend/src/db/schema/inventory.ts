@@ -26,7 +26,7 @@ export const inventoryMovements = sqliteTable('inventory_movements', {
         .notNull()
         .references(() => items.id),
     movementType: text('movement_type', {
-        enum: ['in_purchase', 'out_distribution', 'in_distribution', 'out_consumption', 'waste', 'adjustment'],
+        enum: ['in_purchase', 'out_distribution', 'in_distribution', 'out_consumption', 'waste', 'adjustment', 'in_direct_delivery'],
     }).notNull(),
     locationType: text('location_type', { enum: ['gudang', 'dapur'] }).notNull(),
     gudangId: text('gudang_id').references(() => gudang.id),

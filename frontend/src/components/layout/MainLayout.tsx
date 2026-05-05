@@ -8,6 +8,7 @@ import { useSession } from '../../lib/auth-client'
 
 const breadcrumbMap: Record<string, string> = {
     dashboard: 'Dashboard',
+    executive: 'Executive Dashboard',
     approvals: 'Pusat Approval',
     'master-data': 'Master Data',
     items: 'Item / SKU',

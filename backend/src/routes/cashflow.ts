@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { db } from '../db/index'
-import { cashflowPayments, goodsReceipts, kitchenReceivings } from '../db/schema/index'
-import { eq } from 'drizzle-orm'
+import { cashflowPayments, goodsReceipts, kitchenReceivings, purchaseOrders, vendors } from '../db/schema/index'
+import { eq, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
 
@@ -61,6 +61,130 @@ app.get('/', requireAuth, async (c) => {
     let all = await db.query.cashflowPayments.findMany({ orderBy: (p, { desc }) => [desc(p.createdAt)] })
     if (type) all = all.filter(p => p.type === type)
     return c.json({ data: all, total: all.length })
+})
+
+// ─── Vendor Summary: group vendor_payment by vendorName with PO detail ────────
+// GET /api/cashflow/vendor-summary
+// Returns per-vendor summary: total hutang, aging, list GRN + PO detail
+app.get('/vendor-summary', requireAuth, async (c) => {
+    // Get all vendor_payment cashflow records
+    const payments = await db.query.cashflowPayments.findMany({
+        where: eq(cashflowPayments.type, 'vendor_payment'),
+        orderBy: (p, { desc }) => [desc(p.createdAt)],
+    })
+
+    // For each payment, enrich with GRN → PO → Vendor detail
+    const enriched = await Promise.all(payments.map(async (p) => {
+        let poNumber: string | null = null
+        let poId: string | null = null
+        let vendorId: string | null = null
+        let receivedDate: Date | null = null
+        let grnItems: any[] = []
+
+        if (p.refType === 'grn' && p.refId) {
+            const grn = await db.query.goodsReceipts.findFirst({
+                where: eq(goodsReceipts.id, p.refId),
+                with: {
+                    po: { with: { vendor: true } },
+                    items: { with: { item: true } },
+                },
+            })
+            if (grn) {
+                poNumber = (grn as any).po?.poNumber || null
+                poId = grn.poId
+                vendorId = (grn as any).po?.vendorId || null
+                receivedDate = grn.receivedDate
+                grnItems = ((grn as any).items || []).map((i: any) => ({
+                    itemName: i.item?.name || '-',
+                    sku: i.item?.sku || '-',
+                    uom: i.item?.uom || '-',
+                    qtyReceived: i.qtyReceived,
+                    unitPrice: i.unitPrice,
+                    totalPrice: i.totalPrice,
+                }))
+            }
+        }
+
+        return {
+            ...p,
+            poNumber,
+            poId,
+            vendorId,
+            receivedDate,
+            grnItems,
+        }
+    }))
+
+    // Group by vendorName
+    const vendorMap = new Map<string, {
+        vendorName: string
+        vendorPhone: string | null
+        vendorContact: string | null
+        totalUnpaid: number
+        totalPending: number
+        totalPaid: number
+        totalAll: number
+        unpaidCount: number
+        oldestUnpaidDate: Date | null
+        agingDays: number
+        payments: typeof enriched
+    }>()
+
+    const now = new Date()
+
+    for (const p of enriched) {
+        const key = p.vendorName || 'Unknown'
+        const existing = vendorMap.get(key)
+
+        // Fetch vendor phone/contact if we have vendorId
+        let vendorPhone: string | null = null
+        let vendorContact: string | null = null
+        if (p.vendorId) {
+            const vendorRecord = await db.query.vendors.findFirst({
+                where: eq(vendors.id, p.vendorId),
+            })
+            vendorPhone = vendorRecord?.phone || null
+            vendorContact = vendorRecord?.contactPerson || null
+        }
+
+        if (!existing) {
+            vendorMap.set(key, {
+                vendorName: key,
+                vendorPhone,
+                vendorContact,
+                totalUnpaid: p.status === 'unpaid' ? p.totalAmount : 0,
+                totalPending: p.status === 'pending' ? p.totalAmount : 0,
+                totalPaid: p.status === 'paid' ? p.totalAmount : 0,
+                totalAll: p.totalAmount,
+                unpaidCount: p.status !== 'paid' ? 1 : 0,
+                oldestUnpaidDate: p.status !== 'paid' ? p.createdAt : null,
+                agingDays: p.status !== 'paid' ? Math.floor((now.getTime() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0,
+                payments: [p],
+            })
+        } else {
+            // Update phone/contact if not yet set
+            if (!existing.vendorPhone && vendorPhone) existing.vendorPhone = vendorPhone
+            if (!existing.vendorContact && vendorContact) existing.vendorContact = vendorContact
+            if (p.status === 'unpaid') existing.totalUnpaid += p.totalAmount
+            if (p.status === 'pending') existing.totalPending += p.totalAmount
+            if (p.status === 'paid') existing.totalPaid += p.totalAmount
+            existing.totalAll += p.totalAmount
+            if (p.status !== 'paid') {
+                existing.unpaidCount++
+                const pDate = new Date(p.createdAt)
+                if (!existing.oldestUnpaidDate || pDate < existing.oldestUnpaidDate) {
+                    existing.oldestUnpaidDate = pDate
+                    existing.agingDays = Math.floor((now.getTime() - pDate.getTime()) / (1000 * 60 * 60 * 24))
+                }
+            }
+            existing.payments.push(p)
+        }
+    }
+
+    // Sort by totalUnpaid DESC
+    const result = Array.from(vendorMap.values()).sort((a, b) => b.totalUnpaid - a.totalUnpaid)
+
+    return c.json({ data: result, total: result.length })
 })
 
 // ─── Get single ───────────────────────────────────────────────────────────────

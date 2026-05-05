@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Plus, Search, Edit2, Trash2, BookOpen, X, Eye, Calculator, Download } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Plus, Search, Edit2, Trash2, BookOpen, X, Eye, Calculator, Download, Tag } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -7,8 +8,205 @@ import Modal from '../../components/ui/Modal'
 import styles from '../shared.module.css'
 import { useRecipes, useCreateRecipe, useUpdateRecipe, useDeleteRecipe, useItems } from '../../hooks/useApi'
 import { useToast } from '../../components/ui/Toast'
-import { fmtDate } from '../../lib/utils'
+import { fmtDate, fmtDateOnly, fmtRp } from '../../lib/utils'
 import { downloadPDF } from '../../lib/pdf'
+import { api, ApiResponse } from '../../lib/api'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface ActivePrice {
+    id: string
+    itemId: string
+    purchasePrice: number
+    sellPrice: number
+    effectiveDate: string
+}
+
+// ─── Hook: useActivePriceForItem ──────────────────────────────────────────────
+
+function useActivePriceForItem(itemId: string) {
+    const today = new Date().toISOString().split('T')[0]
+    return useQuery({
+        queryKey: ['price-list', 'active', itemId],
+        queryFn: () => api.get<ApiResponse<ActivePrice | null>>(`/price-list/active?itemId=${itemId}&date=${today}`),
+        enabled: !!itemId,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    })
+}
+
+// ─── Component: IngredientPriceRow ────────────────────────────────────────────
+
+interface IngredientPriceRowProps {
+    ing: any
+    idx: number
+    multiplier: number
+}
+
+function IngredientPriceRow({ ing, idx, multiplier }: IngredientPriceRowProps) {
+    const { data, isLoading } = useActivePriceForItem(ing.itemId)
+    const price = data?.data ?? null
+    const scaledQty = ing.quantity * multiplier
+
+    return (
+        <tr>
+            <td className={styles.muted}>{idx + 1}</td>
+            <td style={{ fontWeight: 500 }}>{ing.item?.name || '-'}</td>
+            <td style={{ textAlign: 'right' }}>{ing.quantity.toLocaleString('id-ID', { maximumFractionDigits: 3 })}</td>
+            <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--color-primary)' }}>
+                {scaledQty.toLocaleString('id-ID', { maximumFractionDigits: 3 })}
+            </td>
+            <td className={styles.muted}>{ing.uom || ing.item?.uom || '-'}</td>
+            <td style={{ textAlign: 'right' }}>
+                {isLoading ? (
+                    <span style={{ color: 'var(--color-text-dim)', fontSize: 11 }}>...</span>
+                ) : price ? (
+                    <div>
+                        <div style={{ fontWeight: 600, color: 'var(--color-text)' }}>{fmtRp(price.purchasePrice)}</div>
+                        <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{fmtDateOnly(price.effectiveDate)}</div>
+                    </div>
+                ) : (
+                    <Badge label="Belum ada harga" color="gray" />
+                )}
+            </td>
+            <td style={{ textAlign: 'right' }}>
+                {isLoading ? (
+                    <span style={{ color: 'var(--color-text-dim)', fontSize: 11 }}>...</span>
+                ) : price ? (
+                    <div>
+                        <div style={{ fontWeight: 600, color: 'var(--color-text)' }}>{fmtRp(price.sellPrice)}</div>
+                        <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{fmtDateOnly(price.effectiveDate)}</div>
+                    </div>
+                ) : (
+                    <span style={{ color: 'var(--color-text-dim)' }}>-</span>
+                )}
+            </td>
+        </tr>
+    )
+}
+
+// ─── Component: BOMPriceSummary ───────────────────────────────────────────────
+
+interface BOMPriceSummaryProps {
+    ingredients: any[]
+    multiplier: number
+}
+
+// Inner component that fetches price for a single ingredient and reports it via useEffect
+function IngredientPriceFetcher({
+    ing,
+    onPrice,
+}: {
+    ing: any
+    onPrice: (itemId: string, purchasePrice: number | null, sellPrice: number | null) => void
+}) {
+    const { data, isLoading } = useActivePriceForItem(ing.itemId)
+    const price = data?.data ?? null
+
+    const itemId = ing.itemId
+    const purchasePrice = price?.purchasePrice ?? null
+    const sellPrice = price?.sellPrice ?? null
+    const onPriceRef = useRef(onPrice)
+    onPriceRef.current = onPrice
+
+    useEffect(() => {
+        if (!isLoading) {
+            onPriceRef.current(itemId, purchasePrice, sellPrice)
+        }
+    }, [isLoading, itemId, purchasePrice, sellPrice])
+
+    return null
+}
+
+function BOMPriceSummary({ ingredients, multiplier }: BOMPriceSummaryProps) {
+    const [prices, setPrices] = useState<Record<string, { purchasePrice: number | null; sellPrice: number | null }>>({})
+
+    const handlePrice = (itemId: string, purchasePrice: number | null, sellPrice: number | null) => {
+        setPrices(prev => {
+            const existing = prev[itemId]
+            if (existing?.purchasePrice === purchasePrice && existing?.sellPrice === sellPrice) return prev
+            return { ...prev, [itemId]: { purchasePrice, sellPrice } }
+        })
+    }
+
+    let totalHPPBase = 0
+    let totalSellBase = 0
+    let hasAllPrices = true
+    let loadedCount = 0
+
+    ingredients.forEach(ing => {
+        const p = prices[ing.itemId]
+        if (p !== undefined) {
+            loadedCount++
+            if (p.purchasePrice !== null && p.sellPrice !== null) {
+                totalHPPBase += ing.quantity * p.purchasePrice
+                totalSellBase += ing.quantity * p.sellPrice
+            } else {
+                hasAllPrices = false
+            }
+        } else {
+            hasAllPrices = false
+        }
+    })
+
+    const isLoading = loadedCount < ingredients.length
+    const totalHPPScaled = totalHPPBase * multiplier
+    const totalSellScaled = totalSellBase * multiplier
+
+    return (
+        <>
+            {/* Hidden fetchers — one per ingredient, each reports its price */}
+            {ingredients.map(ing => (
+                <IngredientPriceFetcher key={ing.itemId} ing={ing} onPrice={handlePrice} />
+            ))}
+
+            <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <Tag size={14} style={{ color: 'var(--color-success, #10b981)' }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-success, #10b981)' }}>Estimasi Biaya</span>
+                    {isLoading && (
+                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Memuat harga...</span>
+                    )}
+                    {!isLoading && !hasAllPrices && (
+                        <Badge label="Beberapa bahan belum ada harga" color="yellow" />
+                    )}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ background: 'var(--color-surface)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--color-border)' }}>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Total HPP (Porsi Dasar)
+                        </div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>
+                            {isLoading ? '...' : fmtRp(totalHPPBase)}
+                        </div>
+                        {!isLoading && multiplier !== 1 && (
+                            <div style={{ fontSize: 12, color: 'var(--color-primary)', marginTop: 4, fontWeight: 600 }}>
+                                Scaled: {fmtRp(totalHPPScaled)}
+                            </div>
+                        )}
+                    </div>
+                    <div style={{ background: 'var(--color-surface)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--color-border)' }}>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Total Harga Jual (Porsi Dasar)
+                        </div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>
+                            {isLoading ? '...' : fmtRp(totalSellBase)}
+                        </div>
+                        {!isLoading && multiplier !== 1 && (
+                            <div style={{ fontSize: 12, color: 'var(--color-primary)', marginTop: 4, fontWeight: 600 }}>
+                                Scaled: {fmtRp(totalSellScaled)}
+                            </div>
+                        )}
+                    </div>
+                </div>
+                {!isLoading && multiplier !== 1 && (
+                    <div style={{ marginTop: 10, fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                        Faktor scaling: ×{multiplier.toFixed(2)} — nilai scaled = nilai dasar × {multiplier.toFixed(2)}
+                    </div>
+                )}
+            </div>
+        </>
+    )
+}
 
 const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }
@@ -289,30 +487,36 @@ export default function RecipesPage() {
                                         <th style={{ textAlign: 'right' }}>Qty Dasar</th>
                                         <th style={{ textAlign: 'right' }}>Qty Scaled</th>
                                         <th>UOM</th>
+                                        <th style={{ textAlign: 'right' }}>Harga Beli</th>
+                                        <th style={{ textAlign: 'right' }}>Harga Jual</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {(viewRecipe.ingredients || []).length === 0 && (
-                                        <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--color-text-muted)' }}>Belum ada bahan</td></tr>
+                                        <tr><td colSpan={7} style={{ textAlign: 'center', padding: 20, color: 'var(--color-text-muted)' }}>Belum ada bahan</td></tr>
                                     )}
                                     {(viewRecipe.ingredients || []).map((ing: any, idx: number) => {
                                         const multiplier = simPorsi / viewRecipe.defaultYield
-                                        const scaledQty = ing.quantity * multiplier
                                         return (
-                                            <tr key={ing.id}>
-                                                <td className={styles.muted}>{idx + 1}</td>
-                                                <td style={{ fontWeight: 500 }}>{ing.item?.name || '-'}</td>
-                                                <td style={{ textAlign: 'right' }}>{ing.quantity.toLocaleString('id-ID', { maximumFractionDigits: 3 })}</td>
-                                                <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--color-primary)' }}>
-                                                    {scaledQty.toLocaleString('id-ID', { maximumFractionDigits: 3 })}
-                                                </td>
-                                                <td className={styles.muted}>{ing.uom || ing.item?.uom || '-'}</td>
-                                            </tr>
+                                            <IngredientPriceRow
+                                                key={ing.id || idx}
+                                                ing={ing}
+                                                idx={idx}
+                                                multiplier={multiplier}
+                                            />
                                         )
                                     })}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* BOM Price Summary */}
+                        {(viewRecipe.ingredients || []).length > 0 && (
+                            <BOMPriceSummary
+                                ingredients={viewRecipe.ingredients || []}
+                                multiplier={simPorsi / viewRecipe.defaultYield}
+                            />
+                        )}
 
                         {/* Footer: timestamps + actions */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
@@ -324,12 +528,12 @@ export default function RecipesPage() {
                                 <Button size="sm" icon={<Download size={12} />} variant="secondary" onClick={() => {
                                     const rows = (viewRecipe.ingredients || []).map((ing: any, i: number) => {
                                         const scaled = ing.quantity * (simPorsi / viewRecipe.defaultYield)
-                                        return `<tr><td>${i+1}</td><td>${ing.item?.name||'-'}</td><td class="right">${ing.quantity}</td><td class="right bold">${scaled.toFixed(3)}</td><td>${ing.uom||ing.item?.uom||'-'}</td></tr>`
+                                        return `<tr><td>${i+1}</td><td>${ing.item?.name||'-'}</td><td class="right">${ing.quantity}</td><td class="right bold">${scaled.toFixed(3)}</td><td>${ing.uom||ing.item?.uom||'-'}</td><td class="right">-</td><td class="right">-</td></tr>`
                                     }).join('')
                                     downloadPDF(`
                                         <div class="header"><div><h1>RESEP / BOM</h1><div class="muted">${viewRecipe.code} — ${viewRecipe.name}</div></div><div style="text-align:right"><div class="bold">Porsi: ${simPorsi.toLocaleString('id-ID')}</div><div class="muted">Dasar: ${viewRecipe.defaultYield.toLocaleString('id-ID')}</div></div></div>
                                         ${viewRecipe.description ? `<p class="muted">${viewRecipe.description}</p>` : ''}
-                                        <table><thead><tr><th>No</th><th>Bahan</th><th class="right">Qty Dasar</th><th class="right">Qty Scaled</th><th>UOM</th></tr></thead><tbody>${rows}</tbody></table>
+                                        <table><thead><tr><th>No</th><th>Bahan</th><th class="right">Qty Dasar</th><th class="right">Qty Scaled</th><th>UOM</th><th class="right">Harga Beli</th><th class="right">Harga Jual</th></tr></thead><tbody>${rows}</tbody></table>
                                     `, `Resep-${viewRecipe.code}`)
                                 }}>PDF</Button>
                             </div>

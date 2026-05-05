@@ -60,6 +60,12 @@ export default function Dashboard() {
     const summary = summaryRes?.data
     const lowStockItems = lowStockRes?.data || []
 
+    // Owner gets Executive Dashboard
+    if (userRole === 'owner') {
+        navigate('/executive', { replace: true })
+        return null
+    }
+
     if (isLoading) return (
         <div className={styles.page}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '80px 20px', color: 'var(--color-text-muted)' }}>

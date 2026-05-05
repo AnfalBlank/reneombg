@@ -1,9 +1,10 @@
 # 📘 DOKUMENTASI SISTEM ERP MBG (Reneo MBG)
 
-**Versi**: 1.1.0
+**Versi**: 1.2.0
 **Platform**: Web Application + Telegram Bot
 **URL**: https://rmb.manggalautama.web.id
 **Powered by**: PT. Manggala Utama Indonesia — Solusi Sistem Terintegrasi
+**Terakhir diperbarui**: Mei 2026
 
 ---
 
@@ -13,13 +14,15 @@ ERP MBG adalah sistem Enterprise Resource Planning terintegrasi untuk manajemen 
 
 - Manajemen pembelian (Purchase Order & Goods Receipt)
 - Distribusi bahan ke dapur (Internal Request → Delivery Order → Kitchen Receiving)
-- Inventori gudang & dapur
-- Keuangan (Invoice, Arus Kas, Anggaran)
+- Inventori gudang utama (stok dapur tidak dimonitor)
+- Keuangan (Tagihan Dapur, Pembayaran Vendor, Anggaran, Log Anggaran)
+- Price List & Budget Control (harga baku per item, kontrol anggaran dapur)
 - Pembukuan (Jurnal, General Ledger)
-- Laporan operasional
+- Laporan operasional & keuangan
 - Notifikasi real-time (Web + Telegram)
 - Chat antar pengguna
 - Audit trail lengkap
+- Executive Dashboard untuk Owner
 
 ---
 
@@ -40,6 +43,7 @@ ERP MBG adalah sistem Enterprise Resource Planning terintegrasi untuk manajemen 
 | Icons | Lucide React |
 | State | TanStack React Query |
 | PDF | Browser Print API |
+| Testing | Vitest + fast-check (Property-Based Testing) |
 
 ### 2.2 Arsitektur Deployment
 
@@ -57,8 +61,9 @@ Browser ──→ Nginx (SSL/Reverse Proxy)
 Sistem memiliki 5 role dengan hak akses berbeda:
 
 ### 3.1 Owner
+- **Executive Dashboard** khusus (KPI keuangan, pending approvals, dapur performance)
 - Akses penuh ke seluruh sistem
-- Approve pembayaran & invoice
+- Approve IR & PO
 - Hapus data master
 - Kelola pengguna & pengaturan
 
@@ -69,9 +74,9 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 - Kelola semua data
 
 ### 3.3 Admin Pusat
-- Master Data (Item, Vendor, Dapur, Gudang, COA, Resep/BOM)
+- Master Data (Item, Vendor, Dapur, Gudang, COA, Resep/BOM, Price List)
 - Pembelian (PO, Goods Receipt)
-- Inventori (semua gudang & dapur)
+- Inventori (stok gudang utama)
 - Supply Chain (IR, DO, KR, Konsumsi)
 - Pembukuan (Jurnal, GL, Tutup Buku)
 - Laporan operasional
@@ -81,8 +86,7 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 - Dashboard khusus dapurnya
 - Internal Request (hanya dapurnya, dapur auto-fill & terkunci)
 - Kitchen Receiving (hanya kiriman untuk dapurnya)
-- Inventori (hanya stok dapurnya)
-- Invoice Dapur (hanya invoice dapurnya)
+- Tagihan Dapur (hanya invoice dapurnya)
 - Anggaran Dapur (hanya budget dapurnya)
 - Pemakaian Bahan
 - **TIDAK BISA**: Approve IR, buat DO, akses dapur lain
@@ -91,7 +95,8 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 - Dashboard keuangan
 - Pembelian (PO, GR)
 - Pembukuan (Jurnal, GL, Tutup Buku)
-- Arus Kas (Pembayaran Vendor, Invoice, Pengeluaran, Anggaran)
+- Arus Kas (Pembayaran Vendor, Tagihan Dapur, Pengeluaran Operasional, Anggaran, Log Anggaran)
+- Price List management
 - Laporan keuangan & analisis
 - Approve pembayaran & invoice
 
@@ -100,24 +105,33 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 ## 4. MODUL & FITUR
 
 ### 4.1 Dashboard
+
+#### Dashboard Operasional (Admin, Finance, Super Admin)
 - Ringkasan operasional (PO, IR, DO, KR aktif)
-- Grafik interaktif (pembelian, distribusi, pengeluaran)
-- Alert stok rendah (scrollable ticker)
+- Grafik distribusi jurnal (pie chart)
+- Alert stok rendah gudang utama (scrollable ticker)
 - Sapaan personal berdasarkan user login
-- Dashboard berbeda per role
+- Quick actions berdasarkan role
+
+#### Executive Dashboard (Owner)
+- KPI keuangan: Revenue, COGS, Gross Profit, Net Profit + margin %
+- Operational summary: Total PO, GRN, IR, Stok Kritis
+- **Pending Approvals widget**: amber banner dengan count IR + PO pending
+- Chart: P&L Trend, Expense Breakdown, Dapur Performance
+- Recent Activity (5 jurnal terakhir)
+- Auto-redirect dari /dashboard ke /executive untuk role owner
 
 ### 4.2 Master Data
 
 #### Item / SKU
-- CRUD item dengan SKU auto-generate (ITM-0001)
-- Kategori: Bahan Baku, Bumbu, Packaging, dll
+- CRUD item dengan SKU auto-generate
+- Kategori: Bahan Baku, Protein, Bumbu & Rempah, Sayuran, Minuman, Packaging, Peralatan, Lainnya
 - UOM (satuan): kg, liter, pcs, dll
 - Minimum stock untuk alert
 
 #### Vendor
 - CRUD vendor dengan kode auto-generate
-- Kontak, email, kategori
-- Riwayat harga per item
+- Kontak person, nomor telepon (untuk notifikasi WA), email, kategori
 
 #### Dapur / Unit
 - Daftar dapur cabang
@@ -125,7 +139,6 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 
 #### Gudang
 - Daftar gudang penyimpanan
-- Lokasi, kapasitas
 
 #### Chart of Accounts (COA)
 - Struktur akun akuntansi
@@ -135,161 +148,184 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 - Create manual atau upload dari template Excel
 - Nama menu, default yield (porsi)
 - Daftar bahan + qty per porsi
-- Scaling simulator (hitung kebutuhan untuk X porsi)
-- Auto-generate dari upload IR (jika menu belum ada)
+- **Harga Beli & Harga Jual per bahan** (dari Price List aktif)
+- **Total HPP & Total Harga Jual** per resep
+- **Scaling simulator** dengan update harga proporsional
+- Auto-generate dari upload IR
 - Print PDF
+
+#### Price List (BARU)
+- Daftar harga baku per item dengan tanggal berlaku (effectiveDate)
+- Harga berlaku sampai ada harga baru (tidak ada expiry)
+- Riwayat harga per item (timeline)
+- Badge "Akan Berlaku" untuk harga future
+- Warning jika harga jual < harga beli
+- **Download Template Excel** → isi harga → **Import Excel** (partial success)
+- Audit log setiap perubahan harga
+- Validasi: harga > 0, backdating max 30 hari
 
 ### 4.3 Pembelian
 
 #### Purchase Order (PO)
 - Buat PO ke vendor dengan item & harga
+- **Auto-fill harga dari Price List** saat item dipilih
+- **Indikator deviasi harga**: kuning (>0%), merah (>10%)
+- **Konfirmasi eksplisit** jika deviasi >10%
+- **Pengiriman Langsung ke Dapur** (Direct Delivery): checkbox + pilih dapur tujuan
+- Badge "DIRECT" untuk PO direct delivery
 - Status: draft → pending_approval → open → received
-- Approval workflow (admin/super_admin approve)
-- Input harga dengan separator ribuan (CurrencyInput)
-- Auto-generate dari IR jika stok gudang kurang
+- Approval workflow
 - Print PDF
 
 #### Goods Receipt (GR)
 - Terima barang dari vendor berdasarkan PO
-- Input qty aktual diterima
-- Otomatis update stok gudang
-- Auto-generate record di Arus Kas (Pembayaran Vendor)
+- **Regular GR**: update stok gudang utama
+- **Direct Delivery GR**: stok gudang TIDAK berubah, langsung ke dapur
+- Auto-generate record di Pembayaran Vendor
 
 ### 4.4 Inventori
 
-#### Stok Gudang
-- Tampilan stok per gudang & per dapur
-- Alert stok rendah (< minimum stock)
-- Filter per lokasi
+#### Stok Gudang (Gudang Utama Saja)
+- Hanya menampilkan stok gudang utama (`locationType = 'gudang'`)
+- Stok dapur tidak ditampilkan (monitoring dihapus)
+- Alert stok rendah hanya untuk gudang
+- Filter: search, gudang
 
 #### Stock Opname
 - Buat stock opname per gudang
 - Input qty fisik vs qty sistem
-- Selisih otomatis terhitung
 - Laporan stock opname (view & PDF)
 
 #### Pengembalian Barang
 - Item dari KR partial yang ditolak → pending return
 - Approval sebelum masuk kembali ke gudang
-- Detail modal: item, qty, alasan penolakan
-- Status: pending → approved → returned
 
 ### 4.5 Supply Chain
 
 #### Internal Request (IR)
 - Permintaan bahan dari dapur ke gudang
-- Input manual atau upload Excel template (SPPG)
-- Load dari Resep/BOM (pilih menu + target porsi)
-- Auto-detect dapur, menu, item dari template Excel
-- Auto-create item baru jika belum ada di master
-- Auto-create BOM jika menu belum ada
-- Warning budget dapur saat membuat IR
-- Status: draft → pending → approved → in_delivery → fulfilled/partial_received
-- Kitchen admin: dapur auto-fill & terkunci
+- Input manual, upload Excel (SPPG), atau load dari BOM
+- **Budget Validation**: estimasi nilai IR real-time
+  - Banner sisa anggaran dapur
+  - Warning merah + disable Submit jika melebihi anggaran
+  - Modal BUDGET_EXCEEDED dengan saran alternatif item
+  - Banner kuning jika anggaran belum ditetapkan
+- Status: pending → approved → in_transit → fulfilled/partial_received/cancelled
 
 #### Delivery Order (DO)
-- Surat jalan pengiriman dari gudang ke dapur
-- Auto-create saat IR di-approve (status draft)
-- Input harga jual per item (CurrencyInput)
-- Status: draft → in_transit → delivered → confirmed
+- Auto-create saat IR di-approve
+- Input harga jual per item
 - Konfirmasi kirim → kurangi stok gudang
 - Print surat jalan PDF
 
 #### Kitchen Receiving (KR)
 - Penerimaan aktual barang di dapur
-- Tabel proporsional: Item, Dikirim, Diterima (input), Selisih, Alasan
-- Summary cards: Total Dikirim, Diterima, Ditolak
-- Partial receiving: qty aktual < qty dikirim
-- Alasan penolakan per item (rusak, expired, dll)
+- Partial receiving dengan alasan penolakan
 - Konfirmasi → update stok dapur, buat invoice otomatis
-- Item ditolak → masuk Pengembalian (pending approval)
-- Notifikasi Telegram detail (item diterima & ditolak)
+- Jurnal distribusi otomatis
 
-#### Pemakaian Bahan (Konsumsi)
+#### Pemakaian Bahan
 - Catat pemakaian bahan di dapur
-- Berdasarkan resep atau manual
 - Kurangi stok dapur
 
 ### 4.6 Keuangan (Arus Kas)
 
-#### Pembayaran Vendor
-- Auto-generate dari Goods Receipt
-- Status: unpaid → pending (upload bukti) → paid (approve)
-- Upload bukti pembayaran (JPG/PDF)
-- Approve oleh finance/admin
+#### Pembayaran Vendor (DIPERKAYA)
+Halaman dengan 3 tab:
 
-#### Invoice Dapur
-- Auto-generate dari Kitchen Receiving (qty aktual × harga jual)
-- No. Invoice, No. DO, No. KR tercantum
+**Tab 1: Summary per Vendor**
+- Kartu per vendor dengan aging badge (>30h merah, >14h kuning)
+- Stats: Belum Bayar, Pending, Lunas per vendor
+- Expand vendor → list GRN dengan No. GRN, No. PO, tanggal, total, status
+- Expand GRN → detail item (nama, SKU, qty, harga, total)
+- **Tombol WA per GRN** (hijau kecil): kirim notifikasi untuk 1 PO saja
+- **Tombol "Kirim Rekap"/"Kirim Notifikasi"** di vendor card:
+  - Muncul jika ada minimal 1 transaksi lunas
+  - Pesan WA include: daftar PO lunas + daftar outstanding
+  - Otomatis buka WhatsApp ke nomor vendor (dari master data)
+
+**Tab 2: Per Transaksi**
+- Tabel semua GRN payment
+- Upload bukti, approve
+
+**Tab 3: Pendapatan Dapur**
+- Tabel income dari Kitchen Receiving
+
+#### Tagihan Dapur (DIGABUNG)
+Halaman dengan 2 tab:
+
+**Tab 1: Per Transaksi**
+- Invoice per KR transaction
 - Filter: search, dapur, bulan, tahun, status
-- Rekap per dapur per periode
-- Status: issued → pending (upload bukti) → paid (approve)
-- Tombol Bayar: upload bukti pembayaran
-- Tombol Approve: verifikasi pembayaran
-- Lihat bukti pembayaran (preview gambar/PDF)
-- Print invoice PDF & rekap PDF
-- RBAC: kitchen_admin hanya lihat invoice dapurnya
+- Rekap per dapur
+- Bayar + upload bukti, approve, cetak PDF
 
-#### Anggaran Dapur (Budget Monitoring)
-- Setup budget per dapur per periode (biasanya 2 minggu)
-- Auto-suggest periode (1-15 atau 16-akhir bulan)
-- Realisasi otomatis dari invoice dalam periode
-- Progress bar berwarna: hijau (<80%), kuning (80-99%), merah (≥100%)
-- Badge: "Aman", "Hampir Habis", "OVER BUDGET"
-- Detail: breakdown invoice per periode
-- Warning di form IR saat budget hampir habis
-- Create/Edit/Close/Delete budget
-- Print rekap PDF
-- RBAC: kitchen_admin hanya lihat budget dapurnya
+**Tab 2: Rekap Bulanan**
+- Rekap tagihan per dapur per bulan
+- Kartu per dapur dengan status lunas/belum
+- Tombol Bayar + upload bukti
+- Cetak invoice per dapur
 
-#### Pengeluaran
-- Catat pengeluaran operasional manual
-- Kategori, deskripsi, jumlah (CurrencyInput)
-- Upload lampiran (gambar/PDF)
-- View lampiran di detail
+#### Anggaran Dapur (DIPERKAYA)
+- Setup budget per dapur per periode
+- **Field dailyBudget**: alokasi anggaran harian
+- **Tombol "Lihat Log"**: navigasi ke Log Anggaran dengan filter dapur
+- Progress bar + badge status
+- Detail breakdown invoice
 
-#### Dashboard Finance
-- Ringkasan keuangan per periode
-- Grafik pendapatan vs pengeluaran
+#### Log Anggaran (BARU)
+- Audit trail setiap transaksi yang mempengaruhi anggaran
+- Kolom: Tanggal, Dapur, Jenis Transaksi, Nomor Referensi, Jumlah, Saldo Sebelum, Saldo Sesudah
+- Filter: dapur, rentang tanggal, jenis transaksi
+- Summary harian (total pengeluaran per hari)
+- Export CSV
 
-#### Laporan Keuangan
-- Laporan laba rugi, neraca
-
-#### Analisis
-- Analisis tren, perbandingan periode
+#### Pengeluaran Operasional
+- Catat pengeluaran manual (gaji, utilitas, maintenance, dll)
+- Kategori, deskripsi, jumlah, upload lampiran
+- Berbeda dari Pembayaran Vendor (yang otomatis dari GRN)
 
 ### 4.7 Pembukuan
 
 #### Jurnal Umum
-- Auto-generate dari distribusi (DO → KR)
-- Auto-generate dari konsumsi bahan
-- Auto-generate dari waste/selisih KR
+- Auto-generate dari distribusi, konsumsi, waste
 - Manual entry
 
 #### General Ledger
 - Buku besar per akun COA
-- Filter per periode
 
 #### Tutup Buku
 - Tutup periode akuntansi
-- Lock jurnal periode sebelumnya
 
-### 4.8 Laporan Operasional
-- 6 jenis laporan:
-  1. Laporan Pembelian
-  2. Laporan Internal Request
-  3. Laporan Distribusi
-  4. Laporan Inventori
-  5. Laporan Jurnal
-  6. Laporan Konsumsi
-- Summary cards + detail tabel
-- Download PDF per laporan
+### 4.8 Laporan
 
-### 4.9 Approval Center
-- Halaman terpusat untuk semua approval
-- IR pending, PO pending, Return pending
-- History approval (siapa minta, siapa approve)
-- Filter status: menunggu, disetujui, ditolak
+#### Laporan Operasional
+- 6 jenis laporan: Pembelian, IR, Distribusi, Inventori, Jurnal, Konsumsi
+- Download PDF
+
+#### Laporan Keuangan
+- P&L (Laba Rugi) per periode + per dapur
+- Balance Sheet (Neraca)
+- Export PDF
+
+#### Dashboard Finance
+- KPI: Revenue, COGS, Gross Profit, Net Profit
+- Chart: P&L Trend, Expense Breakdown, Dapur Comparison
+- Top Expenses, Recent Transactions
+
+#### Analisis Keuangan
+- Rasio keuangan: Gross Margin, Net Margin, COGS Ratio
+- Tren margin per periode
+- Efisiensi per dapur (radar chart)
+- Alerts & insights otomatis
+
+### 4.9 Approval Center (DIPERBAIKI)
+- Halaman terpusat untuk semua approval (IR + PO)
+- **Tombol Tolak** untuk IR dan PO
+- IR ditolak → status `cancelled` → tampil sebagai "Ditolak" di halaman approval
+- Notifikasi ke requester saat approve/reject
+- Filter: status, tipe, search
+- History: siapa approve/reject, kapan
 
 ### 4.10 Notifikasi
 
@@ -297,46 +333,22 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 - Push notification via WebSocket
 - Bell icon 🔔 di header dengan badge count
 - Toast notification untuk aksi penting
-- Dropdown list notifikasi dengan mark as read
 
 #### Telegram Bot
-- Link akun via email (/start → masukkan email)
+- Link akun via email
 - Upload Excel IR langsung dari Telegram
 - Approve IR & PO via inline button
-- Notifikasi otomatis:
-  - IR disetujui → status + No. DO
-  - DO terkirim → No. DO + link surat jalan
-  - KR selesai → detail item diterima & ditolak + No. Invoice
-- Cek status IR via command
+- Notifikasi otomatis: IR approve/reject, DO kirim, KR selesai
 
 ### 4.11 Chat
 - Chat real-time antar pengguna via WebSocket
-- Daftar kontak dengan unread count
-- Read receipts (✓ terkirim, ✓✓ dibaca)
-- Search user
+- Read receipts, unread count
 
 ### 4.12 Pengaturan
-
-#### Admin Panel (Owner/Super Admin)
-- Overview sistem
-- Kelola pengguna
-- Pengaturan sistem
-- Audit log
-- Pengumuman
-
-#### Pengguna & Akses
-- CRUD user (nama, email, role, dapur)
-- Reset password per user
-- Assign role & dapur
-
-#### Audit Log
-- Rekam semua aksi (POST/PATCH/PUT/DELETE)
-- Siapa, kapan, endpoint apa, data apa
-- Filter per user, tanggal, aksi
-
-#### Profil Saya
-- Edit nama, email
-- Ganti password
+- Admin Panel (Owner/Super Admin)
+- Pengguna & Akses (CRUD user, reset password)
+- Audit Log
+- Profil Saya
 
 ---
 
@@ -344,60 +356,65 @@ Sistem memiliki 5 role dengan hak akses berbeda:
 
 ### 5.1 Flow Pembelian
 ```
-Buat PO → Approve PO → Terima Barang (GR) → Stok Gudang Bertambah
-                                            → Auto-create Pembayaran Vendor
+Buat PO (auto-fill harga dari Price List)
+    → Approve PO
+    → Terima Barang (GR)
+    → Stok Gudang Bertambah (regular) atau Langsung ke Dapur (direct delivery)
+    → Auto-create Pembayaran Vendor
+    → Upload Bukti → Approve → Lunas
+    → Kirim Notifikasi WA ke Vendor (opsional)
 ```
 
-### 5.2 Flow Distribusi (Gudang → Dapur)
+### 5.2 Flow Distribusi
 ```
-Admin Dapur buat IR → Admin/Super Admin Approve IR
-    → Auto-create DO (draft) → Input Harga Jual → Konfirmasi Kirim
-    → Stok Gudang Berkurang → Status: Terkirim
+Admin Dapur buat IR (cek budget otomatis)
+    → Approve IR → Auto-create DO
+    → Konfirmasi Kirim → Stok Gudang Berkurang
     → Admin Dapur terima (KR) → Input Qty Aktual
     → Stok Dapur Bertambah → Auto-create Invoice
-    → Item ditolak → Masuk Pengembalian (pending approval)
     → Jurnal distribusi otomatis
 ```
 
-### 5.3 Flow Pembayaran
+### 5.3 Flow Budget Control
 ```
-Invoice Terbit (dari KR) → Upload Bukti Bayar → Status: Pending
-    → Finance Approve → Status: Lunas
-```
-
-### 5.4 Flow Anggaran
-```
-Finance set Budget per Dapur per 2 Minggu
-    → Realisasi otomatis dari Invoice
-    → Warning di IR jika budget hampir habis
-    → Tutup periode saat selesai
+Finance set Budget per Dapur per Periode
+    → Saat buat IR: estimasi nilai dihitung real-time
+    → Jika melebihi: IR diblokir + saran alternatif item
+    → Jika disetujui: budget log 'ir_reserved' dibuat
+    → Jika IR dibatalkan: budget log di-reverse
+    → Direct Delivery GR: budget dapur dipotong otomatis
+    → Warning notifikasi jika sisa < 20%
 ```
 
-### 5.5 Flow Telegram
+### 5.4 Flow Price List
 ```
-User /start → Link email → Upload Excel IR
-    → Admin approve (web/telegram) → Auto-create DO
-    → DO terkirim → Notif + surat jalan
-    → KR selesai → Notif detail item + invoice
+Finance input harga per item (effectiveDate)
+    → Harga aktif = entry dengan effectiveDate terbesar ≤ tanggal transaksi
+    → PO: auto-fill harga, tampilkan deviasi jika diubah manual
+    → BOM: tampilkan HPP & harga jual per bahan
+    → IR: estimasi nilai berdasarkan harga aktif
 ```
 
 ---
 
-## 6. INPUT FORMAT
+## 6. DATABASE
 
-### 6.1 Currency Input
-Semua input nominal uang menggunakan komponen CurrencyInput:
-- Prefix "Rp" otomatis
-- Separator ribuan real-time (titik)
-- Desimal dengan koma
-- Contoh: ketik 15000000 → tampil Rp 15.000.000
+Database menggunakan **Turso** (Cloud SQLite):
+- URL: `libsql://[database-name].turso.io`
+- Migrasi: file `backend/migrate*.mjs`
+- Jalankan migrasi: `node migrate16.mjs` dari direktori `backend/`
 
-### 6.2 Template Excel IR (SPPG)
-Format template yang didukung:
-- Kolom: No, Bahan, Qty, Satuan
-- Header berisi nama dapur (auto-detect)
-- Total penerima manfaat (untuk porsi BOM)
-- Nama menu (auto-detect untuk BOM)
+### Tabel Utama
+- `items`, `vendors`, `gudang`, `dapur`, `coa` — Master data
+- `purchase_orders`, `po_items`, `goods_receipts`, `gr_items` — Pembelian
+- `internal_requests`, `ir_items`, `delivery_orders`, `do_items`, `kitchen_receivings`, `kr_items` — Supply chain
+- `inventory_stock`, `inventory_movements` — Inventori
+- `price_list_entries` — Price list (BARU)
+- `dapur_budgets`, `budget_logs` — Anggaran & log (BARU)
+- `cashflow_payments` — Arus kas
+- `invoices`, `invoice_items` — Invoice dapur
+- `journal_entries`, `journal_lines` — Pembukuan
+- `notifications`, `audit_logs`, `chat_messages` — Sistem
 
 ---
 
@@ -408,27 +425,27 @@ Format template yang didukung:
 - RBAC: role-based access control di frontend & backend
 - Audit trail: semua mutasi data tercatat
 - CORS: hanya origin yang diizinkan
-- HTTPS: SSL via Let's Encrypt (Certbot)
+- HTTPS: SSL via Let's Encrypt
 - Environment variables: .env tidak di-commit ke git
 
 ---
 
 ## 8. DEPLOYMENT
 
-### 8.1 Requirements
-- VPS Ubuntu 22.04+
-- Node.js 20+
-- Nginx
-- PM2
-- Domain + SSL
-
-### 8.2 Quick Deploy
+### 8.1 Quick Deploy
 ```bash
-# Di VPS
-sudo bash setup-vps.sh    # Setup awal (sekali)
-bash deploy.sh             # Deploy/update
-certbot --nginx -d domain  # SSL (sekali)
+bash deploy.sh
+```
+
+### 8.2 Migrasi Database Baru
+```bash
+cd backend
+node migrate.mjs
+node migrate2.mjs
+# ... sampai
+node migrate16.mjs
+node reset-admin.mjs  # buat superadmin
 ```
 
 ### 8.3 Environment Variables
-Lihat `.env.example` untuk daftar lengkap variabel yang dibutuhkan.
+Lihat `.env.example` untuk daftar lengkap.

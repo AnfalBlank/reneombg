@@ -71,10 +71,12 @@ export default function ApprovalPage() {
     }
 
     const handleReject = async (item: any) => {
-        if (!confirm(`Tolak ${item.number}?`)) return
+        if (!confirm(`Tolak ${item.number}? Berikan alasan penolakan jika perlu.`)) return
         try {
             if (item.type === 'po') {
                 await rejectPO.mutateAsync(item.id)
+            } else if (item.type === 'ir') {
+                await api.patch(`/supply-chain/requests/${item.id}/cancel`, {})
             }
             qc.invalidateQueries({ queryKey: ['approvals'] })
             success(`${item.number} ditolak.`)
@@ -185,10 +187,8 @@ export default function ApprovalPage() {
                                         <>
                                             <Button size="sm" icon={<CheckCircle size={13} />} variant="success" onClick={() => handleApprove(item)}
                                                 disabled={approveIR.isPending || approvePO.isPending}>Setujui</Button>
-                                            {item.type === 'po' && (
-                                                <Button size="sm" icon={<XCircle size={13} />} variant="danger" onClick={() => handleReject(item)}
-                                                    disabled={rejectPO.isPending}>Tolak</Button>
-                                            )}
+                                            <Button size="sm" icon={<XCircle size={13} />} variant="danger" onClick={() => handleReject(item)}
+                                                disabled={rejectPO.isPending}>Tolak</Button>
                                         </>
                                     )}
                                     <button className={styles.actionBtn} onClick={() => navigate(item.link)} style={{ fontSize: 11 }}>

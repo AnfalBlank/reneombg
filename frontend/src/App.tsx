@@ -35,6 +35,12 @@ import ApprovalPage from './pages/approval/ApprovalPage'
 import AuditLogPage from './pages/settings/AuditLogPage'
 import AdminPanelPage from './pages/settings/AdminPanelPage'
 import OperationalReportsPage from './pages/reports/OperationalReportsPage'
+import PriceListPage from './pages/master-data/PriceListPage'
+import VendorInvoicePage from './pages/finance/VendorInvoicePage'
+import BudgetLogPage from './pages/finance/BudgetLogPage'
+import TagihanDapurPage from './pages/finance/TagihanDapurPage'
+import KitchenBillingPage from './pages/finance/KitchenBillingPage'
+import ExecutiveDashboard from './pages/ExecutiveDashboard'
 
 export default function App() {
     return (
@@ -48,6 +54,7 @@ export default function App() {
                     <Route path="/" element={<MainLayout />}>
                         <Route index element={<Navigate to="/dashboard" replace />} />
                         <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="executive" element={<ExecutiveDashboard />} />
                         <Route path="approvals" element={<ApprovalPage />} />
 
                         {/* Master Data */}
@@ -57,6 +64,7 @@ export default function App() {
                         <Route path="master-data/gudang" element={<GudangPage />} />
                         <Route path="master-data/coa" element={<CoaPage />} />
                         <Route path="master-data/recipes" element={<RecipesPage />} />
+                        <Route path="master-data/price-list" element={<PriceListPage />} />
 
                         {/* Purchase */}
                         <Route path="purchase/po" element={<PurchaseOrderPage />} />
@@ -91,6 +99,12 @@ export default function App() {
                         <Route path="finance/budget" element={<BudgetPage />} />
                         <Route path="finance/analysis" element={<AnalysisPage />} />
                         <Route path="finance/expenses" element={<ExpensePage />} />
+                        <Route path="finance/vendor-invoices" element={<VendorInvoicePage />} />
+                        <Route path="finance/budget-log" element={<BudgetLogPage />} />
+                        <Route path="finance/tagihan-dapur" element={<TagihanDapurPage />} />
+                        <Route path="finance/kitchen-billing" element={<KitchenBillingPage />} />
+                        {/* Legacy redirects — lama ke baru */}
+                        <Route path="finance/invoices" element={<Navigate to="/finance/tagihan-dapur" replace />} />
 
                         {/* Legacy redirects */}
                         <Route path="finance/journal" element={<Navigate to="/accounting/journal" replace />} />
