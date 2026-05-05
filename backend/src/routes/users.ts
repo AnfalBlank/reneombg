@@ -134,12 +134,44 @@ app.post('/:id/reset-password', requireAuth, requireAdmin, async (c) => {
 app.delete('/:id', requireAuth, requireAdmin, async (c) => {
     const id = c.req.param('id') as string
     const admin = (c as any).get('user') as any
+
     const targetUser = await db.query.user.findFirst({ where: eq(user.id, id) })
+    if (!targetUser) return c.json({ error: 'User tidak ditemukan' }, 404)
 
-    await logAudit({ userId: admin.id, userName: admin.name, userRole: admin.role, action: 'delete_user', entity: 'user', entityId: id, description: `${admin.name} hapus user: ${targetUser?.name} (${targetUser?.email})` })
+    // Prevent deleting yourself
+    if (admin.id === id) return c.json({ error: 'Tidak dapat menghapus akun sendiri' }, 400)
 
-    await db.delete(user).where(eq(user.id, id))
-    return c.json({ success: true })
+    try {
+        // Delete all related data first (SQLite doesn't enforce FK cascade reliably)
+        const { notifications, chatMessages, session: sessionTable, account: accountTable } = await import('../db/schema/index')
+
+        // 1. Delete notifications
+        await db.delete(notifications).where(eq(notifications.userId, id))
+
+        // 2. Delete chat messages (as sender or receiver)
+        await db.delete(chatMessages).where(eq(chatMessages.senderId, id))
+        await db.delete(chatMessages).where(eq(chatMessages.receiverId, id))
+
+        // 3. Delete sessions
+        await db.delete(sessionTable).where(eq(sessionTable.userId, id))
+
+        // 4. Delete accounts (credentials)
+        await db.delete(accountTable).where(eq(accountTable.userId, id))
+
+        // 5. Finally delete the user
+        await db.delete(user).where(eq(user.id, id))
+
+        await logAudit({
+            userId: admin.id, userName: admin.name, userRole: admin.role,
+            action: 'delete_user', entity: 'user', entityId: id,
+            description: `${admin.name} hapus user: ${targetUser.name} (${targetUser.email})`,
+        })
+
+        return c.json({ success: true })
+    } catch (err: any) {
+        console.error('[DELETE USER]', err)
+        return c.json({ error: err.message || 'Gagal menghapus user' }, 500)
+    }
 })
 
 export default app
