@@ -626,6 +626,15 @@ const statements = [
         created_at INTEGER NOT NULL
     )`,
 
+    // ── Telegram ──────────────────────────────────────────────────────────────
+    `CREATE TABLE IF NOT EXISTS telegram_links (
+        user_id TEXT PRIMARY KEY,
+        chat_id INTEGER NOT NULL,
+        user_name TEXT,
+        user_role TEXT,
+        linked_at INTEGER NOT NULL
+    )`,
+
     // ── Indexes ───────────────────────────────────────────────────────────────
     `CREATE INDEX IF NOT EXISTS idx_inv_stock_item ON inventory_stock (item_id)`,
     `CREATE INDEX IF NOT EXISTS idx_inv_stock_gudang ON inventory_stock (gudang_id)`,
