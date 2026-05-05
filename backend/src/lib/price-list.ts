@@ -48,23 +48,35 @@ export interface PriceListEntryInput {
  * Validates: Requirements 2.3, 2.4, 9.2, 9.3
  */
 // Helper: normalize effectiveDate from DB (could be Date, ms number, or seconds number)
+// Returns start-of-day UTC milliseconds to avoid timezone issues
 function toMs(val: any): number {
-    if (val instanceof Date) return val.getTime()
+    if (val instanceof Date) {
+        // Normalize to start of UTC day
+        const d = new Date(val)
+        d.setUTCHours(0, 0, 0, 0)
+        return d.getTime()
+    }
     const n = Number(val)
-    if (isNaN(n)) return new Date(val).getTime()
-    // If number is < 1e10, it's likely Unix seconds (not ms)
-    // Unix seconds for year 2000+ are ~9.4e8 to ~2e9
-    // Unix ms for year 2000+ are ~9.4e11 to ~2e12
-    return n < 1e10 ? n * 1000 : n
+    if (isNaN(n)) {
+        const d = new Date(val)
+        d.setUTCHours(0, 0, 0, 0)
+        return d.getTime()
+    }
+    // If number is < 1e10, it's Unix seconds; convert to ms
+    const ms = n < 1e10 ? n * 1000 : n
+    // Normalize to start of UTC day
+    const d = new Date(ms)
+    d.setUTCHours(0, 0, 0, 0)
+    return d.getTime()
 }
 
 export function resolveActivePricePure<T extends PriceEntryLike>(
     entries: T[],
     queryDate: Date,
 ): T | null {
-    // Normalize to end-of-day so entries set for "today" are always active
+    // Normalize queryDate to end of UTC day
     const normalized = new Date(queryDate)
-    normalized.setHours(23, 59, 59, 999)
+    normalized.setUTCHours(23, 59, 59, 999)
     const normalizedMs = normalized.getTime()
 
     const validEntries = entries.filter((e) => toMs(e.effectiveDate) <= normalizedMs)
@@ -99,8 +111,9 @@ export async function resolveActivePrice(
 
     if (entries.length === 0) return null
 
+    // Normalize queryDate to end of UTC day
     const normalized = new Date(queryDate)
-    normalized.setHours(23, 59, 59, 999)
+    normalized.setUTCHours(23, 59, 59, 999)
     const normalizedMs = normalized.getTime()
 
     const valid = entries.filter(e => toMs(e.effectiveDate) <= normalizedMs)
