@@ -1,11 +1,19 @@
 import { Hono } from 'hono'
 import { db } from '../db/index'
-import { journalEntries, journalLines, accountingPeriods, inventoryStock } from '../db/schema/index'
+import { journalEntries, journalLines, accountingPeriods, inventoryStock, invoices, vendorInvoices, expenses, cashflowPayments, goodsReceipts } from '../db/schema/index'
 import { eq, and, gte, lte, sum, sql } from 'drizzle-orm'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { randomUUID } from 'crypto'
 
 const app = new Hono()
+
+// ─── Helper: filter by date range ────────────────────────────────────────────
+function inRange(date: Date | null | undefined, start?: string, end?: string): boolean {
+    if (!date) return true
+    if (start && new Date(date) < new Date(start)) return false
+    if (end && new Date(date) > new Date(end + 'T23:59:59')) return false
+    return true
+}
 
 // ─── Journal Entries ──────────────────────────────────────────────────────────
 app.get('/journal', requireAuth, async (c) => {
@@ -126,104 +134,205 @@ app.post('/periods/:id/close', requireAuth, requireRole('super_admin', 'admin', 
     return c.json({ success: true, message: `Periode ${period.label} berhasil ditutup` })
 })
 
-// ─── Profit & Loss Report (berbasis GR harga beli vs DO/KR harga jual) ────────
-// Revenue  = total sellTotal dari DO yang sudah confirmed/delivered (harga jual ke dapur)
-// COGS     = total harga beli dari GR (unitPrice × qtyReceived) untuk item yang sudah di-DO
-// Profit   = Revenue - COGS
-// Stok dapur dianggap sudah terjual saat KR dikonfirmasi
+// ─── Profit & Loss Report ─────────────────────────────────────────────────────
+//
+// PENDAPATAN (Revenue):
+//   1. Invoice Dapur (tagihan ke dapur) — invoices.totalAmount
+//      - Semua status (issued/pending/paid) diakui sebagai pendapatan
+//      - Filter: invoices.createdAt dalam periode
+//
+// HARGA POKOK PENJUALAN (COGS):
+//   2. Vendor Invoice (tagihan dari vendor) — vendorInvoices.totalAmount
+//      - Semua status (draft/issued/paid) diakui sebagai COGS
+//      - Filter: vendorInvoices.createdAt dalam periode
+//
+// BEBAN OPERASIONAL (Expenses):
+//   3. Expenses (pengeluaran operasional) — expenses.amount
+//      - Semua status (recorded/approved/paid)
+//      - Filter: expenses.createdAt dalam periode
+//   4. Pembayaran ke vendor via cashflow (vendor_payment) — cashflowPayments.totalAmount
+//      - Hanya yang belum masuk vendor invoice (refType = 'grn' dan tidak ada vendor invoice)
+//
+// GROSS PROFIT = Revenue - COGS
+// NET PROFIT   = Gross Profit - Expenses
+//
 app.get('/reports/pl', requireAuth, requireRole('super_admin', 'admin', 'finance'), async (c) => {
     const startDate = c.req.query('startDate')
     const endDate = c.req.query('endDate')
     const dapurId = c.req.query('dapurId')
 
-    // ── Revenue: dari DO confirmed/delivered (sellTotal per item) ──────────────
-    let dos = await db.query.deliveryOrders.findMany({
-        with: { items: { with: { item: true } }, dapur: true },
-        orderBy: (d, { asc }) => [asc(d.createdAt)],
+    // ── 1. PENDAPATAN: Invoice Dapur ──────────────────────────────────────────
+    let allInvoices = await db.query.invoices.findMany({
+        with: { items: true },
+        orderBy: (i, { asc }) => [asc(i.createdAt)],
     })
-    // Hanya DO yang sudah dikirim/dikonfirmasi
-    dos = dos.filter(d => ['in_transit', 'delivered', 'confirmed'].includes(d.status))
-    if (startDate) dos = dos.filter(d => new Date(d.createdAt) >= new Date(startDate))
-    if (endDate) dos = dos.filter(d => new Date(d.createdAt) <= new Date(endDate + 'T23:59:59'))
-    if (dapurId) dos = dos.filter(d => d.dapurId === dapurId)
+    if (startDate) allInvoices = allInvoices.filter(i => inRange(i.createdAt, startDate, endDate))
+    else if (endDate) allInvoices = allInvoices.filter(i => inRange(i.createdAt, undefined, endDate))
+    if (dapurId) allInvoices = allInvoices.filter(i => i.dapurId === dapurId)
 
-    // Revenue per dapur
-    const revenueByDapur: Record<string, { name: string; revenue: number; cogs: number }> = {}
     let totalRevenue = 0
-    let totalCogs = 0
+    const revenueByDapur: Record<string, { name: string; revenue: number; cogs: number; invoiceCount: number; paidCount: number }> = {}
+    const revenueByStatus = { issued: 0, pending: 0, paid: 0 }
 
-    // Revenue detail per item
-    const revenueDetail: Array<{ itemName: string; qty: number; sellPrice: number; sellTotal: number; unitCost: number; costTotal: number; margin: number; dapurName: string }> = []
-
-    for (const doRec of dos) {
-        const dapurName = doRec.dapur?.name || '-'
-        if (!revenueByDapur[doRec.dapurId]) {
-            revenueByDapur[doRec.dapurId] = { name: dapurName, revenue: 0, cogs: 0 }
+    for (const inv of allInvoices) {
+        const amt = inv.totalAmount || 0
+        totalRevenue += amt
+        revenueByStatus[inv.status as keyof typeof revenueByStatus] = (revenueByStatus[inv.status as keyof typeof revenueByStatus] || 0) + amt
+        if (!revenueByDapur[inv.dapurId]) {
+            revenueByDapur[inv.dapurId] = { name: inv.dapurName || '-', revenue: 0, cogs: 0, invoiceCount: 0, paidCount: 0 }
         }
-        for (const li of doRec.items) {
-            const rev = li.sellTotal || 0
-            const cost = li.totalCost || 0
-            totalRevenue += rev
-            totalCogs += cost
-            revenueByDapur[doRec.dapurId].revenue += rev
-            revenueByDapur[doRec.dapurId].cogs += cost
-            revenueDetail.push({
-                itemName: li.item?.name || '-',
-                qty: li.qtyDelivered,
-                sellPrice: li.sellPrice,
-                sellTotal: rev,
-                unitCost: li.unitCost,
-                costTotal: cost,
-                margin: rev > 0 ? ((rev - cost) / rev) * 100 : 0,
-                dapurName,
-            })
-        }
+        revenueByDapur[inv.dapurId].revenue += amt
+        revenueByDapur[inv.dapurId].invoiceCount++
+        if (inv.status === 'paid') revenueByDapur[inv.dapurId].paidCount++
     }
 
-    // ── Expenses: dari expense table (pengeluaran operasional) ─────────────────
-    let totalExpenses = 0
-    try {
-        const { expenses: expenseTable } = await import('../db/schema/index')
-        const expList = await db.query.expenses.findMany()
-        let filtered = expList
-        if (startDate) filtered = filtered.filter((e: any) => new Date(e.expenseDate) >= new Date(startDate))
-        if (endDate) filtered = filtered.filter((e: any) => new Date(e.expenseDate) <= new Date(endDate + 'T23:59:59'))
-        if (dapurId) filtered = filtered.filter((e: any) => !e.dapurId || e.dapurId === dapurId)
-        totalExpenses = filtered.reduce((a: number, e: any) => a + (e.amount || 0), 0)
-    } catch { /* expenses table mungkin belum ada */ }
+    // ── 2. COGS: Vendor Invoice ───────────────────────────────────────────────
+    let allVendorInvoices = await db.query.vendorInvoices.findMany({
+        with: { vendor: true },
+        orderBy: (vi, { asc }) => [asc(vi.createdAt)],
+    })
+    if (startDate) allVendorInvoices = allVendorInvoices.filter(vi => inRange(vi.createdAt, startDate, endDate))
+    else if (endDate) allVendorInvoices = allVendorInvoices.filter(vi => inRange(vi.createdAt, undefined, endDate))
 
+    let totalCogs = 0
+    const cogsByVendor: Record<string, { name: string; amount: number; paid: number; unpaid: number }> = {}
+    const cogsByStatus = { draft: 0, issued: 0, paid: 0 }
+
+    for (const vi of allVendorInvoices) {
+        const amt = vi.totalAmount || 0
+        totalCogs += amt
+        cogsByStatus[vi.status as keyof typeof cogsByStatus] = (cogsByStatus[vi.status as keyof typeof cogsByStatus] || 0) + amt
+        const vendorName = vi.vendorName || vi.vendor?.name || '-'
+        if (!cogsByVendor[vi.vendorId]) {
+            cogsByVendor[vi.vendorId] = { name: vendorName, amount: 0, paid: 0, unpaid: 0 }
+        }
+        cogsByVendor[vi.vendorId].amount += amt
+        if (vi.status === 'paid') cogsByVendor[vi.vendorId].paid += amt
+        else cogsByVendor[vi.vendorId].unpaid += amt
+    }
+
+    // ── 3. BEBAN OPERASIONAL: Expenses ───────────────────────────────────────
+    let allExpenses = await db.query.expenses.findMany({
+        orderBy: (e, { asc }) => [asc(e.createdAt)],
+    })
+    if (startDate) allExpenses = allExpenses.filter(e => inRange(e.createdAt, startDate, endDate))
+    else if (endDate) allExpenses = allExpenses.filter(e => inRange(e.createdAt, undefined, endDate))
+
+    let totalExpenses = 0
+    const expensesByCategory: Record<string, number> = {}
+
+    for (const exp of allExpenses) {
+        const amt = exp.amount || 0
+        totalExpenses += amt
+        expensesByCategory[exp.category] = (expensesByCategory[exp.category] || 0) + amt
+    }
+
+    // ── 4. PEMBAYARAN VENDOR via Cashflow (yang belum masuk vendor invoice) ───
+    // Ini untuk menangkap pembayaran langsung yang tidak melalui vendor invoice
+    let cashflowVendorPayments = await db.query.cashflowPayments.findMany({
+        orderBy: (p, { asc }) => [asc(p.createdAt)],
+    })
+    cashflowVendorPayments = cashflowVendorPayments.filter(p =>
+        p.type === 'vendor_payment' && p.status === 'paid'
+    )
+    if (startDate) cashflowVendorPayments = cashflowVendorPayments.filter(p => inRange(p.createdAt, startDate, endDate))
+    else if (endDate) cashflowVendorPayments = cashflowVendorPayments.filter(p => inRange(p.createdAt, undefined, endDate))
+
+    // Hanya hitung cashflow vendor payment yang refType bukan 'vendor_invoice'
+    // (untuk menghindari double counting dengan vendor invoice)
+    const cashflowVendorTotal = cashflowVendorPayments
+        .filter(p => p.refType !== 'vendor_invoice')
+        .reduce((a, p) => a + (p.totalAmount || 0), 0)
+
+    // ── Kalkulasi P&L ─────────────────────────────────────────────────────────
     const grossProfit = totalRevenue - totalCogs
     const netProfit = grossProfit - totalExpenses
-    const grossMargin = totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(2) + '%' : '0%'
-    const netMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) + '%' : '0%'
+    const grossMarginPct = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
+    const netMarginPct = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
 
-    // Monthly trend
-    const monthMap: Record<string, { revenue: number; cogs: number; profit: number }> = {}
-    for (const doRec of dos) {
-        const d = new Date(doRec.createdAt)
+    // ── Monthly Trend ─────────────────────────────────────────────────────────
+    const monthMap: Record<string, { revenue: number; cogs: number; expenses: number }> = {}
+
+    for (const inv of allInvoices) {
+        const d = new Date(inv.createdAt)
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, profit: 0 }
-        for (const li of doRec.items) {
-            monthMap[key].revenue += li.sellTotal || 0
-            monthMap[key].cogs += li.totalCost || 0
-        }
+        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, expenses: 0 }
+        monthMap[key].revenue += inv.totalAmount || 0
     }
+    for (const vi of allVendorInvoices) {
+        const d = new Date(vi.createdAt)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, expenses: 0 }
+        monthMap[key].cogs += vi.totalAmount || 0
+    }
+    for (const exp of allExpenses) {
+        const d = new Date(exp.createdAt)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, expenses: 0 }
+        monthMap[key].expenses += exp.amount || 0
+    }
+
     const monthlyTrend = Object.entries(monthMap)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([period, v]) => ({ period, revenue: v.revenue, cogs: v.cogs, profit: v.revenue - v.cogs }))
+        .map(([period, v]) => ({
+            period,
+            revenue: v.revenue,
+            cogs: v.cogs,
+            expenses: v.expenses,
+            grossProfit: v.revenue - v.cogs,
+            netProfit: v.revenue - v.cogs - v.expenses,
+        }))
+
+    // ── Sinkronisasi COGS ke revenueByDapur ──────────────────────────────────
+    // Distribusikan COGS ke dapur berdasarkan proporsi revenue
+    const totalRevForCogs = Object.values(revenueByDapur).reduce((a, d) => a + d.revenue, 0)
+    if (totalRevForCogs > 0) {
+        for (const d of Object.values(revenueByDapur)) {
+            d.cogs = totalCogs * (d.revenue / totalRevForCogs)
+        }
+    }
 
     return c.json({
         data: {
-            // Summary
+            // ── Summary ──────────────────────────────────────────────────────
             revenue: totalRevenue,
             cogs: totalCogs,
             grossProfit,
             expenses: totalExpenses,
             netProfit,
-            grossMargin,
-            netMargin,
-            margin: grossMargin,
-            // Per dapur
+            grossMargin: grossMarginPct.toFixed(2) + '%',
+            netMargin: netMarginPct.toFixed(2) + '%',
+            margin: grossMarginPct.toFixed(2) + '%',
+
+            // ── Breakdown Pendapatan ──────────────────────────────────────────
+            revenueBreakdown: {
+                total: totalRevenue,
+                byStatus: revenueByStatus,
+                invoiceCount: allInvoices.length,
+                paidRevenue: revenueByStatus.paid,
+                unpaidRevenue: revenueByStatus.issued + revenueByStatus.pending,
+            },
+
+            // ── Breakdown COGS ────────────────────────────────────────────────
+            cogsBreakdown: {
+                total: totalCogs,
+                byStatus: cogsByStatus,
+                vendorInvoiceCount: allVendorInvoices.length,
+                paidCogs: cogsByStatus.paid,
+                unpaidCogs: cogsByStatus.draft + cogsByStatus.issued,
+                byVendor: Object.entries(cogsByVendor).map(([id, v]) => ({ vendorId: id, ...v }))
+                    .sort((a, b) => b.amount - a.amount),
+            },
+
+            // ── Breakdown Beban ───────────────────────────────────────────────
+            expenseBreakdown: {
+                total: totalExpenses,
+                byCategory: Object.entries(expensesByCategory).map(([cat, amt]) => ({ category: cat, amount: amt }))
+                    .sort((a, b) => b.amount - a.amount),
+                count: allExpenses.length,
+            },
+
+            // ── Per Dapur ─────────────────────────────────────────────────────
             byDapur: Object.entries(revenueByDapur).map(([id, v]) => ({
                 dapurId: id,
                 dapurName: v.name,
@@ -231,99 +340,129 @@ app.get('/reports/pl', requireAuth, requireRole('super_admin', 'admin', 'finance
                 cogs: v.cogs,
                 profit: v.revenue - v.cogs,
                 margin: v.revenue > 0 ? ((v.revenue - v.cogs) / v.revenue * 100).toFixed(1) + '%' : '0%',
-            })),
-            // Detail per item
-            detail: revenueDetail.sort((a, b) => b.sellTotal - a.sellTotal).slice(0, 50),
-            // Monthly trend
+                invoiceCount: v.invoiceCount,
+                paidCount: v.paidCount,
+            })).sort((a, b) => b.revenue - a.revenue),
+
+            // ── Monthly Trend ─────────────────────────────────────────────────
             monthlyTrend,
-            // Legacy summary field (untuk backward compat ReportsPage)
-            summary: Object.entries(revenueByDapur).map(([id, v]) => ({
-                id,
-                name: v.name,
-                type: 'REVENUE',
-                debit: v.cogs,
-                credit: v.revenue,
-            })),
+
+            // ── Legacy compat untuk ReportsPage ──────────────────────────────
+            summary: [
+                ...Object.entries(revenueByDapur).map(([id, v]) => ({
+                    id, name: v.name, type: 'REVENUE', debit: v.cogs, credit: v.revenue,
+                })),
+                ...Object.entries(cogsByVendor).map(([id, v]) => ({
+                    id, name: v.name, type: 'EXPENSE', debit: v.amount, credit: 0,
+                })),
+                ...Object.entries(expensesByCategory).map(([cat, amt]) => ({
+                    id: cat, name: cat, type: 'EXPENSE', debit: amt, credit: 0,
+                })),
+            ],
         },
     })
 })
 
-// ─── Balance Sheet Report (berbasis inventory stock + hutang vendor) ───────────
-// Aset     = nilai stok gudang + nilai stok dapur + kas (dari cashflow)
-// Kewajiban = hutang vendor (GR yang belum dibayar)
-// Ekuitas  = Aset - Kewajiban
+// ─── Balance Sheet Report ─────────────────────────────────────────────────────
+//
+// ASET:
+//   - Persediaan Gudang     = inventory_stock (locationType=gudang)
+//   - Persediaan Dapur      = inventory_stock (locationType=dapur)
+//   - Piutang Dapur (AR)    = invoices yang belum paid (issued + pending)
+//
+// KEWAJIBAN:
+//   - Hutang Vendor (AP)    = vendor_invoices yang belum paid (draft + issued)
+//   - Beban Akrual          = expenses yang belum paid (recorded + approved)
+//
+// EKUITAS:
+//   - Laba Ditahan          = akumulasi net profit (revenue - cogs - expenses)
+//
 app.get('/reports/balance-sheet', requireAuth, requireRole('super_admin', 'admin', 'finance'), async (c) => {
     const endDate = c.req.query('endDate')
 
-    // ── ASET: Inventory Stock ──────────────────────────────────────────────────
+    // ── ASET 1: Inventory Stock ───────────────────────────────────────────────
     const stocks = await db.query.inventoryStock.findMany({
         with: { item: true, gudang: true, dapur: true },
     })
-
     const gudangStocks = stocks.filter(s => s.locationType === 'gudang')
     const dapurStocks = stocks.filter(s => s.locationType === 'dapur')
     const totalGudangValue = gudangStocks.reduce((a, s) => a + s.totalValue, 0)
     const totalDapurValue = dapurStocks.reduce((a, s) => a + s.totalValue, 0)
-    const totalInventory = totalGudangValue + totalDapurValue
 
-    // ── KEWAJIBAN: GR yang belum dibayar (vendor_invoice_id = null) ────────────
-    let grns = await db.query.goodsReceipts.findMany({
-        with: { po: { with: { vendor: true } } },
+    // ── ASET 2: Piutang Dapur (AR) — invoice belum dibayar ───────────────────
+    let allInvoices = await db.query.invoices.findMany()
+    if (endDate) allInvoices = allInvoices.filter(i => inRange(i.createdAt, undefined, endDate))
+    const unpaidInvoices = allInvoices.filter(i => i.status !== 'paid')
+    const totalPiutangDapur = unpaidInvoices.reduce((a, i) => a + (i.totalAmount || 0), 0)
+
+    // Piutang per dapur
+    const piutangByDapur: Record<string, { name: string; amount: number; count: number }> = {}
+    for (const inv of unpaidInvoices) {
+        if (!piutangByDapur[inv.dapurId]) {
+            piutangByDapur[inv.dapurId] = { name: inv.dapurName || '-', amount: 0, count: 0 }
+        }
+        piutangByDapur[inv.dapurId].amount += inv.totalAmount || 0
+        piutangByDapur[inv.dapurId].count++
+    }
+
+    // ── KEWAJIBAN 1: Hutang Vendor (AP) — vendor invoice belum paid ───────────
+    let allVendorInvoices = await db.query.vendorInvoices.findMany({
+        with: { vendor: true },
     })
-    if (endDate) grns = grns.filter(g => new Date(g.createdAt) <= new Date(endDate + 'T23:59:59'))
-    // Hutang = GR yang belum punya vendor invoice
-    const unpaidGrns = grns.filter(g => !g.vendorInvoiceId)
-    const totalHutangVendor = unpaidGrns.reduce((a, g) => a + (g.totalAmount || 0), 0)
+    if (endDate) allVendorInvoices = allVendorInvoices.filter(vi => inRange(vi.createdAt, undefined, endDate))
+    const unpaidVendorInvoices = allVendorInvoices.filter(vi => vi.status !== 'paid')
+    const totalHutangVendor = unpaidVendorInvoices.reduce((a, vi) => a + (vi.totalAmount || 0), 0)
 
-    // ── ASET: Kas dari cashflow payments ──────────────────────────────────────
-    let totalKas = 0
-    try {
-        const { cashflowPayments } = await import('../db/schema/index')
-        const payments = await db.query.cashflowPayments.findMany()
-        let filtered = payments
-        if (endDate) filtered = filtered.filter((p: any) => new Date(p.paymentDate) <= new Date(endDate + 'T23:59:59'))
-        // Kas berkurang saat bayar vendor
-        const totalPaid = filtered.filter((p: any) => p.status === 'paid').reduce((a: number, p: any) => a + (p.amount || 0), 0)
-        // Kas awal tidak ditrack, jadi kita hitung sebagai negatif hutang yang sudah dibayar
-        totalKas = -totalPaid // kas keluar
-    } catch { /* cashflow mungkin belum ada */ }
+    // Hutang per vendor
+    const hutangByVendor: Record<string, { name: string; amount: number; count: number; oldestDate: Date | null }> = {}
+    for (const vi of unpaidVendorInvoices) {
+        const vendorName = vi.vendorName || vi.vendor?.name || '-'
+        if (!hutangByVendor[vi.vendorId]) {
+            hutangByVendor[vi.vendorId] = { name: vendorName, amount: 0, count: 0, oldestDate: null }
+        }
+        hutangByVendor[vi.vendorId].amount += vi.totalAmount || 0
+        hutangByVendor[vi.vendorId].count++
+        const d = new Date(vi.createdAt)
+        if (!hutangByVendor[vi.vendorId].oldestDate || d < hutangByVendor[vi.vendorId].oldestDate!) {
+            hutangByVendor[vi.vendorId].oldestDate = d
+        }
+    }
 
-    // ── REVENUE dari DO (untuk retained earnings) ─────────────────────────────
-    let dos = await db.query.deliveryOrders.findMany({
-        with: { items: true },
-    })
-    dos = dos.filter(d => ['in_transit', 'delivered', 'confirmed'].includes(d.status))
-    if (endDate) dos = dos.filter(d => new Date(d.createdAt) <= new Date(endDate + 'T23:59:59'))
-    const totalRevenue = dos.reduce((a, d) => d.items.reduce((b, li) => b + (li.sellTotal || 0), a), 0)
-    const totalCogs = dos.reduce((a, d) => d.items.reduce((b, li) => b + (li.totalCost || 0), a), 0)
+    // ── KEWAJIBAN 2: Beban Akrual — expenses belum paid ───────────────────────
+    let allExpenses = await db.query.expenses.findMany()
+    if (endDate) allExpenses = allExpenses.filter(e => inRange(e.createdAt, undefined, endDate))
+    const unpaidExpenses = allExpenses.filter(e => e.status !== 'paid')
+    const totalBebanAkrual = unpaidExpenses.reduce((a, e) => a + (e.amount || 0), 0)
 
-    // ── Expenses ───────────────────────────────────────────────────────────────
-    let totalExpenses = 0
-    try {
-        const expList = await db.query.expenses.findMany()
-        let filtered = expList
-        if (endDate) filtered = filtered.filter((e: any) => new Date(e.expenseDate) <= new Date(endDate + 'T23:59:59'))
-        totalExpenses = filtered.reduce((a: number, e: any) => a + (e.amount || 0), 0)
-    } catch { /* expenses mungkin belum ada */ }
-
+    // ── RETAINED EARNINGS: akumulasi net profit ───────────────────────────────
+    // Revenue = semua invoice (semua status)
+    const totalRevenue = allInvoices.reduce((a, i) => a + (i.totalAmount || 0), 0)
+    // COGS = semua vendor invoice (semua status)
+    const totalCogs = allVendorInvoices.reduce((a, vi) => a + (vi.totalAmount || 0), 0)
+    // Expenses = semua expenses (semua status)
+    const totalExpenses = allExpenses.reduce((a, e) => a + (e.amount || 0), 0)
     const retainedEarnings = totalRevenue - totalCogs - totalExpenses
 
-    // ── Susun Balance Sheet ────────────────────────────────────────────────────
+    // ── Susun Balance Sheet ───────────────────────────────────────────────────
     const assets = [
-        { id: 'inv-gudang', code: '1-3100', name: 'Persediaan Gudang', balance: totalGudangValue },
-        { id: 'inv-dapur', code: '1-3200', name: 'Persediaan Dapur', balance: totalDapurValue },
+        { id: 'inv-gudang', code: '1-3100', name: 'Persediaan Gudang', balance: totalGudangValue, type: 'inventory' },
+        { id: 'inv-dapur', code: '1-3200', name: 'Persediaan Dapur', balance: totalDapurValue, type: 'inventory' },
+        { id: 'ar-dapur', code: '1-1200', name: 'Piutang Dapur (Invoice Belum Dibayar)', balance: totalPiutangDapur, type: 'receivable' },
     ].filter(a => a.balance > 0)
 
     const liabilities = [
-        { id: 'hutang-vendor', code: '2-1000', name: 'Hutang Vendor (GR Belum Dibayar)', balance: totalHutangVendor },
+        { id: 'ap-vendor', code: '2-1000', name: 'Hutang Vendor (Invoice Belum Dibayar)', balance: totalHutangVendor, type: 'payable' },
+        { id: 'accrued-exp', code: '2-2000', name: 'Beban Akrual (Pengeluaran Belum Dibayar)', balance: totalBebanAkrual, type: 'accrued' },
     ].filter(a => a.balance > 0)
 
-    const equity: any[] = []
+    const equity = [
+        { id: 'retained', code: '3-2000', name: 'Laba Ditahan', balance: retainedEarnings, type: 'equity' },
+    ]
 
     const totalAssets = assets.reduce((a, x) => a + x.balance, 0)
     const totalLiabilities = liabilities.reduce((a, x) => a + x.balance, 0)
-    const totalEquity = 0
-    const totalLiabilitiesAndEquity = totalLiabilities + totalEquity + retainedEarnings
+    const totalEquity = equity.reduce((a, x) => a + x.balance, 0)
+    const totalLiabilitiesAndEquity = totalLiabilities + totalEquity
 
     return c.json({
         data: {
@@ -336,13 +475,36 @@ app.get('/reports/balance-sheet', requireAuth, requireRole('super_admin', 'admin
             retainedEarnings,
             totalLiabilitiesAndEquity,
             isBalanced: Math.abs(totalAssets - totalLiabilitiesAndEquity) < 1,
-            // Extra info
-            breakdown: {
-                gudangValue: totalGudangValue,
-                dapurValue: totalDapurValue,
-                hutangVendor: totalHutangVendor,
-                unpaidGrnCount: unpaidGrns.length,
-                retainedEarnings,
+
+            // Detail untuk drill-down
+            detail: {
+                inventory: {
+                    gudang: totalGudangValue,
+                    dapur: totalDapurValue,
+                    total: totalGudangValue + totalDapurValue,
+                },
+                piutangDapur: {
+                    total: totalPiutangDapur,
+                    count: unpaidInvoices.length,
+                    byDapur: Object.entries(piutangByDapur).map(([id, v]) => ({ dapurId: id, ...v }))
+                        .sort((a, b) => b.amount - a.amount),
+                },
+                hutangVendor: {
+                    total: totalHutangVendor,
+                    count: unpaidVendorInvoices.length,
+                    byVendor: Object.entries(hutangByVendor).map(([id, v]) => ({
+                        vendorId: id,
+                        name: v.name,
+                        amount: v.amount,
+                        count: v.count,
+                        oldestDate: v.oldestDate,
+                        agingDays: v.oldestDate ? Math.floor((Date.now() - v.oldestDate.getTime()) / 86400000) : 0,
+                    })).sort((a, b) => b.amount - a.amount),
+                },
+                bebanAkrual: {
+                    total: totalBebanAkrual,
+                    count: unpaidExpenses.length,
+                },
             },
         },
     })
