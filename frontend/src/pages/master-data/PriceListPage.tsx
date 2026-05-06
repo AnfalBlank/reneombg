@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, Search, Edit2, Trash2, DollarSign, Download, Upload, History, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
@@ -183,10 +183,17 @@ export default function PriceListPage() {
     const { success, error: toastError, info } = useToast()
 
     // Filters
+    const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
     const [category, setCategory] = useState('')
     const [dateFrom, setDateFrom] = useState('')
     const [dateTo, setDateTo] = useState('')
+
+    // Debounce search input — only fire query after user stops typing for 300ms
+    useEffect(() => {
+        const timer = setTimeout(() => setSearch(searchInput), 300)
+        return () => clearTimeout(timer)
+    }, [searchInput])
 
     // Expanded rows for price history
     const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
@@ -349,8 +356,10 @@ export default function PriceListPage() {
         setExpandedItemId(prev => prev === itemId ? null : itemId)
     }
 
-    if (isLoading) return <div className={styles.page}>Memuat data harga...</div>
     if (error) return <div className={styles.page}>Error: {(error as Error).message}</div>
+
+    // Only show full-page loading on initial load (no data yet)
+    if (isLoading && !priceListRes) return <div className={styles.page}>Memuat data harga...</div>
 
     return (
         <div className={styles.page}>
@@ -393,8 +402,8 @@ export default function PriceListPage() {
                             <input
                                 className={styles.searchInput}
                                 placeholder="Cari nama item atau SKU..."
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
+                                value={searchInput}
+                                onChange={e => setSearchInput(e.target.value)}
                             />
                         </div>
                         <select
@@ -421,11 +430,11 @@ export default function PriceListPage() {
                             title="Sampai tanggal berlaku"
                             style={{ cursor: 'pointer' }}
                         />
-                        {(search || category || dateFrom || dateTo) && (
+                        {(searchInput || category || dateFrom || dateTo) && (
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => { setSearch(''); setCategory(''); setDateFrom(''); setDateTo('') }}
+                                onClick={() => { setSearchInput(''); setSearch(''); setCategory(''); setDateFrom(''); setDateTo('') }}
                             >
                                 Reset Filter
                             </Button>
