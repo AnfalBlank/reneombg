@@ -7,14 +7,20 @@ import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
 import styles from '../shared.module.css'
 
-import { usePeriods, useClosePeriod, useCreatePeriod } from '../../hooks/useApi'
+import { usePeriods, useClosePeriod } from '../../hooks/useApi'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '../../lib/api'
 
 export default function PeriodClosingPage() {
     const navigate = useNavigate()
     const { data: pRes, isLoading, error } = usePeriods()
     const allPeriods = pRes?.data || []
     const closeMutation = useClosePeriod()
-    const createPeriod = useCreatePeriod()
+    const queryClient = useQueryClient()
+    const createPeriod = useMutation({
+        mutationFn: (data: { year: number; month: number }) => api.post<any>('/finance/periods', data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['finance', 'periods'] }),
+    })
 
     const [showCreate, setShowCreate] = useState(false)
     const now = new Date()
