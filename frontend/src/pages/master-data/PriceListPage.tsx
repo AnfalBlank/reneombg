@@ -143,7 +143,7 @@ function PriceHistoryRow({ itemId, itemName }: { itemId: string; itemName: strin
                             <table style={{ width: '100%', minWidth: 480, borderCollapse: 'collapse', fontSize: 12 }}>
                                 <thead>
                                     <tr>
-                                        {['Tanggal Berlaku', 'Harga Beli (Avg)', 'Harga Jual', 'Catatan', 'Dibuat'].map(h => (
+                                        {['Tanggal Berlaku', 'Harga Beli (Avg)', 'Harga Jual', 'Catatan', 'Dibuat Oleh'].map(h => (
                                             <th key={h} style={{ textAlign: 'left', padding: '6px 10px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}>{h}</th>
                                         ))}
                                     </tr>
@@ -164,8 +164,10 @@ function PriceHistoryRow({ itemId, itemName }: { itemId: string; itemName: strin
                                             </td>
                                             <td style={{ padding: '6px 10px', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{fmtRp(h.purchasePrice)}</td>
                                             <td style={{ padding: '6px 10px', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{fmtRp(h.sellPrice)}</td>
-                                            <td style={{ padding: '6px 10px', color: 'var(--color-text-muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.notes || '-'}</td>
-                                            <td style={{ padding: '6px 10px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{h.createdBy || '-'}</td>
+                                            <td style={{ padding: '6px 10px', color: 'var(--color-text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={h.notes || '-'}>{h.notes || '-'}</td>
+                                            <td style={{ padding: '6px 10px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }} title={(h as any).createdByName || h.createdBy || '-'}>
+                                                {(h as any).createdByName || h.createdBy || '-'}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

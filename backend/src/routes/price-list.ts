@@ -264,8 +264,6 @@ app.get('/template', requireAuth, requireRole('super_admin', 'admin', 'finance')
 })
 
 // ─── GET /api/price-list/history/:itemId ──────────────────────────────────────
-// Riwayat harga per item secara kronologis
-// Requirement 2.6, 9.5, 11.1
 app.get('/history/:itemId', requireAuth, async (c) => {
     const itemId = c.req.param('itemId')
 
@@ -283,7 +281,20 @@ app.get('/history/:itemId', requireAuth, async (c) => {
         orderBy: (e, { asc }) => [asc(e.effectiveDate)],
     })
 
-    return c.json({ data: history, item, total: history.length })
+    // Resolve createdBy user ID → name
+    const userIds = [...new Set(history.map(h => h.createdBy).filter(Boolean))]
+    const { user: userTable } = await import('../db/schema/index')
+    const users = userIds.length > 0
+        ? await db.query.user.findMany()
+        : []
+    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]))
+
+    const enriched = history.map(h => ({
+        ...h,
+        createdByName: userMap[h.createdBy ?? ''] || h.createdBy || '-',
+    }))
+
+    return c.json({ data: enriched, item, total: enriched.length })
 })
 
 // ─── POST /api/price-list ─────────────────────────────────────────────────────
