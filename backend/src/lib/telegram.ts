@@ -13,14 +13,16 @@ import { user, internalRequests, irItems, purchaseOrders, dapur, gudang, items a
 import { eq, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { createNotification } from './notify'
+import { validateIRBudget, findActiveBudget, createBudgetLog } from './budget'
+import { logAudit } from './audit'
 
 let bot: TelegramBot | null = null
-const chatUserMap = new Map<number, { userId: string; name: string; role: string; dapurId?: string }>()
+const chatUserMap = new Map<number, { userId: string; name: string; email?: string; role: string; dapurId?: string }>()
 const userChatMap = new Map<string, number>()
 const pendingExcelIR = new Map<number, { dapurId: string; dapurName: string; menuName: string; totalPorsi: number; items: any[] }>()
 
-async function saveTelegramLink(userId: string, chatId: number, name: string, role: string) {
-    chatUserMap.set(chatId, { userId, name, role })
+async function saveTelegramLink(userId: string, chatId: number, name: string, role: string, email?: string) {
+    chatUserMap.set(chatId, { userId, name, email, role })
     userChatMap.set(userId, chatId)
     try {
         const { createClient } = await import('@libsql/client')
@@ -52,34 +54,85 @@ export function initTelegramBot() {
 
     // ── /start ────────────────────────────────────────────────────
     bot.onText(/\/start/, async (msg) => {
-        await send(msg.chat.id, '🏭 <b>ERP MBG Bot</b>\n\nSelamat datang!\n\n📧 Kirim email ERP Anda untuk menghubungkan akun.\n📎 Atau langsung upload file Excel template SPPG untuk buat IR.')
+        await send(msg.chat.id, '🏭 <b>ERP MBG Bot</b>\n\nSelamat datang!\n\n🔐 Untuk menghubungkan akun, kirim:\n<code>login email@anda.com password_anda</code>\n\n📎 Atau upload file Excel template SPPG untuk buat IR.')
     })
 
     // ── /help ─────────────────────────────────────────────────────
     bot.onText(/\/help/, async (msg) => {
-        await send(msg.chat.id, '📋 <b>Perintah:</b>\n\n/ir — Buat IR (pilih dapur)\n/approve — Lihat pending approval\n/status IR-xxx — Cek status\n/me — Info akun\n📎 Upload Excel — Buat IR dari template SPPG')
+        await send(msg.chat.id, '📋 <b>Perintah:</b>\n\n<code>login email password</code> — Hubungkan akun\n/ir — Buat IR (pilih dapur)\n/approve — Lihat pending approval\n/status IR-xxx — Cek status\n/me — Info akun\n/logout — Putuskan akun\n📎 Upload Excel — Buat IR dari template SPPG')
     })
 
     // ── /me ───────────────────────────────────────────────────────
     bot.onText(/\/me/, async (msg) => {
         const u = chatUserMap.get(msg.chat.id)
-        if (!u) return send(msg.chat.id, '❌ Kirim email ERP untuk menghubungkan akun.')
-        await send(msg.chat.id, `👤 <b>${esc(u.name)}</b>\n🔑 ${esc(u.role)}`)
+        if (!u) return send(msg.chat.id, '❌ Belum login. Kirim:\n<code>login email@anda.com password_anda</code>')
+        await send(msg.chat.id, `👤 <b>${esc(u.name)}</b>\n📧 ${esc(u.email || '-')}\n🔑 ${esc(u.role)}`)
     })
 
-    // ── Email linking ─────────────────────────────────────────────
+    // ── /logout ───────────────────────────────────────────────────
+    bot.onText(/\/logout/, async (msg) => {
+        const chatId = msg.chat.id
+        const u = chatUserMap.get(chatId)
+        if (!u) return send(chatId, '❌ Belum login.')
+        chatUserMap.delete(chatId)
+        userChatMap.delete(u.userId)
+        // Remove from DB
+        try {
+            const { createClient } = await import('@libsql/client')
+            const client = createClient({ url: process.env.TURSO_DATABASE_URL!, authToken: process.env.TURSO_AUTH_TOKEN! })
+            await client.execute({ sql: 'DELETE FROM telegram_links WHERE user_id = ?', args: [u.userId] })
+        } catch {}
+        await logAudit({ userId: u.userId, userName: u.name, userRole: u.role, action: 'logout', entity: 'telegram', description: `${u.name} logout dari Telegram bot`, metadata: { source: 'telegram', chatId } })
+        await send(chatId, '✅ Akun berhasil diputuskan dari Telegram.')
+    })
+
+    // ── Login with email + password ───────────────────────────────
     bot.on('message', async (msg) => {
         const chatId = msg.chat.id
         const text = msg.text?.trim() || ''
         if (text.startsWith('/')) return
-        if (text.includes('@') && !chatUserMap.has(chatId)) {
-            const found = await db.query.user.findFirst({ where: eq(user.email, text.toLowerCase()) })
-            if (found) {
-                await saveTelegramLink(found.id, chatId, found.name, found.role)
-                await send(chatId, `✅ Akun terhubung!\n\n👤 <b>${esc(found.name)}</b>\n📧 ${esc(found.email)}\n🔑 ${esc(found.role)}\n\nKetik /help untuk perintah.`)
-            } else {
-                await send(chatId, '❌ Email tidak ditemukan di sistem ERP.')
+
+        // Handle: login email password
+        if (text.toLowerCase().startsWith('login ')) {
+            const parts = text.split(/\s+/)
+            if (parts.length < 3) {
+                return send(chatId, '❌ Format salah. Gunakan:\n<code>login email@anda.com password_anda</code>')
             }
+            const email = parts[1].toLowerCase()
+            const password = parts.slice(2).join(' ')
+
+            // Find user by email
+            const foundUser = await db.query.user.findFirst({ where: eq(user.email, email) })
+            if (!foundUser) {
+                await logAudit({ action: 'login_failed', entity: 'telegram', description: `Login Telegram gagal: email ${email} tidak ditemukan`, metadata: { source: 'telegram', chatId, email } })
+                return send(chatId, '❌ Email tidak ditemukan di sistem ERP.')
+            }
+
+            // Verify password via better-auth internal API
+            try {
+                const res = await fetch(`${process.env.BETTER_AUTH_URL || 'http://localhost:3000'}/api/auth/sign-in/email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Origin': process.env.FRONTEND_URL || 'http://localhost:5173' },
+                    body: JSON.stringify({ email, password }),
+                })
+                if (!res.ok) {
+                    await logAudit({ userId: foundUser.id, userName: foundUser.name, userRole: foundUser.role, action: 'login_failed', entity: 'telegram', description: `Login Telegram gagal: password salah untuk ${email}`, metadata: { source: 'telegram', chatId } })
+                    return send(chatId, '❌ Password salah. Coba lagi.')
+                }
+            } catch (e) {
+                return send(chatId, '❌ Gagal verifikasi. Coba lagi nanti.')
+            }
+
+            // Password verified — link account
+            await saveTelegramLink(foundUser.id, chatId, foundUser.name, foundUser.role, foundUser.email || email)
+            await logAudit({ userId: foundUser.id, userName: foundUser.name, userRole: foundUser.role, action: 'login', entity: 'telegram', description: `${foundUser.name} login ke Telegram bot`, metadata: { source: 'telegram', chatId, email } })
+            await send(chatId, `✅ <b>Login berhasil!</b>\n\n👤 <b>${esc(foundUser.name)}</b>\n📧 ${esc(email)}\n🔑 ${esc(foundUser.role)}\n\nKetik /help untuk perintah.`)
+            return
+        }
+
+        // Legacy: email-only (redirect to new format)
+        if (text.includes('@') && !text.includes(' ') && !chatUserMap.has(chatId)) {
+            return send(chatId, '🔐 Untuk keamanan, gunakan format login baru:\n<code>login email@anda.com password_anda</code>')
         }
     })
 
@@ -273,9 +326,24 @@ export function initTelegramBot() {
             // Manual IR — create
             if (data.startsWith('ir_gudang:')) {
                 const parts = data.split(':')
+                const dapurId = parts[1]
+                const gudangId = parts[2]
+
+                // ── Budget check ──────────────────────────────────
+                const budgetResult = await validateIRBudget(dapurId, [])
+                if (budgetResult.warning !== 'NO_ACTIVE_BUDGET' && budgetResult.remaining <= 0) {
+                    await bot!.answerCallbackQuery(q.id, { text: '❌ Anggaran habis!' })
+                    await bot!.editMessageText(
+                        `❌ <b>IR Tidak Dapat Dibuat</b>\n\nAnggaran dapur sudah habis.\n💰 Sisa: <b>Rp 0</b>\n\nHubungi Finance untuk penambahan anggaran.`,
+                        { chat_id: chatId, message_id: msgId, parse_mode: 'HTML' }
+                    )
+                    return
+                }
+
                 const irId = randomUUID(), irNumber = `IR-${Date.now().toString().slice(-6)}`, now = new Date()
-                await db.insert(internalRequests).values({ id: irId, irNumber, dapurId: parts[1], gudangId: parts[2], status: 'pending', requestDate: now, notes: `Via Telegram — ${u.name}`, requestedBy: u.userId, createdAt: now, updatedAt: now })
+                await db.insert(internalRequests).values({ id: irId, irNumber, dapurId, gudangId, status: 'pending', requestDate: now, notes: `Via Telegram — ${u.name}`, requestedBy: u.userId, createdAt: now, updatedAt: now })
                 await createNotification({ role: 'admin', type: 'ir_pending_approval', title: 'IR Baru', message: `${irNumber} oleh ${u.name} via Telegram`, link: '/supply-chain/requests', refType: 'ir', refId: irId }).catch(() => {})
+                await logAudit({ userId: u.userId, userName: u.name, userRole: u.role, action: 'create', entity: 'ir', entityId: irId, description: `${u.name} membuat IR ${irNumber} via Telegram (manual)`, metadata: { source: 'telegram', irNumber, dapurId, gudangId } })
                 await bot!.editMessageText(`✅ <b>IR Dibuat!</b>\n\n📦 <b>${irNumber}</b>\nStatus: Menunggu Approval\n\n<i>Tambahkan item di web ERP.</i>`, { chat_id: chatId, message_id: msgId, parse_mode: 'HTML' })
             }
 
@@ -285,9 +353,39 @@ export function initTelegramBot() {
                 const pending = pendingExcelIR.get(chatId)
                 if (!pending) return bot!.answerCallbackQuery(q.id, { text: '⚠️ Data expired, upload ulang' })
 
+                const dapurId = pending.dapurId || ''
+
+                // ── Budget check ──────────────────────────────────
+                const irItemsForBudget = pending.items.map((i: any) => ({ itemId: i.itemId, qty: i.qtyRequested }))
+                const budgetResult = await validateIRBudget(dapurId, irItemsForBudget)
+
+                if (budgetResult.allowed === false) {
+                    pendingExcelIR.delete(chatId)
+                    const deficit = budgetResult.deficit ?? 0
+                    const remaining = budgetResult.remaining ?? 0
+                    const estimated = budgetResult.estimatedValue ?? 0
+                    await bot!.answerCallbackQuery(q.id, { text: '❌ Anggaran tidak mencukupi!' })
+                    await bot!.editMessageText(
+                        `❌ <b>IR Tidak Dapat Dibuat — Anggaran Tidak Mencukupi</b>\n\n` +
+                        `💰 Sisa Anggaran: <b>Rp ${remaining.toLocaleString('id-ID')}</b>\n` +
+                        `📋 Estimasi IR: <b>Rp ${estimated.toLocaleString('id-ID')}</b>\n` +
+                        `⚠️ Kekurangan: <b>Rp ${deficit.toLocaleString('id-ID')}</b>\n\n` +
+                        `Hubungi Finance untuk penambahan anggaran atau kurangi item IR.`,
+                        { chat_id: chatId, message_id: msgId, parse_mode: 'HTML' }
+                    )
+                    return
+                }
+
+                // Budget OK — show warning if near limit
+                let budgetNote = ''
+                if (budgetResult.warning === 'BUDGET_WARNING') {
+                    const remaining = budgetResult.remaining ?? 0
+                    budgetNote = `\n⚠️ Sisa anggaran setelah IR: <b>Rp ${remaining.toLocaleString('id-ID')}</b>`
+                }
+
                 const irId = randomUUID(), irNumber = `IR-${Date.now().toString().slice(-6)}`, now = new Date()
                 await db.insert(internalRequests).values({
-                    id: irId, irNumber, dapurId: pending.dapurId || '', gudangId,
+                    id: irId, irNumber, dapurId, gudangId,
                     status: 'pending', requestDate: now,
                     notes: `Via Telegram (${pending.menuName || 'Excel'}) — ${u.name}`,
                     requestedBy: u.userId, createdAt: now, updatedAt: now,
@@ -302,11 +400,25 @@ export function initTelegramBot() {
                     }
                 }
 
+                // Create budget log if budget exists
+                if (budgetResult.warning !== 'NO_ACTIVE_BUDGET' && budgetResult.estimatedValue > 0) {
+                    const activeBudget = await findActiveBudget(dapurId, now)
+                    if (activeBudget) {
+                        await createBudgetLog({
+                            budgetId: activeBudget.id, dapurId,
+                            transactionType: 'ir_reserved', refType: 'ir', refId: irId, refNumber: irNumber,
+                            amount: budgetResult.estimatedValue,
+                            notes: `IR reserved via Telegram: ${irNumber}`, createdBy: u.userId,
+                        })
+                    }
+                }
+
                 pendingExcelIR.delete(chatId)
                 await createNotification({ role: 'admin', type: 'ir_pending_approval', title: 'IR Baru via Telegram', message: `${irNumber} (${pending.items.length} item) oleh ${u.name}`, link: '/supply-chain/requests', refType: 'ir', refId: irId }).catch(() => {})
+                await logAudit({ userId: u.userId, userName: u.name, userRole: u.role, action: 'create', entity: 'ir', entityId: irId, description: `${u.name} membuat IR ${irNumber} via Telegram (Excel template)`, metadata: { source: 'telegram', irNumber, dapurId, gudangId, itemCount: pending.items.length, menuName: pending.menuName, estimatedValue: budgetResult.estimatedValue } })
 
                 await bot!.editMessageText(
-                    `✅ <b>IR Dibuat dari Template!</b>\n\n📦 <b>${irNumber}</b>\n📋 ${pending.items.length} item\n🍽️ ${esc((pending.menuName || '').slice(0, 50))}\n👥 ${pending.totalPorsi} porsi\nStatus: Menunggu Approval`,
+                    `✅ <b>IR Dibuat dari Template!</b>\n\n📦 <b>${irNumber}</b>\n📋 ${pending.items.length} item\n🍽️ ${esc((pending.menuName || '').slice(0, 50))}\n👥 ${pending.totalPorsi} porsi\nStatus: Menunggu Approval${budgetNote}`,
                     { chat_id: chatId, message_id: msgId, parse_mode: 'HTML' }
                 )
             }
