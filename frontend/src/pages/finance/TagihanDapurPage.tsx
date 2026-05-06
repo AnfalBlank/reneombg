@@ -88,10 +88,32 @@ export default function TagihanDapurPage() {
     })
     const payments = payRes?.data || []
 
+    // Also check invoices for paid status (more reliable than kitchen_payments)
+    const { data: invMonthRes } = useQuery({
+        queryKey: ['invoices-month-check', month, year],
+        queryFn: () => {
+            const p = new URLSearchParams()
+            p.set('month', String(month))
+            p.set('year', String(year))
+            return api.get<any>(`/invoices?${p.toString()}`)
+        },
+    })
+    const monthInvoices: any[] = invMonthRes?.data || []
+
     const getPaymentForDapur = (dId: string) => {
-        return payments.find((p: any) => {
-            return p.dapurId === dId && Number(p.periodMonth) === Number(month) && Number(p.periodYear) === Number(year)
-        })
+        // First check kitchen_payments table
+        const kp = payments.find((p: any) =>
+            p.dapurId === dId && Number(p.periodMonth) === Number(month) && Number(p.periodYear) === Number(year)
+        )
+        if (kp) return kp
+
+        // Fallback: check if ALL invoices for this dapur in this month are paid
+        const dapurInvoices = monthInvoices.filter((inv: any) => inv.dapurId === dId)
+        if (dapurInvoices.length > 0 && dapurInvoices.every((inv: any) => inv.status === 'paid')) {
+            // Return a synthetic payment record
+            return { dapurId: dId, synthetic: true, totalPaid: dapurInvoices.reduce((a: number, inv: any) => a + inv.totalAmount, 0) }
+        }
+        return null
     }
 
     // ── Per Transaksi mutations ────────────────────────────────────────────────
@@ -103,7 +125,13 @@ export default function TagihanDapurPage() {
 
     const approveMutation = useMutation({
         mutationFn: (id: string) => api.patch<any>(`/invoices/${id}/approve`, {}),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices'] }); success('Invoice berhasil diapprove — LUNAS!') },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['invoices'] })
+            qc.invalidateQueries({ queryKey: ['kitchen-payments'] })
+            qc.invalidateQueries({ queryKey: ['kitchen-billing'] })
+            qc.invalidateQueries({ queryKey: ['invoices-month-check'] })
+            success('Invoice berhasil diapprove — LUNAS!')
+        },
         onError: () => toastError('Gagal approve'),
     })
 
