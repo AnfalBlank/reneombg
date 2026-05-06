@@ -23,6 +23,7 @@ interface PriceListEntry {
     itemSku: string
     itemCategory: string
     purchasePrice: number
+    avgPurchasePrice?: number  // avg from actual GRN purchases
     sellPrice: number
     effectiveDate: string
     notes?: string
@@ -490,7 +491,16 @@ export default function PriceListPage() {
                                             </td>
                                             <td><span className={styles.mono}>{entry.itemSku}</span></td>
                                             <td><span className={styles.muted}>{entry.itemCategory}</span></td>
-                                            <td style={{ fontWeight: 600 }}>{fmtRp(entry.purchasePrice)}</td>
+                                            <td style={{ fontWeight: 600 }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                                    <span>{fmtRp((entry as any).avgPurchasePrice ?? entry.purchasePrice)}</span>
+                                                    {(entry as any).avgPurchasePrice && (entry as any).avgPurchasePrice !== entry.purchasePrice && (
+                                                        <span style={{ fontSize: 10, color: 'var(--color-text-dim)' }}>
+                                                            input: {fmtRp(entry.purchasePrice)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td style={{ fontWeight: 600 }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                                     {fmtRp(entry.sellPrice)}

@@ -68,13 +68,41 @@ app.get('/', requireAuth, async (c) => {
         )
     }
 
+    // Build avg purchase price map from GRN history
+    const allGrItems = await db.query.grItems.findMany()
+    const priceAccum = new Map<string, { total: number; count: number }>()
+    for (const gi of allGrItems) {
+        if (!gi.unitPrice || gi.unitPrice <= 0) continue
+        const acc = priceAccum.get(gi.itemId) || { total: 0, count: 0 }
+        acc.total += gi.unitPrice
+        acc.count += 1
+        priceAccum.set(gi.itemId, acc)
+    }
+    // Fallback: inventory_stock avgCost
+    const gudangStocks = await db.query.inventoryStock.findMany({
+        where: eq(inventoryStock.locationType, 'gudang'),
+    })
+    const stockAvgMap = new Map<string, number>()
+    for (const s of gudangStocks) {
+        if (s.avgCost > 0 && !stockAvgMap.has(s.itemId)) {
+            stockAvgMap.set(s.itemId, s.avgCost)
+        }
+    }
+
     return c.json({
-        data: filtered.map(e => ({
-            ...e,
-            itemName: e.item?.name ?? '',
-            itemSku: e.item?.sku ?? '',
-            itemCategory: e.item?.category ?? '',
-        })),
+        data: filtered.map(e => {
+            const acc = priceAccum.get(e.itemId)
+            const avgPurchasePrice = acc
+                ? Math.round(acc.total / acc.count)
+                : (stockAvgMap.get(e.itemId) ?? e.purchasePrice)
+            return {
+                ...e,
+                itemName: e.item?.name ?? '',
+                itemSku: e.item?.sku ?? '',
+                itemCategory: e.item?.category ?? '',
+                avgPurchasePrice, // avg from actual GRN purchases
+            }
+        }),
         total: filtered.length,
     })
 })
