@@ -121,7 +121,8 @@ export default function InternalRequestPage() {
 
     // Budget status derived values
     const hasNoBudget = showForm && !!activeDapurId && budgetCheck !== undefined && !budgetInfo
-    const budgetExceeded = budgetInfo !== null && budgetInfo !== undefined && estimatedValue > budgetInfo.remaining
+    // Only block if budget EXISTS and is exceeded — no budget = allowed
+    const budgetExceeded = !!budgetInfo && estimatedValue > 0 && estimatedValue > budgetInfo.remaining
 
     const filtered = requests.filter((r: any) => {
         const matchSearch = (r.dapur?.name || '').toLowerCase().includes(search.toLowerCase()) || (r.irNumber || '').toLowerCase().includes(search.toLowerCase())

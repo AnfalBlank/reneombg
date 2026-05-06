@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { db } from '../db/index'
-import { invoices, invoiceItems } from '../db/schema/index'
-import { eq } from 'drizzle-orm'
+import { invoices, invoiceItems, kitchenPayments } from '../db/schema/index'
+import { eq, and } from 'drizzle-orm'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { randomUUID } from 'crypto'
 
 const app = new Hono()
 
@@ -124,12 +125,52 @@ app.patch('/:id/approve', requireAuth, requireRole('owner', 'super_admin', 'fina
     if (!inv) return c.json({ error: 'Invoice not found' }, 404)
     if (inv.status !== 'pending') return c.json({ error: 'Hanya bisa approve saat status pending' }, 400)
 
+    const now = new Date()
+
     await db.update(invoices).set({
         status: 'paid',
         approvedBy: user.id,
-        approvedAt: new Date(),
-        updatedAt: new Date(),
+        approvedAt: now,
+        updatedAt: now,
     }).where(eq(invoices.id, id))
+
+    // ── Sync to kitchen_payments for monthly recap ─────────────────
+    // Find or create a kitchen_payment record for this dapur/month/year
+    const invDate = inv.createdAt ? new Date(inv.createdAt) : now
+    const periodMonth = invDate.getMonth() + 1
+    const periodYear = invDate.getFullYear()
+
+    const existing = await db.query.kitchenPayments.findFirst({
+        where: and(
+            eq(kitchenPayments.dapurId, inv.dapurId),
+            eq(kitchenPayments.periodMonth, periodMonth),
+            eq(kitchenPayments.periodYear, periodYear),
+        ),
+    })
+
+    if (existing) {
+        // Update existing payment record — add this invoice amount
+        await db.update(kitchenPayments).set({
+            totalPaid: existing.totalPaid + inv.totalAmount,
+            totalBilling: existing.totalBilling + inv.totalAmount,
+        }).where(eq(kitchenPayments.id, existing.id))
+    } else {
+        // Create new kitchen_payment record
+        await db.insert(kitchenPayments).values({
+            id: randomUUID(),
+            paymentNumber: `KP-${Date.now().toString().slice(-6)}`,
+            dapurId: inv.dapurId,
+            periodMonth,
+            periodYear,
+            totalBilling: inv.totalAmount,
+            totalPaid: inv.totalAmount,
+            paymentDate: now,
+            paymentMethod: inv.paymentMethod || 'Transfer',
+            notes: `Auto dari invoice ${inv.invoiceNumber}`,
+            createdBy: user.id,
+            createdAt: now,
+        })
+    }
 
     return c.json({ success: true })
 })
