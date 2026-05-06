@@ -80,3 +80,50 @@ Bahan berpindah dari Gudang ke Dapur.
 *   **Database:** Serverless SQLite menggunakan **Turso**.
 
 🔥 *UI Fully Responsive Mobile-Friendly: bisa dibuka lancar lewat Tablet dan Smartphone.*
+
+---
+
+## 🗑️ Database Management Scripts
+
+### Reset Database (Hapus Semua Data)
+Script untuk reset database ke kondisi awal, menghapus semua data kecuali user dengan role `super_admin` dan `owner`:
+
+```bash
+cd backend
+npm run reset-db
+```
+
+**⚠️ PERINGATAN:** Script ini akan menghapus SEMUA data operasional termasuk:
+- Semua transaksi (PO, GR, IR, DO, KR)
+- Semua master data (Vendor, Gudang, Dapur, Items)
+- Semua data keuangan (Journal, COA, Budget)
+- Semua data inventory (Stock, Movements)
+- Semua user kecuali super_admin dan owner
+
+**Yang TIDAK dihapus:**
+- User dengan role `super_admin`
+- User dengan role `owner`
+- Session dan account dari user tersebut
+
+**Langkah setelah reset:**
+1. Setup master data: Vendor, Gudang, Dapur
+2. Setup Chart of Accounts (COA)
+3. Import items via Master Data → Item
+4. Setup Price List
+5. Input stok awal via Stock Opname
+
+### Clear Data (Hapus Data Operasional)
+Script untuk menghapus data operasional saja tanpa menghapus master data:
+
+```bash
+cd backend
+node clear-data.mjs
+```
+
+Flags yang tersedia:
+- `--all` atau tanpa flag: hapus semua data operasional
+- `--ir`: hapus Internal Requests + IR Items
+- `--items`: hapus Items (dan semua data terkait)
+- `--recipes`: hapus Recipes + Recipe Ingredients
+- `--pricelist`: hapus Price List Entries
+- `--stock`: hapus Inventory Stock + Movements
