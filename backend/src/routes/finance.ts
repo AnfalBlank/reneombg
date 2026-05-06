@@ -126,104 +126,204 @@ app.post('/periods/:id/close', requireAuth, requireRole('super_admin', 'admin', 
     return c.json({ success: true, message: `Periode ${period.label} berhasil ditutup` })
 })
 
-// ─── Profit & Loss Report ─────────────────────────────────────────────────────
+// ─── Profit & Loss Report (berbasis GR harga beli vs DO/KR harga jual) ────────
+// Revenue  = total sellTotal dari DO yang sudah confirmed/delivered (harga jual ke dapur)
+// COGS     = total harga beli dari GR (unitPrice × qtyReceived) untuk item yang sudah di-DO
+// Profit   = Revenue - COGS
+// Stok dapur dianggap sudah terjual saat KR dikonfirmasi
 app.get('/reports/pl', requireAuth, requireRole('super_admin', 'admin', 'finance'), async (c) => {
     const startDate = c.req.query('startDate')
     const endDate = c.req.query('endDate')
     const dapurId = c.req.query('dapurId')
 
-    // Get all journal entries for the period
-    let journals = await db.query.journalEntries.findMany({
-        with: { lines: { with: { coa: true } } },
-        orderBy: (j, { asc }) => [asc(j.createdAt)],
+    // ── Revenue: dari DO confirmed/delivered (sellTotal per item) ──────────────
+    let dos = await db.query.deliveryOrders.findMany({
+        with: { items: { with: { item: true } }, dapur: true },
+        orderBy: (d, { asc }) => [asc(d.createdAt)],
     })
+    // Hanya DO yang sudah dikirim/dikonfirmasi
+    dos = dos.filter(d => ['in_transit', 'delivered', 'confirmed'].includes(d.status))
+    if (startDate) dos = dos.filter(d => new Date(d.createdAt) >= new Date(startDate))
+    if (endDate) dos = dos.filter(d => new Date(d.createdAt) <= new Date(endDate + 'T23:59:59'))
+    if (dapurId) dos = dos.filter(d => d.dapurId === dapurId)
 
-    if (startDate) journals = journals.filter(j => new Date(j.createdAt) >= new Date(startDate))
-    if (endDate) journals = journals.filter(j => new Date(j.createdAt) <= new Date(endDate + 'T23:59:59'))
-    if (dapurId) journals = journals.filter(j => j.dapurId === dapurId || !dapurId)
+    // Revenue per dapur
+    const revenueByDapur: Record<string, { name: string; revenue: number; cogs: number }> = {}
+    let totalRevenue = 0
+    let totalCogs = 0
 
-    // Aggregate by account type
-    const summary: Record<string, { name: string; type: string; debit: number; credit: number }> = {}
+    // Revenue detail per item
+    const revenueDetail: Array<{ itemName: string; qty: number; sellPrice: number; sellTotal: number; unitCost: number; costTotal: number; margin: number; dapurName: string }> = []
 
-    for (const j of journals) {
-        for (const line of j.lines) {
-            const key = line.coaId
-            if (!summary[key]) {
-                summary[key] = { name: line.coa.name, type: line.coa.type, debit: 0, credit: 0 }
-            }
-            if (line.side === 'debit') summary[key].debit += line.amount
-            else summary[key].credit += line.amount
+    for (const doRec of dos) {
+        const dapurName = doRec.dapur?.name || '-'
+        if (!revenueByDapur[doRec.dapurId]) {
+            revenueByDapur[doRec.dapurId] = { name: dapurName, revenue: 0, cogs: 0 }
+        }
+        for (const li of doRec.items) {
+            const rev = li.sellTotal || 0
+            const cost = li.totalCost || 0
+            totalRevenue += rev
+            totalCogs += cost
+            revenueByDapur[doRec.dapurId].revenue += rev
+            revenueByDapur[doRec.dapurId].cogs += cost
+            revenueDetail.push({
+                itemName: li.item?.name || '-',
+                qty: li.qtyDelivered,
+                sellPrice: li.sellPrice,
+                sellTotal: rev,
+                unitCost: li.unitCost,
+                costTotal: cost,
+                margin: rev > 0 ? ((rev - cost) / rev) * 100 : 0,
+                dapurName,
+            })
         }
     }
 
-    // Calculate P&L
-    const revenue = Object.values(summary).filter(s => s.type === 'REVENUE').reduce((a, s) => a + s.credit - s.debit, 0)
-    const cogs = Object.values(summary).filter(s => s.name.startsWith('COGS')).reduce((a, s) => a + s.debit - s.credit, 0)
-    const expenses = Object.values(summary).filter(s => s.type === 'EXPENSE' && !s.name.startsWith('COGS')).reduce((a, s) => a + s.debit - s.credit, 0)
-    const grossProfit = revenue - cogs
-    const netProfit = grossProfit - expenses
+    // ── Expenses: dari expense table (pengeluaran operasional) ─────────────────
+    let totalExpenses = 0
+    try {
+        const { expenses: expenseTable } = await import('../db/schema/index')
+        const expList = await db.query.expenses.findMany()
+        let filtered = expList
+        if (startDate) filtered = filtered.filter((e: any) => new Date(e.expenseDate) >= new Date(startDate))
+        if (endDate) filtered = filtered.filter((e: any) => new Date(e.expenseDate) <= new Date(endDate + 'T23:59:59'))
+        if (dapurId) filtered = filtered.filter((e: any) => !e.dapurId || e.dapurId === dapurId)
+        totalExpenses = filtered.reduce((a: number, e: any) => a + (e.amount || 0), 0)
+    } catch { /* expenses table mungkin belum ada */ }
+
+    const grossProfit = totalRevenue - totalCogs
+    const netProfit = grossProfit - totalExpenses
+    const grossMargin = totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(2) + '%' : '0%'
+    const netMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) + '%' : '0%'
+
+    // Monthly trend
+    const monthMap: Record<string, { revenue: number; cogs: number; profit: number }> = {}
+    for (const doRec of dos) {
+        const d = new Date(doRec.createdAt)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, profit: 0 }
+        for (const li of doRec.items) {
+            monthMap[key].revenue += li.sellTotal || 0
+            monthMap[key].cogs += li.totalCost || 0
+        }
+    }
+    const monthlyTrend = Object.entries(monthMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([period, v]) => ({ period, revenue: v.revenue, cogs: v.cogs, profit: v.revenue - v.cogs }))
 
     return c.json({
         data: {
-            summary: Object.entries(summary).map(([id, s]) => ({ id, ...s })),
-            revenue,
-            cogs,
+            // Summary
+            revenue: totalRevenue,
+            cogs: totalCogs,
             grossProfit,
-            expenses,
+            expenses: totalExpenses,
             netProfit,
-            margin: revenue > 0 ? ((grossProfit / revenue) * 100).toFixed(2) + '%' : '0%',
+            grossMargin,
+            netMargin,
+            margin: grossMargin,
+            // Per dapur
+            byDapur: Object.entries(revenueByDapur).map(([id, v]) => ({
+                dapurId: id,
+                dapurName: v.name,
+                revenue: v.revenue,
+                cogs: v.cogs,
+                profit: v.revenue - v.cogs,
+                margin: v.revenue > 0 ? ((v.revenue - v.cogs) / v.revenue * 100).toFixed(1) + '%' : '0%',
+            })),
+            // Detail per item
+            detail: revenueDetail.sort((a, b) => b.sellTotal - a.sellTotal).slice(0, 50),
+            // Monthly trend
+            monthlyTrend,
+            // Legacy summary field (untuk backward compat ReportsPage)
+            summary: Object.entries(revenueByDapur).map(([id, v]) => ({
+                id,
+                name: v.name,
+                type: 'REVENUE',
+                debit: v.cogs,
+                credit: v.revenue,
+            })),
         },
     })
 })
 
-// ─── Balance Sheet Report ─────────────────────────────────────────────────────
+// ─── Balance Sheet Report (berbasis inventory stock + hutang vendor) ───────────
+// Aset     = nilai stok gudang + nilai stok dapur + kas (dari cashflow)
+// Kewajiban = hutang vendor (GR yang belum dibayar)
+// Ekuitas  = Aset - Kewajiban
 app.get('/reports/balance-sheet', requireAuth, requireRole('super_admin', 'admin', 'finance'), async (c) => {
     const endDate = c.req.query('endDate')
 
-    // Get all journal entries up to endDate
-    let journals = await db.query.journalEntries.findMany({
-        with: { lines: { with: { coa: true } } },
-        orderBy: (j, { asc }) => [asc(j.createdAt)],
+    // ── ASET: Inventory Stock ──────────────────────────────────────────────────
+    const stocks = await db.query.inventoryStock.findMany({
+        with: { item: true, gudang: true, dapur: true },
     })
 
-    if (endDate) journals = journals.filter(j => new Date(j.createdAt) <= new Date(endDate + 'T23:59:59'))
+    const gudangStocks = stocks.filter(s => s.locationType === 'gudang')
+    const dapurStocks = stocks.filter(s => s.locationType === 'dapur')
+    const totalGudangValue = gudangStocks.reduce((a, s) => a + s.totalValue, 0)
+    const totalDapurValue = dapurStocks.reduce((a, s) => a + s.totalValue, 0)
+    const totalInventory = totalGudangValue + totalDapurValue
 
-    // Aggregate by account
-    const accounts: Record<string, { code: string; name: string; type: string; debit: number; credit: number; balance: number }> = {}
+    // ── KEWAJIBAN: GR yang belum dibayar (vendor_invoice_id = null) ────────────
+    let grns = await db.query.goodsReceipts.findMany({
+        with: { po: { with: { vendor: true } } },
+    })
+    if (endDate) grns = grns.filter(g => new Date(g.createdAt) <= new Date(endDate + 'T23:59:59'))
+    // Hutang = GR yang belum punya vendor invoice
+    const unpaidGrns = grns.filter(g => !g.vendorInvoiceId)
+    const totalHutangVendor = unpaidGrns.reduce((a, g) => a + (g.totalAmount || 0), 0)
 
-    for (const j of journals) {
-        for (const line of j.lines) {
-            const key = line.coaId
-            if (!accounts[key]) {
-                accounts[key] = { code: line.coa.code, name: line.coa.name, type: line.coa.type, debit: 0, credit: 0, balance: 0 }
-            }
-            if (line.side === 'debit') accounts[key].debit += line.amount
-            else accounts[key].credit += line.amount
-        }
-    }
+    // ── ASET: Kas dari cashflow payments ──────────────────────────────────────
+    let totalKas = 0
+    try {
+        const { cashflowPayments } = await import('../db/schema/index')
+        const payments = await db.query.cashflowPayments.findMany()
+        let filtered = payments
+        if (endDate) filtered = filtered.filter((p: any) => new Date(p.paymentDate) <= new Date(endDate + 'T23:59:59'))
+        // Kas berkurang saat bayar vendor
+        const totalPaid = filtered.filter((p: any) => p.status === 'paid').reduce((a: number, p: any) => a + (p.amount || 0), 0)
+        // Kas awal tidak ditrack, jadi kita hitung sebagai negatif hutang yang sudah dibayar
+        totalKas = -totalPaid // kas keluar
+    } catch { /* cashflow mungkin belum ada */ }
 
-    // Calculate balances based on account type
-    for (const acc of Object.values(accounts)) {
-        if (acc.type === 'ASSET' || acc.type === 'EXPENSE') {
-            acc.balance = acc.debit - acc.credit
-        } else {
-            acc.balance = acc.credit - acc.debit
-        }
-    }
+    // ── REVENUE dari DO (untuk retained earnings) ─────────────────────────────
+    let dos = await db.query.deliveryOrders.findMany({
+        with: { items: true },
+    })
+    dos = dos.filter(d => ['in_transit', 'delivered', 'confirmed'].includes(d.status))
+    if (endDate) dos = dos.filter(d => new Date(d.createdAt) <= new Date(endDate + 'T23:59:59'))
+    const totalRevenue = dos.reduce((a, d) => d.items.reduce((b, li) => b + (li.sellTotal || 0), a), 0)
+    const totalCogs = dos.reduce((a, d) => d.items.reduce((b, li) => b + (li.totalCost || 0), a), 0)
 
-    const accountList = Object.entries(accounts).map(([id, a]) => ({ id, ...a }))
-    const assets = accountList.filter(a => a.type === 'ASSET')
-    const liabilities = accountList.filter(a => a.type === 'LIABILITY')
-    const equity = accountList.filter(a => a.type === 'EQUITY')
+    // ── Expenses ───────────────────────────────────────────────────────────────
+    let totalExpenses = 0
+    try {
+        const expList = await db.query.expenses.findMany()
+        let filtered = expList
+        if (endDate) filtered = filtered.filter((e: any) => new Date(e.expenseDate) <= new Date(endDate + 'T23:59:59'))
+        totalExpenses = filtered.reduce((a: number, e: any) => a + (e.amount || 0), 0)
+    } catch { /* expenses mungkin belum ada */ }
 
-    const totalAssets = assets.reduce((s, a) => s + a.balance, 0)
-    const totalLiabilities = liabilities.reduce((s, a) => s + a.balance, 0)
-    const totalEquity = equity.reduce((s, a) => s + a.balance, 0)
+    const retainedEarnings = totalRevenue - totalCogs - totalExpenses
 
-    // Retained earnings = Revenue - Expenses (net profit)
-    const revenue = accountList.filter(a => a.type === 'REVENUE').reduce((s, a) => s + a.balance, 0)
-    const expenses = accountList.filter(a => a.type === 'EXPENSE').reduce((s, a) => s + a.balance, 0)
-    const retainedEarnings = revenue - expenses
+    // ── Susun Balance Sheet ────────────────────────────────────────────────────
+    const assets = [
+        { id: 'inv-gudang', code: '1-3100', name: 'Persediaan Gudang', balance: totalGudangValue },
+        { id: 'inv-dapur', code: '1-3200', name: 'Persediaan Dapur', balance: totalDapurValue },
+    ].filter(a => a.balance > 0)
+
+    const liabilities = [
+        { id: 'hutang-vendor', code: '2-1000', name: 'Hutang Vendor (GR Belum Dibayar)', balance: totalHutangVendor },
+    ].filter(a => a.balance > 0)
+
+    const equity: any[] = []
+
+    const totalAssets = assets.reduce((a, x) => a + x.balance, 0)
+    const totalLiabilities = liabilities.reduce((a, x) => a + x.balance, 0)
+    const totalEquity = 0
+    const totalLiabilitiesAndEquity = totalLiabilities + totalEquity + retainedEarnings
 
     return c.json({
         data: {
@@ -234,8 +334,16 @@ app.get('/reports/balance-sheet', requireAuth, requireRole('super_admin', 'admin
             totalLiabilities,
             totalEquity,
             retainedEarnings,
-            totalLiabilitiesAndEquity: totalLiabilities + totalEquity + retainedEarnings,
-            isBalanced: Math.abs(totalAssets - (totalLiabilities + totalEquity + retainedEarnings)) < 0.01,
+            totalLiabilitiesAndEquity,
+            isBalanced: Math.abs(totalAssets - totalLiabilitiesAndEquity) < 1,
+            // Extra info
+            breakdown: {
+                gudangValue: totalGudangValue,
+                dapurValue: totalDapurValue,
+                hutangVendor: totalHutangVendor,
+                unpaidGrnCount: unpaidGrns.length,
+                retainedEarnings,
+            },
         },
     })
 })

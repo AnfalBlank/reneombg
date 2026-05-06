@@ -2,7 +2,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
     LayoutDashboard, Package, Store, UtensilsCrossed, Warehouse, BookOpen,
     ShoppingCart, Truck, BarChart3, ArrowLeftRight, ClipboardList, ChevronDown,
-    ChevronRight, Receipt, BookMarked, FileText, Lock, Database, X, Settings,
+    ChevronRight, Receipt, FileText, Lock, Database, X, Settings,
     Users, TrendingUp, PieChart, Wallet, Activity, LogOut, Shield, FileBarChart,
     DollarSign, Monitor, CheckCircle, ClipboardCheck, RotateCcw, Crown
 } from 'lucide-react'
@@ -81,16 +81,6 @@ function buildNav(role: string): NavItem[] {
             scChildren.push({ label: 'Daftar Harga', path: '/supply-chain/price-list', icon: DollarSign })
         }
         items.push({ label: 'Supply Chain', icon: ArrowLeftRight, children: scChildren })
-    }
-
-    if (access.accounting) {
-        items.push({
-            label: 'Pembukuan', icon: BookMarked, children: [
-                { label: 'Jurnal Umum', path: '/accounting/journal', icon: Receipt },
-                { label: 'General Ledger', path: '/accounting/general-ledger', icon: BookOpen },
-                { label: 'Tutup Buku', path: '/accounting/period-closing', icon: Lock },
-            ],
-        })
     }
 
     if (access.reports) {
