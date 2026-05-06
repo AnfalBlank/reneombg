@@ -3,6 +3,7 @@ import { db } from '../db/index'
 import { journalEntries, journalLines, accountingPeriods, inventoryStock } from '../db/schema/index'
 import { eq, and, gte, lte, sum, sql } from 'drizzle-orm'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { randomUUID } from 'crypto'
 
 const app = new Hono()
 
@@ -74,6 +75,35 @@ app.get('/periods', requireAuth, async (c) => {
         orderBy: (p, { desc }) => [desc(p.year), desc(p.month)],
     })
     return c.json({ data: all })
+})
+
+// ─── Create Period ────────────────────────────────────────────────────────────
+app.post('/periods', requireAuth, requireRole('super_admin', 'admin', 'finance'), async (c) => {
+    const body = await c.req.json()
+    const { year, month } = body
+
+    if (!year || !month || month < 1 || month > 12) {
+        return c.json({ error: 'year dan month (1-12) wajib diisi' }, 400)
+    }
+
+    // Check if period already exists
+    const existing = await db.query.accountingPeriods.findFirst({
+        where: and(eq(accountingPeriods.year, year), eq(accountingPeriods.month, month)),
+    })
+    if (existing) {
+        return c.json({ error: `Periode ${existing.label} sudah ada`, data: existing }, 400)
+    }
+
+    const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+    const label = `${monthNames[month - 1]} ${year}`
+    const id = randomUUID()
+
+    await db.insert(accountingPeriods).values({
+        id, year, month, label, status: 'open', createdAt: new Date(),
+    })
+
+    const created = await db.query.accountingPeriods.findFirst({ where: eq(accountingPeriods.id, id) })
+    return c.json({ data: created }, 201)
 })
 
 // ─── Period Close ─────────────────────────────────────────────────────────────
