@@ -114,6 +114,14 @@ if (existsSync(frontendDist)) {
         return new Response(readFileSync(filePath), { headers: { 'Content-Type': types[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=86400' } })
     })
 
+    // Serve static HTML files from public (manual-book.html, dll)
+    app.get('/:file{.+\\.html}', (c) => {
+        const filePath = join(frontendDist, c.req.param('file'))
+        if (!existsSync(filePath)) return c.notFound()
+        const html = readFileSync(filePath, 'utf-8')
+        return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } })
+    })
+
     // SPA fallback — serve index.html for all non-API routes
     app.get('*', (c) => {
         if (c.req.path.startsWith('/api/') || c.req.path.startsWith('/ws')) return c.notFound()
