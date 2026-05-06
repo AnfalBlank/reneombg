@@ -1,8 +1,8 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
-    LayoutDashboard, Package, Store, UtensilsCrossed, Warehouse, BookOpen,
+    LayoutDashboard, Package, Store, UtensilsCrossed, Warehouse,
     ShoppingCart, Truck, BarChart3, ArrowLeftRight, ClipboardList, ChevronDown,
-    ChevronRight, Receipt, FileText, Lock, Database, X, Settings,
+    ChevronRight, Receipt, FileText, Database, X, Settings,
     Users, TrendingUp, PieChart, Wallet, Activity, LogOut, Shield, FileBarChart,
     DollarSign, Monitor, CheckCircle, ClipboardCheck, RotateCcw, Crown
 } from 'lucide-react'
@@ -38,7 +38,6 @@ function buildNav(role: string): NavItem[] {
                 { label: 'Vendor', path: '/master-data/vendors', icon: Store },
                 { label: 'Dapur / Unit', path: '/master-data/dapur', icon: UtensilsCrossed },
                 { label: 'Gudang', path: '/master-data/gudang', icon: Warehouse },
-                { label: 'Chart of Accounts', path: '/master-data/coa', icon: BookOpen },
                 { label: 'Resep / BOM', path: '/master-data/recipes', icon: UtensilsCrossed },
                 { label: 'Price List', path: '/master-data/price-list', icon: DollarSign },
             ],

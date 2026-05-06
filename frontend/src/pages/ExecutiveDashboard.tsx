@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
-    TrendingUp, TrendingDown, DollarSign, Wallet, Receipt,
+    TrendingUp, DollarSign, Wallet, Receipt,
     ShoppingCart, Truck, ClipboardList, AlertTriangle,
     ArrowUp, ArrowDown, Activity, ChevronRight, Bell, CheckCircle
 } from 'lucide-react'
@@ -29,20 +29,9 @@ const fmtShort = (n: number) => {
 
 const COLORS = ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a680d0', '#38bdf8', '#f472b6', '#34d399']
 
-const journalTypeLabel: Record<string, string> = {
-    purchase_receiving: 'Pembelian',
-    distribution: 'Distribusi',
-    consumption: 'COGS',
-    waste: 'Waste',
-    adjustment: 'Penyesuaian',
-}
-
-const journalTypeColor: Record<string, 'blue' | 'green' | 'purple' | 'yellow' | 'red'> = {
-    purchase_receiving: 'blue',
-    distribution: 'green',
-    consumption: 'purple',
-    waste: 'red',
-    adjustment: 'yellow',
+const txTypeColor: Record<string, 'blue' | 'green' | 'purple' | 'yellow' | 'red' | 'gray'> = {
+    invoice_dapur: 'green',
+    vendor_invoice: 'red',
 }
 
 export default function ExecutiveDashboard() {
@@ -171,8 +160,8 @@ export default function ExecutiveDashboard() {
     const dapurComparison = fin.dapurComparison || []
     const expenseBreakdown = fin.expenseBreakdown || []
 
-    // ── Recent journals (last 5) ───────────────────────────────────────────────
-    const recentJournals = (ops?.recentJournals || []).slice(0, 5)
+    // ── Recent transactions (invoice dapur + vendor invoice) ──────────────────
+    const recentTransactions = (fin.recentTransactions || []).slice(0, 5)
 
     return (
         <div className={styles.page}>
@@ -411,12 +400,12 @@ export default function ExecutiveDashboard() {
                 )}
             </Card>
 
-            {/* ── Recent Activity (last 5 journal entries) ─────────────────────── */}
+            {/* ── Recent Activity (invoice dapur & vendor terbaru) ──────────── */}
             <Card
                 title="Aktivitas Terbaru"
-                subtitle="5 jurnal terakhir yang diproses"
+                subtitle="Invoice dapur & vendor yang baru diproses"
                 action={
-                    <a href="/accounting/journal" className={styles.viewAllLink}>
+                    <a href="/finance/tagihan-dapur" className={styles.viewAllLink}>
                         Lihat Semua <ChevronRight size={14} />
                     </a>
                 }
@@ -426,7 +415,7 @@ export default function ExecutiveDashboard() {
                     <table className={styles.table}>
                         <thead>
                             <tr>
-                                <th>No. Jurnal</th>
+                                <th>No. Invoice</th>
                                 <th>Tanggal</th>
                                 <th>Deskripsi</th>
                                 <th>Jumlah</th>
@@ -434,29 +423,31 @@ export default function ExecutiveDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {recentJournals.length === 0 && (
+                            {recentTransactions.length === 0 && (
                                 <tr>
                                     <td colSpan={5} style={{ textAlign: 'center', padding: 24, color: 'var(--color-text-muted)' }}>
-                                        Belum ada jurnal untuk periode ini
+                                        Belum ada transaksi untuk periode ini
                                     </td>
                                 </tr>
                             )}
-                            {recentJournals.map((j: any) => (
-                                <tr key={j.id}>
-                                    <td><span className={styles.mono}>{j.number}</span></td>
+                            {recentTransactions.map((t: any) => (
+                                <tr key={t.id}>
+                                    <td><span className={styles.mono}>{t.number}</span></td>
                                     <td className={styles.muted}>
-                                        {j.date ? new Date(j.date).toLocaleDateString('id-ID') : '-'}
+                                        {t.date ? new Date(t.date).toLocaleDateString('id-ID') : '-'}
                                     </td>
-                                    <td style={{ maxWidth: 260 }} title={j.description}>
+                                    <td style={{ maxWidth: 260 }} title={t.description}>
                                         <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {j.description}
+                                            {t.description}
                                         </span>
                                     </td>
-                                    <td style={{ fontWeight: 600, fontSize: 13 }}>{fmtRp(j.amount)}</td>
+                                    <td style={{ fontWeight: 600, fontSize: 13, color: t.type === 'invoice_dapur' ? '#22c55e' : '#ef4444' }}>
+                                        {fmtRp(t.credit || t.debit || 0)}
+                                    </td>
                                     <td>
                                         <Badge
-                                            label={journalTypeLabel[j.type] || j.type}
-                                            color={journalTypeColor[j.type] || 'gray'}
+                                            label={t.typeLabel || t.type}
+                                            color={txTypeColor[t.type] || 'gray'}
                                         />
                                     </td>
                                 </tr>

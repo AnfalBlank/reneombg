@@ -276,12 +276,12 @@ export default function FinanceDashboard() {
                 </Card>
             </div>
 
-            {/* Recent Transactions */}
+            {/* Recent Transactions — invoice dapur & vendor terbaru */}
             <Card
                 title="Transaksi Keuangan Terbaru"
-                subtitle="Jurnal terakhir yang diproses sistem"
+                subtitle="Invoice dapur & vendor yang baru diproses"
                 action={
-                    <a href="/accounting/journal" className={styles.viewAllLink}>
+                    <a href="/finance/tagihan-dapur" className={styles.viewAllLink}>
                         Lihat Semua <ChevronRight size={14} />
                     </a>
                 }
@@ -291,7 +291,7 @@ export default function FinanceDashboard() {
                     <table className={styles.table}>
                         <thead>
                             <tr>
-                                <th>No. Jurnal</th>
+                                <th>No. Invoice</th>
                                 <th>Tanggal</th>
                                 <th>Deskripsi</th>
                                 <th>Debit</th>
@@ -308,12 +308,12 @@ export default function FinanceDashboard() {
                                     <td><span className={styles.mono}>{t.number}</span></td>
                                     <td className={styles.muted}>{t.date ? new Date(t.date).toLocaleDateString('id-ID') : '-'}</td>
                                     <td style={{ maxWidth: 260 }} className="truncate">{t.description}</td>
-                                    <td style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{fmt(t.debit)}</td>
-                                    <td style={{ fontWeight: 600, color: 'var(--color-danger)' }}>{fmt(t.credit)}</td>
+                                    <td style={{ fontWeight: 600, color: 'var(--color-danger)' }}>{t.debit > 0 ? fmt(t.debit) : '–'}</td>
+                                    <td style={{ fontWeight: 600, color: 'var(--color-success)' }}>{t.credit > 0 ? fmt(t.credit) : '–'}</td>
                                     <td>
                                         <Badge
                                             label={t.typeLabel || t.type}
-                                            color={t.type === 'purchase_receiving' ? 'blue' : t.type === 'distribution' ? 'green' : t.type === 'consumption' ? 'purple' : t.type === 'waste' ? 'red' : 'gray'}
+                                            color={t.type === 'invoice_dapur' ? 'green' : t.type === 'vendor_invoice' ? 'red' : 'gray'}
                                         />
                                     </td>
                                 </tr>

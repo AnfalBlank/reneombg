@@ -4,7 +4,7 @@ import { purchaseOrders, poItems, goodsReceipts, grItems, inventoryStock, invent
 import { eq, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
-import { journalPurchaseReceiving, recalcMovingAverage } from '../lib/journal'
+import { recalcMovingAverage } from '../lib/journal'
 import { createNotification } from '../lib/notify'
 import { deductDapurBudget } from '../lib/budget'
 import { z } from 'zod'
@@ -290,13 +290,6 @@ app.post('/orders/:poId/receive', requireAuth, requireRole('super_admin', 'admin
         })
     }
 
-    const journalId = await journalPurchaseReceiving({
-        grnId, gudangId: po.gudangId, vendorId: po.vendorId, totalAmount,
-        description: `Receiving ${grnNumber} dari PO ${po.poNumber}`, createdBy: user.id,
-    }).catch(err => { console.warn('Auto-journal skipped:', err.message); return null })
-
-    if (journalId) await db.update(goodsReceipts).set({ journalId }).where(eq(goodsReceipts.id, grnId))
-
     const updatedPoItems = await db.query.poItems.findMany({ where: eq(poItems.poId, poId) })
     const allReceived = updatedPoItems.every(i => i.qtyReceived >= i.qtyOrdered)
     const someReceived = updatedPoItems.some(i => i.qtyReceived > 0)
@@ -304,7 +297,7 @@ app.post('/orders/:poId/receive', requireAuth, requireRole('super_admin', 'admin
     await db.update(purchaseOrders).set({ status: newStatus, updatedAt: now }).where(eq(purchaseOrders.id, poId))
 
     const grn = await db.query.goodsReceipts.findFirst({ where: eq(goodsReceipts.id, grnId) })
-    return c.json({ data: grn, journalId }, 201)
+    return c.json({ data: grn }, 201)
 })
 
 // ─── Direct Delivery Goods Receipt ────────────────────────────────────────────

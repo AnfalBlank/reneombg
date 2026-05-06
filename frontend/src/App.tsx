@@ -7,7 +7,6 @@ import ItemsPage from './pages/master-data/ItemsPage'
 import VendorsPage from './pages/master-data/VendorsPage'
 import DapurPage from './pages/master-data/DapurPage'
 import GudangPage from './pages/master-data/GudangPage'
-import CoaPage from './pages/master-data/CoaPage'
 import RecipesPage from './pages/master-data/RecipesPage'
 import PurchaseOrderPage from './pages/purchase/PurchaseOrderPage'
 import GoodsReceiptPage from './pages/purchase/GoodsReceiptPage'
@@ -19,9 +18,6 @@ import DeliveryOrderPage from './pages/supply-chain/DeliveryOrderPage'
 import KitchenReceivingPage from './pages/supply-chain/KitchenReceivingPage'
 import ConsumptionPage from './pages/supply-chain/ConsumptionPage'
 import DOPrintPage from './pages/supply-chain/DOPrintPage'
-import JournalPage from './pages/finance/JournalPage'
-import GeneralLedgerPage from './pages/finance/GeneralLedgerPage'
-import PeriodClosingPage from './pages/finance/PeriodClosingPage'
 import ReportsPage from './pages/finance/ReportsPage'
 import FinanceDashboard from './pages/finance/FinanceDashboard'
 import ArusKasPage from './pages/finance/ArusKasPage'
@@ -63,7 +59,6 @@ export default function App() {
                         <Route path="master-data/vendors" element={<VendorsPage />} />
                         <Route path="master-data/dapur" element={<DapurPage />} />
                         <Route path="master-data/gudang" element={<GudangPage />} />
-                        <Route path="master-data/coa" element={<CoaPage />} />
                         <Route path="master-data/recipes" element={<RecipesPage />} />
                         <Route path="master-data/price-list" element={<PriceListPage />} />
 
@@ -84,13 +79,13 @@ export default function App() {
                         <Route path="supply-chain/consumption" element={<ConsumptionPage />} />
                         <Route path="supply-chain/price-list" element={<PriceListViewPage />} />
 
-                        {/* Pembukuan (Accounting) */}
-                        <Route path="accounting/journal" element={<JournalPage />} />
-                        <Route path="accounting/general-ledger" element={<GeneralLedgerPage />} />
-                        <Route path="accounting/period-closing" element={<PeriodClosingPage />} />
-
-                        {/* Laporan Operasional */}
-                        <Route path="reports" element={<OperationalReportsPage />} />
+                        {/* Legacy redirects */}
+                        <Route path="finance/journal" element={<Navigate to="/finance/reports" replace />} />
+                        <Route path="finance/general-ledger" element={<Navigate to="/finance/reports" replace />} />
+                        <Route path="finance/period-closing" element={<Navigate to="/finance/reports" replace />} />
+                        <Route path="accounting/journal" element={<Navigate to="/finance/reports" replace />} />
+                        <Route path="accounting/general-ledger" element={<Navigate to="/finance/reports" replace />} />
+                        <Route path="accounting/period-closing" element={<Navigate to="/finance/reports" replace />} />
 
                         {/* Finance */}
                         <Route path="finance/dashboard" element={<FinanceDashboard />} />
@@ -105,13 +100,9 @@ export default function App() {
                         <Route path="finance/budget-log" element={<BudgetLogPage />} />
                         <Route path="finance/tagihan-dapur" element={<TagihanDapurPage />} />
                         <Route path="finance/kitchen-billing" element={<KitchenBillingPage />} />
-                        {/* Legacy redirects — lama ke baru */}
-                        <Route path="finance/invoices" element={<Navigate to="/finance/tagihan-dapur" replace />} />
 
-                        {/* Legacy redirects */}
-                        <Route path="finance/journal" element={<Navigate to="/accounting/journal" replace />} />
-                        <Route path="finance/general-ledger" element={<Navigate to="/accounting/general-ledger" replace />} />
-                        <Route path="finance/period-closing" element={<Navigate to="/accounting/period-closing" replace />} />
+                        {/* Laporan Operasional */}
+                        <Route path="reports" element={<OperationalReportsPage />} />
 
                         {/* Settings */}
                         <Route path="settings/users" element={<UsersPage />} />

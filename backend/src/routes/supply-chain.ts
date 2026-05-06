@@ -11,7 +11,6 @@ import {
 import { eq, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
-import { journalDistribution, journalConsumption, journalWaste } from '../lib/journal'
 import { createNotification } from '../lib/notify'
 import { validateIRBudget, createBudgetLog, reverseBudgetLog, checkBudgetWarning, findActiveBudget } from '../lib/budget'
 import { nextItemSkuByCategory } from '../lib/auto-code'
@@ -911,34 +910,7 @@ app.post('/kitchen-receiving/:doId/confirm', requireAuth, requireRole('super_adm
         }
     }
 
-    // Distribution journal based on actual received (unitCost × qtyActual)
-    let journalId: string | null = null
-    if (totalActualCostValue > 0) {
-        journalId = await journalDistribution({
-            doId, dapurId: doRecord.dapurId!,
-            totalValue: totalActualCostValue,
-            description: `Distribusi ${doRecord.doNumber} ke ${doRecord.dapurId} (aktual diterima)`,
-            createdBy: user.id,
-        }).catch(err => { console.warn('Auto-journal skipped:', err.message); return null })
-    }
-
-    // Update DO with journal reference
-    if (journalId) {
-        await db.update(deliveryOrders).set({
-            journalId, updatedAt: now,
-        }).where(eq(deliveryOrders.id, doId))
-    }
-
-    // Waste journal for unaccounted shortage (no rejection reason)
-    if (totalWasteValue > 0) {
-        await journalWaste({
-            refId: krId,
-            dapurId: doRecord.dapurId!,
-            totalAmount: totalWasteValue,
-            description: `Selisih penerimaan KR dari DO ${doRecord.doNumber}`,
-            createdBy: user.id,
-        }).catch(err => { console.warn('Waste journal skipped:', err.message) })
-    }
+    // Update DO with journal reference removed (no auto-journal)
 
     // Update DO status to confirmed
     await db.update(deliveryOrders).set({ status: 'confirmed', updatedAt: now }).where(eq(deliveryOrders.id, doId))
@@ -1085,24 +1057,10 @@ app.post('/consumption', requireAuth, requireRole('super_admin', 'kitchen_admin'
         })
     }
 
-    // Auto-journal: Dr COGS Dapur / Cr Inventory Dapur
-    const journalId = await journalConsumption({
-        refId: consumptionId,
-        dapurId: parsed.data.dapurId,
-        cogsCoaCode: '5-1000', // default COGS code
-        totalAmount: totalCost,
-        description: `Pemakaian bahan dapur${parsed.data.recipeId ? ' (Resep)' : ''} – ${parsed.data.notes || 'Harian'}`,
-        createdBy: user.id,
-    }).catch(err => {
-        console.warn('Consumption journal skipped:', err.message)
-        return null
-    })
-
     return c.json({
         success: true,
         consumptionId,
         totalCost,
-        journalId,
         itemCount: parsed.data.items.length,
     }, 201)
 })

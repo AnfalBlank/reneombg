@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { db } from '../db/index'
-import { journalEntries, journalLines, accountingPeriods, inventoryStock, invoices, vendorInvoices, expenses, cashflowPayments, goodsReceipts } from '../db/schema/index'
+import { journalEntries, journalLines, accountingPeriods, inventoryStock, invoices, vendorInvoices, expenses, cashflowPayments, goodsReceipts, purchaseOrders, internalRequests } from '../db/schema/index'
 import { eq, and, gte, lte, sum, sql } from 'drizzle-orm'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { randomUUID } from 'crypto'
@@ -511,112 +511,149 @@ app.get('/reports/balance-sheet', requireAuth, requireRole('super_admin', 'admin
 })
 
 // ─── Finance Dashboard (dedicated finance overview) ──────────────────────────
+// ─── Finance Dashboard — berbasis data aktual (invoice, vendor invoice, expenses) ─
 app.get('/finance-dashboard', requireAuth, async (c) => {
     const startDate = c.req.query('startDate')
     const endDate = c.req.query('endDate')
     const dapurId = c.req.query('dapurId')
 
-    // Get all journals with lines
-    let journals = await db.query.journalEntries.findMany({
-        with: { lines: { with: { coa: true } }, dapur: true },
-        orderBy: (j, { desc }) => [desc(j.createdAt)],
+    // ── Revenue: Invoice Dapur ────────────────────────────────────────────────
+    let allInvoices = await db.query.invoices.findMany({
+        with: { items: true },
+        orderBy: (i, { asc }) => [asc(i.createdAt)],
     })
+    if (startDate) allInvoices = allInvoices.filter(i => inRange(i.createdAt, startDate, endDate))
+    else if (endDate) allInvoices = allInvoices.filter(i => inRange(i.createdAt, undefined, endDate))
+    if (dapurId) allInvoices = allInvoices.filter(i => i.dapurId === dapurId)
 
-    if (startDate) journals = journals.filter(j => new Date(j.createdAt) >= new Date(startDate))
-    if (endDate) journals = journals.filter(j => new Date(j.createdAt) <= new Date(endDate + 'T23:59:59'))
-    if (dapurId) journals = journals.filter(j => j.dapurId === dapurId)
+    const totalRevenue = allInvoices.reduce((a, i) => a + (i.totalAmount || 0), 0)
 
-    // Aggregate by account type
-    const accountSums: Record<string, { name: string; type: string; debit: number; credit: number }> = {}
-    for (const j of journals) {
-        for (const line of j.lines) {
-            if (!accountSums[line.coaId]) {
-                accountSums[line.coaId] = { name: line.coa.name, type: line.coa.type, debit: 0, credit: 0 }
-            }
-            if (line.side === 'debit') accountSums[line.coaId].debit += line.amount
-            else accountSums[line.coaId].credit += line.amount
-        }
-    }
+    // ── COGS: Vendor Invoice ──────────────────────────────────────────────────
+    let allVendorInvoices = await db.query.vendorInvoices.findMany({
+        with: { vendor: true },
+        orderBy: (vi, { asc }) => [asc(vi.createdAt)],
+    })
+    if (startDate) allVendorInvoices = allVendorInvoices.filter(vi => inRange(vi.createdAt, startDate, endDate))
+    else if (endDate) allVendorInvoices = allVendorInvoices.filter(vi => inRange(vi.createdAt, undefined, endDate))
 
-    const revenue = Object.values(accountSums).filter(s => s.type === 'REVENUE').reduce((a, s) => a + s.credit - s.debit, 0)
-    const cogs = Object.values(accountSums).filter(s => s.name.startsWith('COGS')).reduce((a, s) => a + s.debit - s.credit, 0)
-    const expenses = Object.values(accountSums).filter(s => s.type === 'EXPENSE' && !s.name.startsWith('COGS')).reduce((a, s) => a + s.debit - s.credit, 0)
-    const grossProfit = revenue - cogs
-    const netProfit = grossProfit - expenses
-    const grossMargin = revenue > 0 ? ((grossProfit / revenue) * 100).toFixed(1) + '%' : '0%'
-    const netMargin = revenue > 0 ? ((netProfit / revenue) * 100).toFixed(1) + '%' : '0%'
+    const totalCogs = allVendorInvoices.reduce((a, vi) => a + (vi.totalAmount || 0), 0)
 
-    // P&L Trend (group by month)
-    const monthMap: Record<string, { revenue: number; cogs: number; profit: number }> = {}
-    for (const j of journals) {
-        const d = new Date(j.createdAt)
+    // ── Expenses: Pengeluaran Operasional ─────────────────────────────────────
+    let allExpenses = await db.query.expenses.findMany({
+        orderBy: (e, { asc }) => [asc(e.createdAt)],
+    })
+    if (startDate) allExpenses = allExpenses.filter(e => inRange(e.createdAt, startDate, endDate))
+    else if (endDate) allExpenses = allExpenses.filter(e => inRange(e.createdAt, undefined, endDate))
+
+    const totalExpenses = allExpenses.reduce((a, e) => a + (e.amount || 0), 0)
+
+    const grossProfit = totalRevenue - totalCogs
+    const netProfit = grossProfit - totalExpenses
+    const grossMargin = totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) + '%' : '0%'
+    const netMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) + '%' : '0%'
+
+    // ── P&L Trend per bulan ───────────────────────────────────────────────────
+    const monthMap: Record<string, { revenue: number; cogs: number; expenses: number }> = {}
+    for (const inv of allInvoices) {
+        const d = new Date(inv.createdAt)
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, profit: 0 }
-        if (j.type === 'consumption') monthMap[key].cogs += j.totalDebit
-        // Revenue would come from revenue-type journals if they exist
+        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, expenses: 0 }
+        monthMap[key].revenue += inv.totalAmount || 0
+    }
+    for (const vi of allVendorInvoices) {
+        const d = new Date(vi.createdAt)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, expenses: 0 }
+        monthMap[key].cogs += vi.totalAmount || 0
+    }
+    for (const exp of allExpenses) {
+        const d = new Date(exp.createdAt)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        if (!monthMap[key]) monthMap[key] = { revenue: 0, cogs: 0, expenses: 0 }
+        monthMap[key].expenses += exp.amount || 0
     }
     const pnlTrend = Object.entries(monthMap)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([period, v]) => ({ period, revenue: v.revenue, cogs: v.cogs, profit: v.revenue - v.cogs }))
+        .map(([period, v]) => ({
+            period,
+            revenue: v.revenue,
+            cogs: v.cogs,
+            profit: v.revenue - v.cogs - v.expenses,
+        }))
 
-    // Dapur comparison
-    const dapurMap: Record<string, { name: string; cogs: number; purchase: number }> = {}
-    for (const j of journals) {
-        if (!j.dapurId || !j.dapur) continue
-        if (!dapurMap[j.dapurId]) dapurMap[j.dapurId] = { name: j.dapur.name, cogs: 0, purchase: 0 }
-        if (j.type === 'consumption') dapurMap[j.dapurId].cogs += j.totalDebit
-        if (j.type === 'purchase_receiving') dapurMap[j.dapurId].purchase += j.totalDebit
+    // ── Dapur Comparison: revenue & cogs per dapur ────────────────────────────
+    const dapurMap: Record<string, { name: string; revenue: number; cogs: number }> = {}
+    for (const inv of allInvoices) {
+        if (!dapurMap[inv.dapurId]) dapurMap[inv.dapurId] = { name: inv.dapurName || '-', revenue: 0, cogs: 0 }
+        dapurMap[inv.dapurId].revenue += inv.totalAmount || 0
+    }
+    // Distribusikan COGS ke dapur berdasarkan proporsi revenue
+    const totalRevForCogs = Object.values(dapurMap).reduce((a, d) => a + d.revenue, 0)
+    if (totalRevForCogs > 0) {
+        for (const d of Object.values(dapurMap)) {
+            d.cogs = totalCogs * (d.revenue / totalRevForCogs)
+        }
     }
     const dapurComparison = Object.values(dapurMap)
 
-    // Expense breakdown
-    const expenseAccounts = Object.values(accountSums).filter(s => s.type === 'EXPENSE')
-    const totalExpenseValue = expenseAccounts.reduce((a, s) => a + s.debit - s.credit, 0)
-    const expenseBreakdown = expenseAccounts
-        .map(s => ({ name: s.name, value: s.debit - s.credit }))
+    // ── Expense Breakdown per kategori ────────────────────────────────────────
+    const expCatMap: Record<string, number> = {}
+    for (const exp of allExpenses) {
+        expCatMap[exp.category] = (expCatMap[exp.category] || 0) + (exp.amount || 0)
+    }
+    const expenseBreakdown = Object.entries(expCatMap)
+        .map(([name, value]) => ({ name: name.replace(/_/g, ' '), value }))
         .filter(e => e.value > 0)
         .sort((a, b) => b.value - a.value)
         .slice(0, 8)
 
-    // Top expenses
     const topExpenses = expenseBreakdown.map(e => ({
         name: e.name,
         value: e.value,
-        percentage: totalExpenseValue > 0 ? (e.value / totalExpenseValue) * 100 : 0,
+        percentage: totalExpenses > 0 ? (e.value / totalExpenses) * 100 : 0,
     }))
 
-    // Cash flow summary (simplified)
-    const purchaseTotal = journals.filter(j => j.type === 'purchase_receiving').reduce((a, j) => a + j.totalDebit, 0)
-    const distributionTotal = journals.filter(j => j.type === 'distribution').reduce((a, j) => a + j.totalDebit, 0)
-    const cashFlowSummary = {
-        inflow: distributionTotal,
-        outflow: purchaseTotal,
-        net: distributionTotal - purchaseTotal,
-    }
+    // ── Cash Flow Summary: dari cashflow_payments ─────────────────────────────
+    let cashflowAll = await db.query.cashflowPayments.findMany()
+    if (startDate) cashflowAll = cashflowAll.filter(p => inRange(p.createdAt, startDate, endDate))
+    else if (endDate) cashflowAll = cashflowAll.filter(p => inRange(p.createdAt, undefined, endDate))
 
-    // Recent transactions
-    const typeLabelMap: Record<string, string> = {
-        purchase_receiving: 'Pembelian',
-        distribution: 'Distribusi',
-        consumption: 'COGS',
-        waste: 'Waste',
-        adjustment: 'Penyesuaian',
-    }
-    const recentTransactions = journals.slice(0, 10).map(j => ({
-        id: j.id,
-        number: j.journalNumber,
-        type: j.type,
-        typeLabel: typeLabelMap[j.type] || j.type,
-        description: j.description,
-        debit: j.totalDebit,
-        credit: j.totalCredit,
-        date: j.createdAt,
+    const cashInflow = cashflowAll
+        .filter(p => p.type === 'income' && p.status === 'paid')
+        .reduce((a, p) => a + (p.totalAmount || 0), 0)
+    const cashOutflow = cashflowAll
+        .filter(p => (p.type === 'vendor_payment' || p.type === 'expense') && p.status === 'paid')
+        .reduce((a, p) => a + (p.totalAmount || 0), 0)
+
+    // ── Recent Transactions: invoice dapur + vendor invoice terbaru ───────────
+    const recentInvoices = allInvoices.slice(-5).reverse().map(inv => ({
+        id: inv.id,
+        number: inv.invoiceNumber,
+        type: 'invoice_dapur',
+        typeLabel: 'Invoice Dapur',
+        description: `Invoice ${inv.dapurName || '-'} — ${inv.krNumber || inv.doNumber || '-'}`,
+        debit: 0,
+        credit: inv.totalAmount || 0,
+        date: inv.createdAt,
     }))
+    const recentVendorInv = allVendorInvoices.slice(-5).reverse().map(vi => ({
+        id: vi.id,
+        number: vi.invoiceNumber,
+        type: 'vendor_invoice',
+        typeLabel: 'Invoice Vendor',
+        description: `Invoice ${vi.vendorName || '-'}`,
+        debit: vi.totalAmount || 0,
+        credit: 0,
+        date: vi.createdAt,
+    }))
+    const recentTransactions = [...recentInvoices, ...recentVendorInv]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 10)
 
     return c.json({
         data: {
-            revenue,
-            totalCogs: cogs,
+            revenue: totalRevenue,
+            totalCogs,
             grossProfit,
             netProfit,
             grossMargin,
@@ -627,7 +664,11 @@ app.get('/finance-dashboard', requireAuth, async (c) => {
             dapurComparison,
             expenseBreakdown,
             topExpenses,
-            cashFlowSummary,
+            cashFlowSummary: {
+                inflow: cashInflow,
+                outflow: cashOutflow,
+                net: cashInflow - cashOutflow,
+            },
             recentTransactions,
         },
     })
@@ -796,47 +837,96 @@ app.get('/reports/analysis', requireAuth, async (c) => {
     })
 })
 
-// ─── Dashboard Summary (for frontend Dashboard page) ─────────────────────────
+// ─── Dashboard Summary — data aktual tanpa journal entries ───────────────────
 app.get('/dashboard-summary', requireAuth, async (c) => {
     const user = (c as any).get('user') as any
     const startDate = c.req.query('startDate')
     const endDate = c.req.query('endDate')
     const isKitchen = user.role === 'kitchen_admin' && user.dapurId
 
-    const periods = await db.query.accountingPeriods.findMany({ orderBy: (p, { desc }) => [desc(p.year), desc(p.month)] })
-    const currentPeriod = periods[0]
-
-    // Inventory — kitchen_admin only sees their dapur
+    // ── Inventory ─────────────────────────────────────────────────────────────
     let stocks = await db.query.inventoryStock.findMany({ with: { item: true } })
     if (isKitchen) stocks = stocks.filter(s => s.locationType === 'dapur' && s.dapurId === user.dapurId)
     const totalStockValue = stocks.reduce((a, s) => a + s.totalValue, 0)
     const totalSkuActive = new Set(stocks.map(s => s.itemId)).size
-    // lowStockCount only counts gudang stock (not dapur) for executive dashboard accuracy
     const gudangStocks = stocks.filter(s => s.locationType === 'gudang')
     const lowStockItems = (isKitchen ? stocks : gudangStocks).filter(s => s.item && s.qty < (s.item.minStock ?? 0))
 
-    // Journals — kitchen_admin only sees their dapur journals
-    let journals = currentPeriod?.id
-        ? await db.query.journalEntries.findMany({ where: eq(journalEntries.periodId, currentPeriod.id) })
-        : []
-    if (isKitchen) journals = journals.filter(j => j.dapurId === user.dapurId)
-    if (startDate) journals = journals.filter(j => new Date(j.createdAt) >= new Date(startDate))
-    if (endDate) journals = journals.filter(j => new Date(j.createdAt) <= new Date(endDate + 'T23:59:59'))
+    // ── Purchase: GRN aktual ──────────────────────────────────────────────────
+    let grns = await db.query.goodsReceipts.findMany()
+    if (startDate) grns = grns.filter(g => inRange(g.createdAt, startDate, endDate))
+    else if (endDate) grns = grns.filter(g => inRange(g.createdAt, undefined, endDate))
+    const totalPurchase = grns.reduce((a, g) => a + (g.totalAmount || 0), 0)
+    const grnCount = grns.length
 
-    const totalCogs = journals.filter(j => j.type === 'consumption').reduce((a, j) => a + j.totalDebit, 0)
-    const totalPurchase = journals.filter(j => j.type === 'purchase_receiving').reduce((a, j) => a + j.totalDebit, 0)
+    // ── PO count ──────────────────────────────────────────────────────────────
+    let pos = await db.query.purchaseOrders.findMany()
+    if (startDate) pos = pos.filter(p => inRange(p.createdAt, startDate, endDate))
+    else if (endDate) pos = pos.filter(p => inRange(p.createdAt, undefined, endDate))
+    const poCount = pos.length
+    const poValue = pos.reduce((a, p) => a + (p.totalAmount || 0), 0)
+
+    // ── IR count ──────────────────────────────────────────────────────────────
+    let irs = await db.query.internalRequests.findMany()
+    if (isKitchen) irs = irs.filter(r => r.dapurId === user.dapurId)
+    if (startDate) irs = irs.filter(r => inRange(r.createdAt, startDate, endDate))
+    else if (endDate) irs = irs.filter(r => inRange(r.createdAt, undefined, endDate))
+    const irCount = irs.length
+    const pendingIR = irs.filter(r => r.status === 'pending').length
+
+    // ── COGS: dari vendor invoice (aktual) ────────────────────────────────────
+    let vendorInvs = await db.query.vendorInvoices.findMany()
+    if (startDate) vendorInvs = vendorInvs.filter(vi => inRange(vi.createdAt, startDate, endDate))
+    else if (endDate) vendorInvs = vendorInvs.filter(vi => inRange(vi.createdAt, undefined, endDate))
+    const totalCogs = vendorInvs.reduce((a, vi) => a + (vi.totalAmount || 0), 0)
+
+    // ── Revenue: dari invoice dapur ───────────────────────────────────────────
+    let invs = await db.query.invoices.findMany()
+    if (isKitchen) invs = invs.filter(i => i.dapurId === user.dapurId)
+    if (startDate) invs = invs.filter(i => inRange(i.createdAt, startDate, endDate))
+    else if (endDate) invs = invs.filter(i => inRange(i.createdAt, undefined, endDate))
+    const totalRevenue = invs.reduce((a, i) => a + (i.totalAmount || 0), 0)
+
+    // ── Recent Transactions: invoice dapur terbaru ────────────────────────────
+    const recentTransactions = invs.slice(-5).reverse().map(inv => ({
+        id: inv.id,
+        number: inv.invoiceNumber,
+        type: 'invoice_dapur',
+        description: `Invoice ${inv.dapurName || '-'} — ${inv.krNumber || inv.doNumber || '-'}`,
+        amount: inv.totalAmount || 0,
+        date: inv.createdAt,
+    }))
 
     return c.json({
         data: {
-            currentPeriod: currentPeriod?.label ?? 'N/A',
             userRole: user.role,
             userName: user.name,
             dapurId: user.dapurId,
-            totalStockValue, totalSkuActive, totalCogs, totalPurchase,
-            journalCount: journals.length,
+            // Inventory
+            totalStockValue,
+            totalSkuActive,
             lowStockCount: lowStockItems.length,
-            lowStockItems: lowStockItems.slice(0, 5).map(s => ({ name: s.item?.name, qty: s.qty, minStock: s.item?.minStock, uom: s.item?.uom })),
-            recentJournals: journals.slice(-5).reverse().map(j => ({ id: j.id, number: j.journalNumber, type: j.type, description: j.description, amount: j.totalDebit, date: j.createdAt })),
+            lowStockItems: lowStockItems.slice(0, 5).map(s => ({
+                name: s.item?.name, qty: s.qty, minStock: s.item?.minStock, uom: s.item?.uom,
+            })),
+            // Purchase
+            totalPurchase,
+            grnCount,
+            poCount,
+            poValue,
+            // Supply Chain
+            irCount,
+            pendingIR,
+            // Finance
+            totalCogs,
+            totalRevenue,
+            grossProfit: totalRevenue - totalCogs,
+            // Recent
+            recentTransactions,
+            // Legacy compat
+            journalCount: invs.length,
+            recentJournals: recentTransactions,
+            currentPeriod: new Date().toLocaleString('id-ID', { month: 'long', year: 'numeric' }),
         },
     })
 })
