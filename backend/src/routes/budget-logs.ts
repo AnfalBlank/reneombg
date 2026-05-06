@@ -1,10 +1,19 @@
 import { Hono } from 'hono'
 import { db } from '../db/index'
-import { budgetLogs } from '../db/schema/index'
+import { budgetLogs, dapur } from '../db/schema/index'
 import { eq, and, gte, lte } from 'drizzle-orm'
 import { requireAuth, requireRole } from '../middleware/auth'
 
 const app = new Hono()
+
+// ─── Helper: enrich logs with dapur name ─────────────────────────────────────
+async function enrichWithDapurName(logs: any[]) {
+    if (logs.length === 0) return logs
+    const dapurIds = [...new Set(logs.map(l => l.dapurId).filter(Boolean))]
+    const dapurList = await db.query.dapur.findMany()
+    const dapurMap = Object.fromEntries(dapurList.map(d => [d.id, d.name]))
+    return logs.map(l => ({ ...l, dapurName: dapurMap[l.dapurId] || l.dapurId || '-' }))
+}
 
 // ─── List budget logs with filters and daily summary ─────────────────────────
 // GET /api/budget-logs?dapurId=&dateFrom=&dateTo=&transactionType=
@@ -53,7 +62,7 @@ app.get('/', requireAuth, async (c) => {
         .sort((a, b) => a.date.localeCompare(b.date))
 
     return c.json({
-        data: logs,
+        data: await enrichWithDapurName(logs),
         total: logs.length,
         summary,
     })
@@ -97,15 +106,16 @@ app.get(
             .where(conditions.length > 0 ? and(...conditions) : undefined)
             .orderBy(budgetLogs.transactionDate)
 
+        const enrichedLogs = await enrichWithDapurName(logs)
+
         // Build CSV content
-        // Columns: Tanggal, Dapur, Jenis Transaksi, Nomor Referensi, Jumlah, Saldo Sebelum, Saldo Sesudah, Catatan
         const csvRows: string[] = [
             'Tanggal,Dapur,Jenis Transaksi,Nomor Referensi,Jumlah,Saldo Sebelum,Saldo Sesudah,Catatan',
         ]
 
-        for (const log of logs) {
+        for (const log of enrichedLogs) {
             const tanggal = new Date(log.transactionDate).toISOString().slice(0, 10)
-            const dapur = escapeCsvField(log.dapurId)
+            const dapur = escapeCsvField(log.dapurName || log.dapurId)
             const jenisTransaksi = escapeCsvField(log.transactionType)
             const nomorReferensi = escapeCsvField(log.refNumber ?? '')
             const jumlah = log.amount.toString()
