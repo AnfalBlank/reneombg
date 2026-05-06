@@ -142,7 +142,7 @@ function PriceHistoryRow({ itemId, itemName }: { itemId: string; itemName: strin
                             <thead>
                                 <tr>
                                     <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Tanggal Berlaku</th>
-                                    <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Harga Beli</th>
+                                    <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Harga Beli (Avg)</th>
                                     <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Harga Jual</th>
                                     <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Catatan</th>
                                     <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Dibuat</th>
@@ -441,7 +441,7 @@ export default function PriceListPage() {
                                 <th>Item</th>
                                 <th>SKU</th>
                                 <th>Kategori</th>
-                                <th>Harga Beli</th>
+                                <th>Harga Beli (Avg)</th>
                                 <th>Harga Jual</th>
                                 <th>Tanggal Berlaku</th>
                                 <th>Catatan</th>
@@ -583,7 +583,7 @@ export default function PriceListPage() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div className={modalStyles.formGroup}>
-                            <label className={modalStyles.formLabel}>Harga Beli (Rp) *</label>
+                            <label className={modalStyles.formLabel}>Harga Beli / Avg Cost (Rp) *</label>
                             <input
                                 required
                                 type="number"

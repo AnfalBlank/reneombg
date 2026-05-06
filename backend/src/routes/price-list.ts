@@ -143,40 +143,78 @@ app.get('/template', requireAuth, requireRole('super_admin', 'admin', 'finance')
         }
     }
 
-    // Build worksheet data
-    const headers = ['SKU', 'Nama Item', 'Kategori', 'Harga Pembelian', 'Harga Jual', 'Tanggal Berlaku']
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
-    const rows = activeItems.map(item => [
+    // Build worksheet data
+    // Row 1: Petunjuk pengisian
+    const instructions = [
+        ['TEMPLATE PRICE LIST — ERP MBG', '', '', '', '', ''],
+        ['Petunjuk:', 'Isi kolom HARGA JUAL dan TANGGAL BERLAKU untuk setiap item.', '', '', '', ''],
+        ['', 'Kolom HARGA BELI (AVG) sudah terisi otomatis dari rata-rata harga pembelian terakhir.', '', '', '', ''],
+        ['', 'Format Tanggal Berlaku: YYYY-MM-DD (contoh: ' + todayStr + ')', '', '', '', ''],
+        ['', 'Jangan ubah kolom SKU, Nama Item, dan Kategori.', '', '', '', ''],
+        ['', '', '', '', '', ''],
+        // Contoh baris
+        ['CONTOH:', '', '', '', '', ''],
+        ['SKU', 'Nama Item', 'Kategori', 'Harga Beli (Avg)', 'Harga Jual', 'Tanggal Berlaku'],
+        ['BB-0001', 'Beras Premium', 'Bahan Baku', 12000, 15000, todayStr],
+        ['', '', '', '', '', ''],
+        // Header data sebenarnya
+        ['--- DATA ITEM (isi di bawah ini) ---', '', '', '', '', ''],
+        ['SKU', 'Nama Item', 'Kategori', 'Harga Beli (Avg)', 'Harga Jual', 'Tanggal Berlaku'],
+    ]
+
+    const dataRows = activeItems.map(item => [
         item.sku,
         item.name,
         item.category,
-        avgCostMap.get(item.id) || '',  // Harga Pembelian — auto-filled from avg cost
-        '',  // Harga Jual — to be filled
-        '',  // Tanggal Berlaku — to be filled (format: YYYY-MM-DD)
+        avgCostMap.get(item.id) || 0,  // Harga Beli (Avg) — auto-filled from avg cost
+        '',  // Harga Jual — wajib diisi
+        todayStr,  // Tanggal Berlaku — default hari ini, bisa diubah
     ])
 
-    const wsData = [headers, ...rows]
+    const wsData = [...instructions, ...dataRows]
     const ws = XLSX.utils.aoa_to_sheet(wsData)
 
-    // Set column widths
+    // Style: set column widths
     ws['!cols'] = [
         { wch: 15 }, // SKU
         { wch: 30 }, // Nama Item
-        { wch: 15 }, // Kategori
-        { wch: 18 }, // Harga Pembelian
+        { wch: 18 }, // Kategori
+        { wch: 20 }, // Harga Beli (Avg)
         { wch: 15 }, // Harga Jual
-        { wch: 18 }, // Tanggal Berlaku
+        { wch: 20 }, // Tanggal Berlaku
     ]
 
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Price List')
+
+    // Add instructions sheet
+    const infoData = [
+        ['PANDUAN PENGISIAN TEMPLATE PRICE LIST'],
+        [''],
+        ['1. Kolom SKU, Nama Item, Kategori — JANGAN DIUBAH'],
+        ['2. Kolom Harga Beli (Avg) — sudah terisi otomatis dari avg cost gudang, bisa diubah jika perlu'],
+        ['3. Kolom Harga Jual — WAJIB DIISI, harga jual ke dapur'],
+        ['4. Kolom Tanggal Berlaku — format YYYY-MM-DD, contoh: ' + todayStr],
+        [''],
+        ['CATATAN:'],
+        ['- Harga Jual sebaiknya lebih tinggi dari Harga Beli'],
+        ['- Tanggal Berlaku bisa diisi tanggal mendatang untuk persiapan harga baru'],
+        ['- Baris yang SKU-nya kosong akan diabaikan saat import'],
+        ['- Jika item tidak ada di daftar, tambahkan dulu di Master Data → Item'],
+    ]
+    const wsInfo = XLSX.utils.aoa_to_sheet(infoData)
+    wsInfo['!cols'] = [{ wch: 70 }]
+    XLSX.utils.book_append_sheet(wb, wsInfo, 'Panduan')
 
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 
     return new Response(buffer, {
         headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition': `attachment; filename="price-list-template-${new Date().toISOString().split('T')[0]}.xlsx"`,
+            'Content-Disposition': `attachment; filename="price-list-template-${todayStr}.xlsx"`,
         },
     })
 })
@@ -438,8 +476,19 @@ app.post('/import', requireAuth, requireRole('super_admin', 'admin', 'finance'),
         return c.json({ error: 'File Excel tidak memiliki data (minimal 1 baris data selain header)' }, 400)
     }
 
-    // Skip header row (row index 0)
-    const dataRows = rows.slice(1)
+    // Find the actual data header row — look for row containing 'SKU' in first column
+    // This handles both old format (row 0) and new format with instruction rows
+    let headerRowIdx = 0
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+        const firstCell = String(rows[i][0] ?? '').trim().toUpperCase()
+        if (firstCell === 'SKU') {
+            headerRowIdx = i
+            break
+        }
+    }
+
+    // Skip header row — start from data rows after the header
+    const dataRows = rows.slice(headerRowIdx + 1)
 
     // Fetch all items for SKU lookup
     const allItems = await db.query.items.findMany()
