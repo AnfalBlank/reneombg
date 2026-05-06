@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dokumentasi Teknis — Sistem ERP MBG v1.1.0</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 25mm 18mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; font-size: 11pt; color: #1a1a2e; line-height: 1.6; background: #fff; }
+
+  /* Print styles */
+  @media print {
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    body { font-size: 10pt; }
+    pre, code { font-size: 8pt; }
+  }
+
+  /* Cover */
+  .cover { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; padding: 40px; page-break-after: always; }
+  .cover img { width: 120px; margin-bottom: 30px; border-radius: 16px; }
+  .cover h1 { font-size: 28pt; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .cover .subtitle { font-size: 14pt; color: #a0aec0; margin-bottom: 40px; }
+  .cover .version { font-size: 11pt; color: #718096; margin-top: 20px; }
+  .cover .company { font-size: 10pt; color: #4a5568; margin-top: 60px; border-top: 1px solid #2d3748; padding-top: 20px; }
+  .cover .meta-info { margin-top: 30px; font-size: 10pt; color: #718096; }
+  .cover .meta-info span { display: inline-block; margin: 4px 12px; }
+
+  /* Content */
+  .content { max-width: 720px; margin: 0 auto; padding: 30px 20px; }
+
+  /* TOC */
+  .toc { page-break-after: always; }
+  .toc h2 { font-size: 18pt; margin-bottom: 20px; color: #1a1a2e; border-bottom: 3px solid #0f3460; padding-bottom: 8px; }
+  .toc-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dotted #cbd5e0; font-size: 11pt; }
+  .toc-item a { color: #0f3460; text-decoration: none; }
+  .toc-item a:hover { text-decoration: underline; }
+  .toc-section { font-weight: 700; margin-top: 10px; }
+
+  /* Headings */
+  h2 { font-size: 18pt; color: #0f3460; margin: 30px 0 16px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
+  h3 { font-size: 13pt; color: #1a1a2e; margin: 22px 0 10px; }
+  h4 { font-size: 11pt; color: #2d3748; margin: 16px 0 8px; font-weight: 700; }
+  p { margin-bottom: 10px; }
+
+  /* Lists */
+  ul { padding-left: 20px; margin: 8px 0; }
+  ul li { margin-bottom: 4px; }
+  ol { padding-left: 20px; margin: 8px 0; }
+  ol li { margin-bottom: 4px; }
+
+  /* Info boxes */
+  .info-box { padding: 12px 16px; border-radius: 8px; margin: 12px 0; font-size: 10pt; }
+  .info-box.tip { background: #ebf8ff; border-left: 4px solid #3182ce; }
+  .info-box.warning { background: #fffbeb; border-left: 4px solid #d69e2e; }
+  .info-box.important { background: #fff5f5; border-left: 4px solid #e53e3e; }
+  .info-box.note { background: #f0fff4; border-left: 4px solid #38a169; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; }
+  th { background: #0f3460; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) { background: #f7fafc; }
+  .table-center td, .table-center th { text-align: center; }
+
+  /* Code blocks */
+  pre { background: #1a1a2e; color: #e2e8f0; padding: 16px; border-radius: 8px; margin: 12px 0; overflow-x: auto; font-size: 9pt; line-height: 1.5; }
+  code { font-family: 'Courier New', 'Consolas', monospace; }
+  pre code { color: #e2e8f0; background: none; padding: 0; }
+  .inline-code { background: #edf2f7; color: #c53030; padding: 1px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 9pt; }
+
+  /* ASCII diagram */
+  .diagram { background: #f7fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin: 12px 0; overflow-x: auto; }
+  .diagram pre { background: transparent; color: #1a1a2e; padding: 0; margin: 0; font-size: 8.5pt; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 9pt; font-weight: 600; }
+  .badge-green { background: #c6f6d5; color: #22543d; }
+  .badge-yellow { background: #fefcbf; color: #744210; }
+  .badge-red { background: #fed7d7; color: #742a2a; }
+  .badge-blue { background: #bee3f8; color: #2a4365; }
+  .badge-gray { background: #e2e8f0; color: #4a5568; }
+  .badge-purple { background: #e9d8fd; color: #553c9a; }
+
+  /* Section header */
+  .section-header { background: linear-gradient(135deg, #0f3460, #16213e); color: #fff; padding: 20px 24px; border-radius: 8px; margin-bottom: 24px; }
+  .section-header h2 { color: #fff; border: none; margin: 0; padding: 0; font-size: 16pt; }
+  .section-header p { color: #a0aec0; margin: 4px 0 0; font-size: 10pt; }
+
+  /* Role card */
+  .role-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .role-card h4 { color: #0f3460; margin-top: 0; }
+
+  /* Flow diagram */
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; padding: 16px; background: #f7fafc; border-radius: 8px; }
+  .flow-step { background: #0f3460; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 9pt; font-weight: 600; white-space: nowrap; }
+  .flow-arrow { color: #a0aec0; font-size: 14pt; }
+
+  /* Footer */
+  .page-footer { text-align: center; font-size: 8pt; color: #a0aec0; margin-top: 40px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+
+  /* Print button */
+  .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #0f3460; color: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .print-bar button { background: #fff; color: #0f3460; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 11pt; }
+  .print-bar button:hover { background: #ebf8ff; }
+  .print-spacer { height: 56px; }
+
+  /* Endpoint list */
+  .endpoint-list { margin: 8px 0; }
+  .endpoint-item { display: flex; gap: 10px; padding: 4px 0; font-size: 10pt; align-items: baseline; }
+  .method { font-weight: 700; font-family: monospace; min-width: 50px; }
+  .method-get { color: #2b6cb0; }
+  .method-post { color: #276749; }
+  .method-patch { color: #744210; }
+  .method-delete { color: #742a2a; }
+
+  /* Status flow */
+  .status-flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 10pt; }
+  .status-flow .arrow { color: #718096; }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+
+  /* Table description */
+  .table-desc { font-size: 10pt; color: #4a5568; margin-bottom: 8px; }
+
+  /* Highlight row */
+  .highlight-row { background: #ebf8ff !important; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- Print Bar -->
+<div class="print-bar no-print">
+  <span>&#128196; Dokumentasi Teknis ERP MBG v1.1.0 &#8212; Siap cetak ke PDF</span>
+  <div>
+    <button onclick="window.print()">&#128424; Cetak / Save PDF</button>
+  </div>
+</div>
+<div class="print-spacer no-print"></div>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <img src="/logo.png" alt="Logo ERP MBG" onerror="this.style.display='none'">
+  <h1>DOKUMENTASI TEKNIS</h1>
+  <div class="subtitle">SISTEM ERP MBG</div>
+  <div style="font-size:11pt; color:#a0aec0;">Dokumentasi Teknis Lengkap — Arsitektur, Database, API &amp; Deployment</div>
+  <div class="meta-info">
+    <span>&#128196; Versi 1.1.0</span>
+    <span>&#128197; 2025</span>
+    <span>&#127760; rmb.manggalautama.web.id</span>
+  </div>
+  <div class="company">
+    <strong>PT. Manggala Utama Indonesia</strong><br>
+    Solusi Sistem Terintegrasi<br>
+    https://rmb.manggalautama.web.id
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="content toc">
+  <h2>Daftar Isi</h2>
+
+  <div class="toc-item toc-section"><a href="#sec1">1. Ringkasan Sistem</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-1">1.1 Overview</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-2">1.2 Stack Teknologi</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-3">1.3 Arsitektur Sistem</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec2">2. Skema RBAC — Hak Akses per Role</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-1">2.1 Daftar Role</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-2">2.2 Matriks Akses per Modul</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-3">2.3 Detail Akses per Role</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec3">3. Arsitektur Database</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-1">3.1 Diagram Relasi Tabel (ERD)</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-2">3.2 Deskripsi Tabel Lengkap (25+ tabel)</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec4">4. Modul &amp; Fitur</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-1">4.1 Master Data</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-2">4.2 Pembelian</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-3">4.3 Inventori</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-4">4.4 Supply Chain</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-5">4.5 Keuangan / Arus Kas</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-6">4.6 Laporan Operasional</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-7">4.7 Pengaturan</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec5">5. Alur Bisnis</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-1">5.1 Flow Pembelian</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-2">5.2 Flow Distribusi (Supply Chain)</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-3">5.3 Flow Keuangan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-4">5.4 Flow Anggaran Dapur</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec6">6. Integrasi &amp; Notifikasi</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-1">6.1 Sistem Notifikasi Real-time</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-2">6.2 Telegram Integration</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-3">6.3 WhatsApp Notification</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-4">6.4 WebSocket</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec7">7. Deployment &amp; Infrastruktur</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-1">7.1 Struktur Direktori</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-2">7.2 Environment Variables</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-3">7.3 Konfigurasi Nginx</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-4">7.4 PM2 Configuration</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-5">7.5 Deployment Script</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-6">7.6 Database Migration</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-7">7.7 Monitoring &amp; Maintenance</a></div>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 1: RINGKASAN SISTEM -->
+<div class="content page-break" id="sec1">
+  <div class="section-header">
+    <h2>1. Ringkasan Sistem</h2>
+    <p>Overview, stack teknologi, dan arsitektur sistem ERP MBG</p>
+  </div>
+
+  <h3 id="sec1-1">1.1 Overview</h3>
+  <p>ERP MBG adalah sistem Enterprise Resource Planning berbasis web yang dirancang khusus untuk operasional bisnis makanan/katering skala menengah dengan model <strong>multi-dapur (multi-unit)</strong>. Sistem ini mengintegrasikan seluruh rantai pasokan — dari pembelian bahan baku dari vendor, distribusi ke dapur-dapur produksi, hingga penagihan dan pelaporan keuangan.</p>
+
+  <p><strong>Tujuan Utama:</strong></p>
+  <ul>
+    <li>Mengotomatisasi alur Supply Chain dari pembelian hingga distribusi ke dapur</li>
+    <li>Kontrol anggaran per dapur secara real-time</li>
+    <li>Transparansi keuangan dengan laporan P&amp;L dan Neraca</li>
+    <li>Audit trail lengkap untuk semua transaksi</li>
+  </ul>
+
+  <h3 id="sec1-2">1.2 Stack Teknologi</h3>
+
+  <h4>Backend</h4>
+  <table>
+    <thead><tr><th>Komponen</th><th>Teknologi</th><th>Versi</th></tr></thead>
+    <tbody>
+      <tr><td>Runtime</td><td>Node.js</td><td>≥18</td></tr>
+      <tr><td>Framework</td><td>Hono.js</td><td>Latest</td></tr>
+      <tr><td>Bahasa</td><td>TypeScript</td><td>Latest</td></tr>
+      <tr><td>Database</td><td>SQLite via Turso/libsql</td><td>Latest</td></tr>
+      <tr><td>ORM</td><td>Drizzle ORM</td><td>Latest</td></tr>
+      <tr><td>Autentikasi</td><td>Better Auth</td><td>Latest</td></tr>
+      <tr><td>WebSocket</td><td>ws (native Node)</td><td>Latest</td></tr>
+      <tr><td>Process Manager</td><td>PM2</td><td>Latest</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Frontend</h4>
+  <table>
+    <thead><tr><th>Komponen</th><th>Teknologi</th></tr></thead>
+    <tbody>
+      <tr><td>Framework</td><td>React + TypeScript</td></tr>
+      <tr><td>Build Tool</td><td>Vite</td></tr>
+      <tr><td>State/Data Fetching</td><td>TanStack Query (React Query)</td></tr>
+      <tr><td>Routing</td><td>React Router v6</td></tr>
+      <tr><td>Charts</td><td>Recharts</td></tr>
+      <tr><td>HTTP Client</td><td>Fetch API (custom hook)</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Infrastruktur</h4>
+  <table>
+    <thead><tr><th>Komponen</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Server</td><td>VPS Linux</td></tr>
+      <tr><td>Web Server / Reverse Proxy</td><td>Nginx</td></tr>
+      <tr><td>Process Manager</td><td>PM2</td></tr>
+      <tr><td>Domain</td><td>rmb.manggalautama.web.id</td></tr>
+      <tr><td>Database</td><td>SQLite (file-based, via Turso/libsql)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="sec1-3">1.3 Arsitektur Sistem</h3>
+  <div class="diagram">
+<pre>
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;                        INTERNET                             &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+                          | HTTPS
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9660;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;                    NGINX (Reverse Proxy)                     &#9474;
+&#9474;              rmb.manggalautama.web.id                        &#9474;
+&#9474;   - SSL Termination                                          &#9474;
+&#9474;   - Static file serving (frontend/dist)                      &#9474;
+&#9474;   - Proxy /api/* &#8594; localhost:3000                            &#9474;
+&#9474;   - Proxy /ws &#8594; localhost:3000 (WebSocket)                   &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+                          |
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9660;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;              HONO.JS APPLICATION (PM2)                       &#9474;
+&#9474;                   Port: 3000                                 &#9474;
+&#9474;                                                              &#9474;
+&#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9474;
+&#9474;  &#9474;  REST API    &#9474;  &#9474;  Better Auth &#9474;  &#9474;   WebSocket      &#9474;  &#9474;
+&#9474;  &#9474;  /api/*      &#9474;  &#9474;  /api/auth/* &#9474;  &#9474;   /ws            &#9474;  &#9474;
+&#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9474;
+&#9474;         |                                                    &#9474;
+&#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9660;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;   &#9474;
+&#9474;  &#9474;              Drizzle ORM                              &#9474;   &#9474;
+&#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;   &#9474;
+&#9474;         |                                                    &#9474;
+&#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9660;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;   &#9474;
+&#9474;  &#9474;         SQLite Database (via libsql)                  &#9474;   &#9474;
+&#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;              REACT FRONTEND (SPA)                            &#9474;
+&#9474;   - Served dari frontend/dist oleh Hono/Nginx               &#9474;
+&#9474;   - TanStack Query untuk data fetching &amp; caching            &#9474;
+&#9474;   - WebSocket untuk notifikasi real-time                    &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;              INTEGRASI EKSTERNAL                             &#9474;
+&#9474;   - Telegram Bot (notifikasi critical events)               &#9474;
+&#9474;   - WhatsApp (notifikasi pembayaran vendor)                 &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+</pre>
+  </div>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 2: RBAC -->
+<div class="content page-break" id="sec2">
+  <div class="section-header">
+    <h2>2. Skema RBAC — Hak Akses per Role</h2>
+    <p>Role-Based Access Control: matriks akses dan detail hak per role</p>
+  </div>
+
+  <h3 id="sec2-1">2.1 Daftar Role</h3>
+  <table>
+    <thead><tr><th>Role</th><th>Label</th><th>Deskripsi</th></tr></thead>
+    <tbody>
+      <tr><td><span class="inline-code">owner</span></td><td>Owner</td><td>Pemilik bisnis — akses executive dashboard, approval, laporan</td></tr>
+      <tr><td><span class="inline-code">super_admin</span></td><td>Super Admin</td><td>Akses penuh semua fitur termasuk Admin Panel</td></tr>
+      <tr><td><span class="inline-code">admin</span></td><td>Admin Pusat</td><td>Operasional penuh + finance + pengaturan user (tanpa Admin Panel)</td></tr>
+      <tr><td><span class="inline-code">kitchen_admin</span></td><td>Admin Dapur</td><td>Hanya supply chain dapur sendiri</td></tr>
+      <tr><td><span class="inline-code">finance</span></td><td>Finance</td><td>Pembelian (lihat) + Finance/Arus Kas + Laporan</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="sec2-2">2.2 Matriks Akses per Modul</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Modul / Fitur</th>
+        <th style="text-align:center;">owner</th>
+        <th style="text-align:center;">super_admin</th>
+        <th style="text-align:center;">admin</th>
+        <th style="text-align:center;">kitchen_admin</th>
+        <th style="text-align:center;">finance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight-row"><td colspan="6" style="background:#edf2f7; font-weight:700; color:#2d3748;">Dashboard</td></tr>
+      <tr><td>Executive Dashboard</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Dashboard Operasional</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Approval Center</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr class="highlight-row"><td colspan="6" style="background:#edf2f7; font-weight:700; color:#2d3748;">Master Data</td></tr>
+      <tr><td>Master Data — Item/SKU</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Master Data — Vendor</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Master Data — Dapur</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Master Data — Gudang</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Master Data — Resep/BOM</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Master Data — Price List</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr class="highlight-row"><td colspan="6" style="background:#edf2f7; font-weight:700; color:#2d3748;">Pembelian</td></tr>
+      <tr><td>Pembelian — PO</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#128065; lihat</td></tr>
+      <tr><td>Pembelian — GRN</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#128065; lihat</td></tr>
+      <tr class="highlight-row"><td colspan="6" style="background:#edf2f7; font-weight:700; color:#2d3748;">Inventori</td></tr>
+      <tr><td>Inventori — Stok Gudang</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Inventori — Stock Opname</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Inventori — Pengembalian</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr class="highlight-row"><td colspan="6" style="background:#edf2f7; font-weight:700; color:#2d3748;">Supply Chain</td></tr>
+      <tr><td>Supply Chain — IR</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989; (dapur sendiri)</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Supply Chain — DO</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989; (dapur sendiri)</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Supply Chain — KR</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989; (dapur sendiri)</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Supply Chain — Daftar Harga</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr class="highlight-row"><td colspan="6" style="background:#edf2f7; font-weight:700; color:#2d3748;">Finance</td></tr>
+      <tr><td>Finance — Dashboard</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Finance — Arus Kas</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Finance — Tagihan Dapur</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989; (dapur sendiri)</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Finance — Vendor Invoice</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Finance — Anggaran Dapur</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989; (dapur sendiri)</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Finance — Log Anggaran</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989; (dapur sendiri)</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Finance — Pengeluaran</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Finance — Analisis</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr class="highlight-row"><td colspan="6" style="background:#edf2f7; font-weight:700; color:#2d3748;">Laporan &amp; Pengaturan</td></tr>
+      <tr><td>Laporan Keuangan (P&amp;L)</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Laporan Operasional</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Pengaturan — Pengguna</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Pengaturan — Profil Saya</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
+      <tr><td>Pengaturan — Audit Log</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+      <tr><td>Admin Panel</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="sec2-3">2.3 Detail Akses per Role</h3>
+
+  <h4>2.3.1 Owner</h4>
+  <div class="role-card">
+    <ul>
+      <li>Redirect otomatis ke <span class="inline-code">/executive</span> (Executive Dashboard)</li>
+      <li>Melihat KPI bisnis: revenue, COGS, gross profit, net profit</li>
+      <li>Melihat laporan keuangan (P&amp;L, Balance Sheet)</li>
+      <li>Melihat laporan operasional</li>
+      <li>Approval Center (approve/reject PO, IR jika diperlukan)</li>
+      <li>Audit Log (riwayat aktivitas sistem)</li>
+      <li><strong>Tidak bisa</strong> membuat/edit data operasional</li>
+    </ul>
+  </div>
+
+  <h4>2.3.2 Super Admin</h4>
+  <div class="role-card">
+    <ul>
+      <li>Akses penuh ke semua modul dan fitur</li>
+      <li>Satu-satunya role yang bisa mengakses <strong>Admin Panel</strong></li>
+      <li>Bisa mengubah system settings, feature toggles, announcements</li>
+      <li>Monitoring sistem</li>
+    </ul>
+  </div>
+
+  <h4>2.3.3 Admin (Admin Pusat)</h4>
+  <div class="role-card">
+    <ul>
+      <li>Semua fitur operasional: Master Data, Pembelian, Inventori, Supply Chain</li>
+      <li>Finance lengkap: Arus Kas, Tagihan Dapur, Vendor Invoice, Anggaran, Analisis</li>
+      <li>Pengaturan Pengguna: CRUD user, assign role &amp; dapur</li>
+      <li><strong>Tidak bisa</strong> mengakses Admin Panel</li>
+    </ul>
+  </div>
+
+  <h4>2.3.4 Kitchen Admin (Admin Dapur)</h4>
+  <div class="role-card">
+    <ul>
+      <li>Hanya melihat dan mengelola data <strong>dapur sendiri</strong> (filter by <span class="inline-code">dapurId</span>)</li>
+      <li>Supply Chain: buat IR, lihat DO, konfirmasi KR</li>
+      <li>Finance terbatas: lihat Tagihan Dapur sendiri, lihat Anggaran sendiri, lihat Log Anggaran</li>
+      <li>Lihat Daftar Harga aktif</li>
+      <li><strong>Tidak bisa</strong> mengakses Master Data, Pembelian, Inventori, Laporan</li>
+    </ul>
+  </div>
+
+  <h4>2.3.5 Finance</h4>
+  <div class="role-card">
+    <ul>
+      <li>Pembelian: <strong>hanya lihat</strong> PO dan GRN (tidak bisa buat/edit)</li>
+      <li>Finance lengkap: Dashboard, Arus Kas, Tagihan Dapur, Vendor Invoice, Anggaran, Log Anggaran, Pengeluaran, Analisis</li>
+      <li>Laporan Keuangan dan Operasional</li>
+      <li><strong>Tidak bisa</strong> membuat PO, IR, DO, atau mengelola Master Data</li>
+    </ul>
+  </div>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 3: DATABASE -->
+<div class="content page-break" id="sec3">
+  <div class="section-header">
+    <h2>3. Arsitektur Database</h2>
+    <p>ERD, skema tabel, dan relasi antar entitas (25+ tabel)</p>
+  </div>
+
+  <h3 id="sec3-1">3.1 Diagram Relasi Tabel (ERD Teks)</h3>
+  <div class="diagram">
+<pre>
++----------+     +------------------+     +--------------+
+|  user    |     |  purchase_orders |     |   vendors    |
+|----------|     |------------------|     |--------------|
+| id (PK)  |     | id (PK)          |     | id (PK)      |
+| name     |     | poNumber         |     | code         |
+| email    |     | vendorId (FK)----+----&gt;| name         |
+| role     |     | gudangId (FK)----+-+   | contactPerson|
+| dapurId  |     | status           | |   | phone        |
++----------+     | totalAmount      | |   | email        |
+                 | isDirectDelivery | |   +--------------+
+                 +--------+---------+ |
+                          |           |   +--------------+
+                          v           +--&gt;|   gudang     |
+                 +------------------+     |--------------|
+                 |  goods_receipts  |     | id (PK)      |
+                 |------------------|     | code         |
+                 | id (PK)          |     | name         |
+                 | grnNumber        |     | location     |
+                 | poId (FK)        |     | picName      |
+                 | gudangId (FK)    |     +--------------+
+                 | vendorInvoiceId  |
+                 | isDirectDelivery |     +--------------+
+                 +------------------+     |    dapur     |
+                                          |--------------|
++----------------------+                  | id (PK)      |
+|  internal_requests   |                  | code         |
+|----------------------|                  | name         |
+| id (PK)              |                  | location     |
+| irNumber             |                  | picName      |
+| dapurId (FK)---------+-----------------&gt;| capacity     |
+| gudangId (FK)        |                  +------+-------+
+| status               |                         |
+| requestedBy          |                         |
++----------+-----------+                         |
+           |                                     |
+           v                                     |
++----------------------+                         |
+|  delivery_orders     |                         |
+|----------------------|                         |
+| id (PK)              |                         |
+| doNumber             |                         |
+| irId (FK)            |                         |
+| gudangId (FK)        |                         |
+| dapurId (FK)---------+-------------------------+
+| status               |
+| totalValue           |
++----------+-----------+
+           |
+           v
++----------------------+     +------------------+
+|  kitchen_receivings  |----&gt;|    invoices      |
+|----------------------|     |------------------|
+| id (PK)              |     | id (PK)          |
+| krNumber             |     | invoiceNumber    |
+| doId (FK)            |     | krId (FK)        |
+| dapurId (FK)         |     | doId (FK)        |
+| status               |     | dapurId (FK)     |
+| totalActualValue     |     | totalAmount      |
++----------------------+     | status           |
+                             +------------------+
+
++----------------------+     +----------------------+
+|  vendor_invoices     |     |  dapur_budgets        |
+|----------------------|     |----------------------|
+| id (PK)              |     | id (PK)              |
+| invoiceNumber        |     | dapurId (FK)         |
+| vendorId (FK)        |     | periodStart          |
+| totalAmount          |     | periodEnd            |
+| status               |     | budgetAmount         |
++----------------------+     | usedAmount           |
+                             +----------+-----------+
+                                        |
+                                        v
+                             +----------------------+
+                             |  budget_logs          |
+                             |----------------------|
+                             | id (PK)              |
+                             | budgetId (FK)        |
+                             | transactionType      |
+                             | amount               |
+                             | balanceBefore        |
+                             | balanceAfter         |
+                             +----------------------+
+
++----------------------+     +----------------------+
+|  inventory_stock     |     |  inventory_movements  |
+|----------------------|     |----------------------|
+| id (PK)              |     | id (PK)              |
+| itemId (FK)          |     | itemId (FK)          |
+| locationType         |     | movementType         |
+| gudangId / dapurId   |     | locationType         |
+| qty                  |     | qty                  |
+| avgCost (Moving Avg) |     | unitCost             |
+| totalValue           |     | refType / refId      |
++----------------------+     +----------------------+
+</pre>
+  </div>
+
+  <h3 id="sec3-2">3.2 Deskripsi Tabel Lengkap</h3>
+
+  <h4>Tabel: <code>user</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>name</td><td>TEXT</td><td>Nama lengkap</td></tr>
+      <tr><td>email</td><td>TEXT UNIQUE</td><td>Email login</td></tr>
+      <tr><td>emailVerified</td><td>BOOLEAN</td><td>Status verifikasi email</td></tr>
+      <tr><td>role</td><td>TEXT ENUM</td><td><code>owner</code>, <code>super_admin</code>, <code>admin</code>, <code>kitchen_admin</code>, <code>finance</code></td></tr>
+      <tr><td>dapurId</td><td>TEXT</td><td>FK ke <code>dapur.id</code> (wajib untuk kitchen_admin)</td></tr>
+      <tr><td>createdAt</td><td>TIMESTAMP</td><td>Waktu dibuat</td></tr>
+      <tr><td>updatedAt</td><td>TIMESTAMP</td><td>Waktu diperbarui</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>items</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>sku</td><td>TEXT UNIQUE</td><td>Auto-generate per kategori (BB-0001, PR-0001, dll)</td></tr>
+      <tr><td>name</td><td>TEXT</td><td>Nama item</td></tr>
+      <tr><td>category</td><td>TEXT</td><td>Bahan Baku / Protein / Bumbu &amp; Rempah / Sayuran / Minuman / Packaging / Peralatan / Lainnya</td></tr>
+      <tr><td>uom</td><td>TEXT</td><td>Unit of Measure (KG, Liter, Pcs, dll)</td></tr>
+      <tr><td>description</td><td>TEXT</td><td>Deskripsi opsional</td></tr>
+      <tr><td>minStock</td><td>REAL</td><td>Stok minimum (trigger low_stock alert)</td></tr>
+      <tr><td>isActive</td><td>BOOLEAN</td><td>Status aktif</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>vendors</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>code</td><td>TEXT UNIQUE</td><td>Auto-generate (VND-001)</td></tr>
+      <tr><td>name</td><td>TEXT</td><td>Nama vendor</td></tr>
+      <tr><td>contactPerson</td><td>TEXT</td><td>Nama kontak</td></tr>
+      <tr><td>phone</td><td>TEXT</td><td>Nomor telepon</td></tr>
+      <tr><td>email</td><td>TEXT</td><td>Email vendor</td></tr>
+      <tr><td>address</td><td>TEXT</td><td>Alamat</td></tr>
+      <tr><td>category</td><td>TEXT</td><td>Kategori vendor</td></tr>
+      <tr><td>isActive</td><td>BOOLEAN</td><td>Status aktif</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>dapur</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>code</td><td>TEXT UNIQUE</td><td>Kode dapur (DPR-001)</td></tr>
+      <tr><td>name</td><td>TEXT</td><td>Nama dapur/unit</td></tr>
+      <tr><td>location</td><td>TEXT</td><td>Lokasi</td></tr>
+      <tr><td>picName</td><td>TEXT</td><td>Nama PIC</td></tr>
+      <tr><td>capacity</td><td>INTEGER</td><td>Kapasitas (pax)</td></tr>
+      <tr><td>isActive</td><td>BOOLEAN</td><td>Status aktif</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>gudang</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>code</td><td>TEXT UNIQUE</td><td>Kode gudang (GDG-001)</td></tr>
+      <tr><td>name</td><td>TEXT</td><td>Nama gudang</td></tr>
+      <tr><td>location</td><td>TEXT</td><td>Lokasi</td></tr>
+      <tr><td>picName</td><td>TEXT</td><td>Nama PIC</td></tr>
+      <tr><td>capacity</td><td>TEXT</td><td>Kapasitas</td></tr>
+      <tr><td>isActive</td><td>BOOLEAN</td><td>Status aktif</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>purchase_orders</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>poNumber</td><td>TEXT UNIQUE</td><td>Nomor PO (PO-YYYYMM-001)</td></tr>
+      <tr><td>vendorId</td><td>TEXT FK</td><td>Referensi vendor</td></tr>
+      <tr><td>gudangId</td><td>TEXT FK</td><td>Gudang tujuan</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>draft</code>, <code>pending_approval</code>, <code>open</code>, <code>partial</code>, <code>received</code>, <code>cancelled</code></td></tr>
+      <tr><td>orderDate</td><td>TIMESTAMP</td><td>Tanggal PO</td></tr>
+      <tr><td>expectedDate</td><td>TIMESTAMP</td><td>Tanggal estimasi terima</td></tr>
+      <tr><td>totalAmount</td><td>REAL</td><td>Total nilai PO</td></tr>
+      <tr><td>isDirectDelivery</td><td>BOOLEAN</td><td>Barang langsung ke dapur (bypass gudang)</td></tr>
+      <tr><td>directDapurId</td><td>TEXT</td><td>Dapur tujuan jika direct delivery</td></tr>
+      <tr><td>createdBy</td><td>TEXT</td><td>User yang membuat</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>po_items</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>poId</td><td>TEXT FK</td><td>Referensi PO</td></tr>
+      <tr><td>itemId</td><td>TEXT FK</td><td>Referensi item</td></tr>
+      <tr><td>qtyOrdered</td><td>REAL</td><td>Qty dipesan</td></tr>
+      <tr><td>qtyReceived</td><td>REAL</td><td>Qty sudah diterima</td></tr>
+      <tr><td>unitPrice</td><td>REAL</td><td>Harga satuan</td></tr>
+      <tr><td>totalPrice</td><td>REAL</td><td>Total harga</td></tr>
+      <tr><td>priceListEntryId</td><td>TEXT</td><td>Referensi price list yang digunakan</td></tr>
+      <tr><td>priceSource</td><td>TEXT ENUM</td><td><code>price_list</code> atau <code>manual</code></td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>goods_receipts</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>grnNumber</td><td>TEXT UNIQUE</td><td>Nomor GRN (GRN-YYYYMM-001)</td></tr>
+      <tr><td>poId</td><td>TEXT FK</td><td>Referensi PO</td></tr>
+      <tr><td>gudangId</td><td>TEXT FK</td><td>Gudang penerima</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>partial</code>, <code>complete</code></td></tr>
+      <tr><td>receivedDate</td><td>TIMESTAMP</td><td>Tanggal terima</td></tr>
+      <tr><td>totalAmount</td><td>REAL</td><td>Total nilai GRN</td></tr>
+      <tr><td>isDirectDelivery</td><td>BOOLEAN</td><td>Direct delivery ke dapur</td></tr>
+      <tr><td>directDapurId</td><td>TEXT</td><td>Dapur tujuan direct delivery</td></tr>
+      <tr><td>vendorInvoiceId</td><td>TEXT</td><td>FK ke vendor_invoices (NULL = belum ditagih)</td></tr>
+      <tr><td>receivedBy</td><td>TEXT</td><td>User yang menerima</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 3 CONTINUED: More Tables -->
+<div class="content page-break" id="sec3-tables2">
+  <h2>3. Arsitektur Database <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h4>Tabel: <code>internal_requests</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>irNumber</td><td>TEXT UNIQUE</td><td>Nomor IR (IR-YYYYMM-001)</td></tr>
+      <tr><td>dapurId</td><td>TEXT FK</td><td>Dapur pemohon</td></tr>
+      <tr><td>gudangId</td><td>TEXT FK</td><td>Gudang sumber</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>pending</code>, <code>approved</code>, <code>rejected</code>, <code>in_transit</code>, <code>fulfilled</code>, <code>partial_received</code>, <code>cancelled</code></td></tr>
+      <tr><td>requestDate</td><td>TIMESTAMP</td><td>Tanggal request</td></tr>
+      <tr><td>requestedBy</td><td>TEXT</td><td>User yang membuat</td></tr>
+      <tr><td>approvedBy</td><td>TEXT</td><td>User yang approve</td></tr>
+      <tr><td>approvedAt</td><td>TIMESTAMP</td><td>Waktu approval</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>delivery_orders</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>doNumber</td><td>TEXT UNIQUE</td><td>Nomor DO (DO-YYYYMM-001)</td></tr>
+      <tr><td>irId</td><td>TEXT FK</td><td>Referensi IR (nullable)</td></tr>
+      <tr><td>gudangId</td><td>TEXT FK</td><td>Gudang pengirim</td></tr>
+      <tr><td>dapurId</td><td>TEXT FK</td><td>Dapur tujuan</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>draft</code>, <code>in_transit</code>, <code>delivered</code>, <code>confirmed</code></td></tr>
+      <tr><td>deliveryDate</td><td>TIMESTAMP</td><td>Tanggal pengiriman</td></tr>
+      <tr><td>totalValue</td><td>REAL</td><td>Total nilai DO (berdasarkan sellPrice)</td></tr>
+      <tr><td>journalId</td><td>TEXT</td><td>Referensi journal entry</td></tr>
+      <tr><td>createdBy</td><td>TEXT</td><td>User yang membuat</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>do_items</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>doId</td><td>TEXT FK</td><td>Referensi DO</td></tr>
+      <tr><td>itemId</td><td>TEXT FK</td><td>Referensi item</td></tr>
+      <tr><td>qtyDelivered</td><td>REAL</td><td>Qty dikirim</td></tr>
+      <tr><td>unitCost</td><td>REAL</td><td>HPP saat pengiriman (Moving Average)</td></tr>
+      <tr><td>totalCost</td><td>REAL</td><td>Total HPP</td></tr>
+      <tr><td>sellPrice</td><td>REAL</td><td>Harga jual ke dapur</td></tr>
+      <tr><td>sellTotal</td><td>REAL</td><td>qty × sellPrice</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>kitchen_receivings</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>krNumber</td><td>TEXT UNIQUE</td><td>Nomor KR (KR-YYYYMM-001)</td></tr>
+      <tr><td>doId</td><td>TEXT FK</td><td>Referensi DO (1 DO = 1 KR)</td></tr>
+      <tr><td>dapurId</td><td>TEXT FK</td><td>Dapur penerima</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>pending</code>, <code>complete</code>, <code>discrepancy</code></td></tr>
+      <tr><td>receivedDate</td><td>TIMESTAMP</td><td>Tanggal terima</td></tr>
+      <tr><td>receivedBy</td><td>TEXT</td><td>User yang konfirmasi</td></tr>
+      <tr><td>totalActualValue</td><td>REAL</td><td>Total nilai aktual diterima</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>invoices</code> (Tagihan Dapur)</h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>invoiceNumber</td><td>TEXT UNIQUE</td><td>Nomor invoice (INV-YYYYMM-001)</td></tr>
+      <tr><td>krId</td><td>TEXT FK</td><td>Referensi KR</td></tr>
+      <tr><td>doId</td><td>TEXT FK</td><td>Referensi DO</td></tr>
+      <tr><td>dapurId</td><td>TEXT</td><td>ID dapur</td></tr>
+      <tr><td>totalAmount</td><td>REAL</td><td>Total tagihan</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>issued</code>, <code>pending</code>, <code>paid</code></td></tr>
+      <tr><td>paymentDate</td><td>TIMESTAMP</td><td>Tanggal bayar</td></tr>
+      <tr><td>paymentMethod</td><td>TEXT</td><td>Metode pembayaran</td></tr>
+      <tr><td>attachmentUrl</td><td>TEXT</td><td>URL bukti pembayaran</td></tr>
+      <tr><td>approvedBy</td><td>TEXT</td><td>User yang approve</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>vendor_invoices</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>invoiceNumber</td><td>TEXT UNIQUE</td><td>Nomor VI (VI-YYYYMM-001)</td></tr>
+      <tr><td>vendorId</td><td>TEXT FK</td><td>Referensi vendor</td></tr>
+      <tr><td>periodStart</td><td>TIMESTAMP</td><td>Awal periode</td></tr>
+      <tr><td>periodEnd</td><td>TIMESTAMP</td><td>Akhir periode</td></tr>
+      <tr><td>totalAmount</td><td>REAL</td><td>Total tagihan vendor</td></tr>
+      <tr><td>grCount</td><td>INTEGER</td><td>Jumlah GRN yang diakumulasi</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>draft</code>, <code>issued</code>, <code>paid</code></td></tr>
+      <tr><td>paymentDate</td><td>TIMESTAMP</td><td>Tanggal bayar</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>inventory_stock</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>itemId</td><td>TEXT FK</td><td>Referensi item</td></tr>
+      <tr><td>locationType</td><td>TEXT ENUM</td><td><code>gudang</code> atau <code>dapur</code></td></tr>
+      <tr><td>gudangId</td><td>TEXT FK</td><td>Nullable (jika locationType = gudang)</td></tr>
+      <tr><td>dapurId</td><td>TEXT FK</td><td>Nullable (jika locationType = dapur)</td></tr>
+      <tr><td>qty</td><td>REAL</td><td>Stok saat ini</td></tr>
+      <tr><td>avgCost</td><td>REAL</td><td>HPP rata-rata (Moving Average)</td></tr>
+      <tr><td>totalValue</td><td>REAL</td><td>qty × avgCost</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>dapur_budgets</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>dapurId</td><td>TEXT FK</td><td>Referensi dapur</td></tr>
+      <tr><td>periodStart</td><td>TIMESTAMP</td><td>Awal periode (biasanya 2 mingguan)</td></tr>
+      <tr><td>periodEnd</td><td>TIMESTAMP</td><td>Akhir periode</td></tr>
+      <tr><td>budgetAmount</td><td>REAL</td><td>Total anggaran</td></tr>
+      <tr><td>usedAmount</td><td>REAL</td><td>Anggaran terpakai</td></tr>
+      <tr><td>dailyBudget</td><td>REAL</td><td>Anggaran harian (opsional)</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>active</code>, <code>closed</code></td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>budget_logs</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>budgetId</td><td>TEXT FK</td><td>Referensi budget</td></tr>
+      <tr><td>dapurId</td><td>TEXT</td><td>ID dapur</td></tr>
+      <tr><td>transactionDate</td><td>TIMESTAMP</td><td>Tanggal transaksi</td></tr>
+      <tr><td>transactionType</td><td>TEXT ENUM</td><td><code>ir_reserved</code>, <code>ir_reversed</code>, <code>direct_delivery</code>, <code>po_reserved</code>, <code>po_reversed</code>, <code>adjustment</code></td></tr>
+      <tr><td>refType</td><td>TEXT</td><td>Tipe referensi (<code>ir</code>, <code>po</code>, <code>grn</code>)</td></tr>
+      <tr><td>refNumber</td><td>TEXT</td><td>Nomor dokumen</td></tr>
+      <tr><td>amount</td><td>REAL</td><td>Jumlah (positif = pengeluaran, negatif = reversal)</td></tr>
+      <tr><td>balanceBefore</td><td>REAL</td><td>Saldo sebelum transaksi</td></tr>
+      <tr><td>balanceAfter</td><td>REAL</td><td>Saldo setelah transaksi</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>expenses</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>expenseNumber</td><td>TEXT UNIQUE</td><td>Nomor expense (EXP-001)</td></tr>
+      <tr><td>category</td><td>TEXT ENUM</td><td><code>vendor_payment</code>, <code>operational</code>, <code>utility</code>, <code>salary</code>, <code>maintenance</code>, <code>other</code></td></tr>
+      <tr><td>description</td><td>TEXT</td><td>Deskripsi pengeluaran</td></tr>
+      <tr><td>amount</td><td>REAL</td><td>Jumlah</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>recorded</code>, <code>approved</code>, <code>paid</code></td></tr>
+      <tr><td>attachmentUrl</td><td>TEXT</td><td>Bukti pengeluaran</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>cashflow_payments</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>paymentNumber</td><td>TEXT UNIQUE</td><td>Nomor pembayaran</td></tr>
+      <tr><td>type</td><td>TEXT ENUM</td><td><code>vendor_payment</code>, <code>income</code>, <code>expense</code></td></tr>
+      <tr><td>refType</td><td>TEXT</td><td><code>grn</code>, <code>kr</code>, <code>manual</code></td></tr>
+      <tr><td>refNumber</td><td>TEXT</td><td>Nomor dokumen referensi</td></tr>
+      <tr><td>vendorName</td><td>TEXT</td><td>Nama vendor</td></tr>
+      <tr><td>totalAmount</td><td>REAL</td><td>Jumlah</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>unpaid</code>, <code>pending</code>, <code>paid</code></td></tr>
+      <tr><td>attachmentUrl</td><td>TEXT</td><td>Bukti pembayaran</td></tr>
+      <tr><td>approvedBy</td><td>TEXT</td><td>User yang approve</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>price_list_entries</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>itemId</td><td>TEXT FK</td><td>Referensi item</td></tr>
+      <tr><td>purchasePrice</td><td>REAL</td><td>Harga beli (HPP)</td></tr>
+      <tr><td>sellPrice</td><td>REAL</td><td>Harga jual ke dapur</td></tr>
+      <tr><td>effectiveDate</td><td>TIMESTAMP</td><td>Tanggal berlaku</td></tr>
+      <tr><td>notes</td><td>TEXT</td><td>Catatan</td></tr>
+      <tr><td>createdBy</td><td>TEXT</td><td>User yang membuat</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>recipes</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>code</td><td>TEXT UNIQUE</td><td>Kode resep (RCP-001)</td></tr>
+      <tr><td>name</td><td>TEXT</td><td>Nama resep/menu</td></tr>
+      <tr><td>defaultYield</td><td>REAL</td><td>Yield default (misal: 1000 porsi)</td></tr>
+      <tr><td>description</td><td>TEXT</td><td>Deskripsi</td></tr>
+      <tr><td>isActive</td><td>BOOLEAN</td><td>Status aktif</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>stock_opnames</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>opnameNumber</td><td>TEXT UNIQUE</td><td>Nomor opname</td></tr>
+      <tr><td>locationType</td><td>TEXT ENUM</td><td><code>gudang</code> atau <code>dapur</code></td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>draft</code>, <code>completed</code></td></tr>
+      <tr><td>totalItems</td><td>INTEGER</td><td>Jumlah item diopname</td></tr>
+      <tr><td>totalDifference</td><td>REAL</td><td>Total selisih qty</td></tr>
+      <tr><td>totalDifferenceValue</td><td>REAL</td><td>Total nilai selisih</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>return_items</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>krId</td><td>TEXT</td><td>Referensi KR</td></tr>
+      <tr><td>doId</td><td>TEXT</td><td>Referensi DO</td></tr>
+      <tr><td>itemId</td><td>TEXT FK</td><td>Referensi item</td></tr>
+      <tr><td>qtyReturned</td><td>REAL</td><td>Qty dikembalikan</td></tr>
+      <tr><td>reason</td><td>TEXT</td><td>Alasan pengembalian</td></tr>
+      <tr><td>status</td><td>TEXT ENUM</td><td><code>pending</code>, <code>approved</code>, <code>rejected</code></td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>notifications</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>userId</td><td>TEXT FK</td><td>Penerima notifikasi</td></tr>
+      <tr><td>type</td><td>TEXT ENUM</td><td>Tipe notifikasi (lihat bagian 6)</td></tr>
+      <tr><td>title</td><td>TEXT</td><td>Judul notifikasi</td></tr>
+      <tr><td>message</td><td>TEXT</td><td>Isi pesan</td></tr>
+      <tr><td>link</td><td>TEXT</td><td>URL tujuan</td></tr>
+      <tr><td>refType</td><td>TEXT</td><td>Tipe referensi</td></tr>
+      <tr><td>refId</td><td>TEXT</td><td>ID referensi</td></tr>
+      <tr><td>isRead</td><td>BOOLEAN</td><td>Status baca</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>audit_logs</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>userId</td><td>TEXT</td><td>User yang melakukan aksi</td></tr>
+      <tr><td>userName</td><td>TEXT</td><td>Nama user</td></tr>
+      <tr><td>userRole</td><td>TEXT</td><td>Role user</td></tr>
+      <tr><td>action</td><td>TEXT</td><td>Aksi: <code>create</code>, <code>update</code>, <code>delete</code>, <code>approve</code>, <code>reject</code>, <code>receive</code>, <code>confirm</code>, <code>login</code>, <code>logout</code></td></tr>
+      <tr><td>entity</td><td>TEXT</td><td>Entitas: <code>item</code>, <code>vendor</code>, <code>dapur</code>, <code>gudang</code>, <code>po</code>, <code>ir</code>, <code>do</code>, <code>kr</code>, <code>journal</code>, <code>user</code></td></tr>
+      <tr><td>entityId</td><td>TEXT</td><td>ID entitas</td></tr>
+      <tr><td>description</td><td>TEXT</td><td>Deskripsi aksi</td></tr>
+      <tr><td>metadata</td><td>TEXT</td><td>JSON tambahan</td></tr>
+      <tr><td>ipAddress</td><td>TEXT</td><td>IP address</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>journal_entries</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>journalNumber</td><td>TEXT UNIQUE</td><td>Nomor jurnal</td></tr>
+      <tr><td>periodId</td><td>TEXT FK</td><td>Referensi accounting period</td></tr>
+      <tr><td>type</td><td>TEXT ENUM</td><td><code>purchase_receiving</code>, <code>distribution</code>, <code>kitchen_receiving</code>, <code>consumption</code>, <code>waste</code>, <code>adjustment</code>, <code>manual</code></td></tr>
+      <tr><td>description</td><td>TEXT</td><td>Deskripsi</td></tr>
+      <tr><td>refType</td><td>TEXT</td><td><code>grn</code>, <code>do</code>, <code>kr</code>, <code>consumption</code></td></tr>
+      <tr><td>refId</td><td>TEXT</td><td>ID referensi</td></tr>
+      <tr><td>totalDebit</td><td>REAL</td><td>Total debit</td></tr>
+      <tr><td>totalCredit</td><td>REAL</td><td>Total kredit</td></tr>
+      <tr><td>dapurId</td><td>TEXT FK</td><td>Dapur terkait (opsional)</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>coa</code> (Chart of Accounts)</h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>code</td><td>TEXT UNIQUE</td><td>Kode akun</td></tr>
+      <tr><td>name</td><td>TEXT</td><td>Nama akun</td></tr>
+      <tr><td>type</td><td>TEXT ENUM</td><td><code>ASSET</code>, <code>LIABILITY</code>, <code>EQUITY</code>, <code>REVENUE</code>, <code>EXPENSE</code></td></tr>
+      <tr><td>level</td><td>INTEGER</td><td>1 = header, 2 = detail</td></tr>
+      <tr><td>parentId</td><td>TEXT</td><td>Self-reference untuk hierarki</td></tr>
+      <tr><td>dapurId</td><td>TEXT FK</td><td>Akun COGS spesifik dapur</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>system_settings</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>key</td><td>TEXT PK</td><td>Kunci setting</td></tr>
+      <tr><td>value</td><td>TEXT</td><td>Nilai setting</td></tr>
+      <tr><td>updatedAt</td><td>TIMESTAMP</td><td>Waktu diperbarui</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tabel: <code>announcements</code></h4>
+  <table>
+    <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>TEXT PK</td><td>UUID</td></tr>
+      <tr><td>title</td><td>TEXT</td><td>Judul pengumuman</td></tr>
+      <tr><td>message</td><td>TEXT</td><td>Isi pengumuman</td></tr>
+      <tr><td>type</td><td>TEXT ENUM</td><td><code>info</code>, <code>warning</code>, <code>success</code>, <code>error</code></td></tr>
+      <tr><td>isActive</td><td>BOOLEAN</td><td>Status aktif</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 4: MODUL & FITUR -->
+<div class="content page-break" id="sec4">
+  <div class="section-header">
+    <h2>4. Modul &amp; Fitur</h2>
+    <p>Deskripsi lengkap setiap modul, API endpoints, dan status/enum</p>
+  </div>
+
+  <h3 id="sec4-1">4.1 Master Data</h3>
+  <p><strong>Akses:</strong> <span class="badge badge-blue">admin</span> <span class="badge badge-purple">super_admin</span></p>
+
+  <h4>4.1.1 Item / SKU</h4>
+  <p>Manajemen master data item/bahan baku yang digunakan dalam seluruh operasional.</p>
+  <p><strong>Fitur:</strong></p>
+  <ul>
+    <li>CRUD item dengan validasi lengkap</li>
+    <li>Auto-generate SKU per kategori: <code>BB-0001</code> (Bahan Baku), <code>PR-0001</code> (Protein), <code>BR-0001</code> (Bumbu &amp; Rempah), <code>SY-0001</code> (Sayuran), <code>MN-0001</code> (Minuman), <code>PK-0001</code> (Packaging), <code>PT-0001</code> (Peralatan), <code>LN-0001</code> (Lainnya)</li>
+    <li>Filter dan pencarian item</li>
+    <li>Soft delete (isActive = false)</li>
+    <li>Tampilkan stok minimum dan alert stok rendah</li>
+  </ul>
+  <pre><code>GET    /api/items              — Daftar semua item (dengan filter)
+POST   /api/items              — Buat item baru
+GET    /api/items/:id          — Detail item
+PATCH  /api/items/:id          — Update item
+DELETE /api/items/:id          — Hapus item (soft delete)</code></pre>
+
+  <h4>4.1.2 Vendor</h4>
+  <p>Manajemen data pemasok/vendor.</p>
+  <ul>
+    <li>CRUD vendor dengan auto-generate kode (VND-001)</li>
+    <li>Kategori vendor (Bahan Pokok, Protein, dll)</li>
+    <li>Riwayat harga per vendor-item (<code>price_history</code>)</li>
+    <li>Filter aktif/nonaktif</li>
+  </ul>
+  <pre><code>GET    /api/vendors            — Daftar vendor
+POST   /api/vendors            — Buat vendor baru
+GET    /api/vendors/:id        — Detail vendor
+PATCH  /api/vendors/:id        — Update vendor
+DELETE /api/vendors/:id        — Hapus vendor
+GET    /api/price-history      — Riwayat harga vendor</code></pre>
+
+  <h4>4.1.3 Dapur / Unit Bisnis</h4>
+  <p>Manajemen unit bisnis/dapur produksi.</p>
+  <pre><code>GET    /api/master/dapur       — Daftar dapur
+POST   /api/master/dapur       — Buat dapur baru
+PATCH  /api/master/dapur/:id   — Update dapur
+DELETE /api/master/dapur/:id   — Hapus dapur</code></pre>
+
+  <h4>4.1.4 Gudang</h4>
+  <p>Manajemen gudang penyimpanan bahan baku.</p>
+  <pre><code>GET    /api/master/gudang      — Daftar gudang
+POST   /api/master/gudang      — Buat gudang baru
+PATCH  /api/master/gudang/:id  — Update gudang
+DELETE /api/master/gudang/:id  — Hapus gudang</code></pre>
+
+  <h4>4.1.5 Resep / BOM (Bill of Materials)</h4>
+  <p>Manajemen resep menu dengan kalkulasi HPP otomatis.</p>
+  <ul>
+    <li>CRUD resep dengan daftar bahan (ingredients)</li>
+    <li>Yield per 1000 porsi (configurable)</li>
+    <li>Kalkulasi HPP otomatis dari price list aktif</li>
+    <li>Kode resep auto-generate (RCP-001)</li>
+  </ul>
+  <pre><code>GET    /api/recipes            — Daftar resep
+POST   /api/recipes            — Buat resep baru
+GET    /api/recipes/:id        — Detail resep + kalkulasi HPP
+PATCH  /api/recipes/:id        — Update resep
+DELETE /api/recipes/:id        — Hapus resep</code></pre>
+
+  <h4>4.1.6 Price List</h4>
+  <p>Manajemen harga beli dan jual per item dengan riwayat harga.</p>
+  <ul>
+    <li>Harga beli (purchasePrice) dan harga jual ke dapur (sellPrice)</li>
+    <li>Effective date — harga aktif = entry dengan tanggal terbaru ≤ tanggal query</li>
+    <li>Riwayat harga lengkap per item</li>
+    <li>Import massal via Excel template</li>
+    <li>Debounce search untuk performa</li>
+  </ul>
+  <pre><code>GET    /api/price-list                    — Daftar price list (harga aktif per item)
+POST   /api/price-list                    — Tambah entry harga baru
+GET    /api/price-list/:id                — Detail entry
+PATCH  /api/price-list/:id                — Update entry
+DELETE /api/price-list/:id                — Hapus entry
+POST   /api/price-list/import             — Import dari Excel
+GET    /api/price-list/history/:itemId    — Riwayat harga item</code></pre>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 4.2-4.4: Pembelian, Inventori, Supply Chain -->
+<div class="content page-break" id="sec4-2">
+  <h2>4. Modul &amp; Fitur <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>4.2 Pembelian</h3>
+  <p><strong>Akses:</strong> <span class="badge badge-blue">admin</span> <span class="badge badge-purple">super_admin</span> (buat/edit); <span class="badge badge-green">finance</span> (lihat saja)</p>
+
+  <h4>4.2.1 Purchase Order (PO)</h4>
+  <p>Pembuatan dan pengelolaan pesanan pembelian ke vendor.</p>
+  <p><strong>Status Flow:</strong></p>
+  <div class="status-flow">
+    <span class="badge badge-gray">draft</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-yellow">pending_approval</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-green">open</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-blue">partial</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-green">received</span>
+    <span style="margin-left:10px; color:#718096;">↘</span>
+    <span class="badge badge-red">cancelled</span>
+  </div>
+  <ul>
+    <li>Buat PO ke vendor dengan pilihan item dari master data</li>
+    <li>Harga dari Price List atau input manual</li>
+    <li>Support <strong>Direct Delivery</strong>: barang langsung ke dapur, tidak masuk gudang</li>
+    <li>Setelah dibuat → status <code>pending_approval</code>, butuh approval</li>
+    <li>Setelah diapprove → status <code>open</code>, siap untuk GRN</li>
+    <li>Partial receiving: PO bisa diterima bertahap</li>
+  </ul>
+  <pre><code>GET    /api/purchase/po              — Daftar PO
+POST   /api/purchase/po              — Buat PO baru
+GET    /api/purchase/po/:id          — Detail PO
+PATCH  /api/purchase/po/:id          — Update PO (hanya draft)
+DELETE /api/purchase/po/:id          — Hapus PO (hanya draft)
+POST   /api/purchase/po/:id/approve  — Approve PO
+POST   /api/purchase/po/:id/reject   — Reject PO</code></pre>
+
+  <h4>4.2.2 Goods Receipt / GRN</h4>
+  <p>Konfirmasi penerimaan barang dari vendor.</p>
+  <ul>
+    <li>Buat GRN dari PO yang sudah <code>open</code></li>
+    <li>Update stok gudang dengan <strong>Moving Average HPP</strong></li>
+    <li>Support partial receiving (GRN bisa dibuat beberapa kali untuk satu PO)</li>
+    <li>GRN menjadi dasar pembuatan Vendor Invoice</li>
+    <li>Untuk Direct Delivery: stok langsung masuk ke dapur</li>
+  </ul>
+  <p><strong>Status:</strong> <span class="badge badge-blue">partial</span> <span class="badge badge-green">complete</span></p>
+  <pre><code>GET    /api/purchase/grn             — Daftar GRN
+POST   /api/purchase/grn             — Buat GRN baru
+GET    /api/purchase/grn/:id         — Detail GRN</code></pre>
+
+  <h3 id="sec4-3">4.3 Inventori</h3>
+  <p><strong>Akses:</strong> <span class="badge badge-blue">admin</span> <span class="badge badge-purple">super_admin</span></p>
+
+  <h4>4.3.1 Stok Gudang</h4>
+  <p>Monitoring posisi stok real-time per item per gudang.</p>
+  <ul>
+    <li>Lihat stok semua item di semua gudang</li>
+    <li>Nilai stok = qty × avgCost (Moving Average)</li>
+    <li>Filter per gudang, per kategori</li>
+    <li>Alert item stok rendah (qty &lt; minStock)</li>
+  </ul>
+  <pre><code>GET    /api/inventory/stock          — Posisi stok semua item
+GET    /api/inventory/stock/:itemId  — Stok item tertentu
+GET    /api/inventory/movements      — Riwayat pergerakan stok
+GET    /api/inventory/low-stock      — Item dengan stok rendah</code></pre>
+
+  <h4>4.3.2 Stock Opname</h4>
+  <p>Penyesuaian stok aktual vs sistem.</p>
+  <ul>
+    <li>Buat opname per gudang atau per dapur</li>
+    <li>Input qty aktual per item</li>
+    <li>Sistem menghitung selisih (aktual - sistem)</li>
+    <li>Setelah complete → stok sistem diupdate ke qty aktual</li>
+    <li>Catat nilai selisih untuk laporan</li>
+  </ul>
+  <p><strong>Status:</strong> <span class="badge badge-gray">draft</span> <span class="badge badge-green">completed</span></p>
+  <pre><code>GET    /api/inventory/opname                  — Daftar opname
+POST   /api/inventory/opname                  — Buat opname baru
+GET    /api/inventory/opname/:id              — Detail opname
+POST   /api/inventory/opname/:id/complete     — Selesaikan opname</code></pre>
+
+  <h4>4.3.3 Pengembalian Barang</h4>
+  <p>Return item dari dapur ke gudang.</p>
+  <ul>
+    <li>Buat return dari KR yang sudah complete</li>
+    <li>Butuh approval dari admin</li>
+    <li>Setelah approved → stok gudang bertambah, stok dapur berkurang</li>
+  </ul>
+  <p><strong>Status:</strong> <span class="badge badge-yellow">pending</span> <span class="badge badge-green">approved</span> <span class="badge badge-red">rejected</span></p>
+  <pre><code>GET    /api/inventory/returns                 — Daftar return
+POST   /api/inventory/returns                 — Buat return baru
+POST   /api/inventory/returns/:id/approve     — Approve return
+POST   /api/inventory/returns/:id/reject      — Reject return</code></pre>
+
+  <h3 id="sec4-4">4.4 Supply Chain</h3>
+  <p><strong>Akses:</strong> Semua role; <span class="badge badge-yellow">kitchen_admin</span> hanya data dapur sendiri</p>
+
+  <h4>4.4.1 Internal Request (IR)</h4>
+  <p>Permintaan bahan dari dapur ke gudang.</p>
+  <p><strong>Status Flow:</strong></p>
+  <div class="status-flow">
+    <span class="badge badge-yellow">pending</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-green">approved</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-blue">in_transit</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-green">fulfilled</span>
+    <span style="margin-left:10px; color:#718096;">↘</span>
+    <span class="badge badge-red">rejected</span>
+    <span style="margin-left:10px; color:#718096;">↘</span>
+    <span class="badge badge-gray">cancelled</span>
+    <span style="margin-left:10px; color:#718096;">↘</span>
+    <span class="badge badge-blue">partial_received</span>
+  </div>
+  <ul>
+    <li>Dapur buat IR dengan daftar item yang dibutuhkan</li>
+    <li><strong>Validasi budget</strong> sebelum submit: jika total IR melebihi sisa anggaran → ditolak</li>
+    <li>Notifikasi ke admin untuk approval</li>
+    <li>Setelah approved → auto-create DO (status <code>draft</code>)</li>
+    <li>Budget di-reserve saat IR approved</li>
+  </ul>
+  <pre><code>GET    /api/supply-chain/ir              — Daftar IR
+POST   /api/supply-chain/ir              — Buat IR baru
+GET    /api/supply-chain/ir/:id          — Detail IR
+PATCH  /api/supply-chain/ir/:id          — Update IR (hanya pending)
+POST   /api/supply-chain/ir/:id/approve  — Approve IR
+POST   /api/supply-chain/ir/:id/reject   — Reject IR
+POST   /api/supply-chain/ir/:id/cancel   — Cancel IR</code></pre>
+
+  <h4>4.4.2 Delivery Order (DO)</h4>
+  <p>Pengiriman bahan dari gudang ke dapur.</p>
+  <p><strong>Status Flow:</strong></p>
+  <div class="status-flow">
+    <span class="badge badge-gray">draft</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-blue">in_transit</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-green">delivered</span>
+    <span class="arrow">→</span>
+    <span class="badge badge-green">confirmed</span>
+  </div>
+  <ul>
+    <li>Auto-created saat IR diapprove</li>
+    <li>Berisi harga jual (sellPrice) per item ke dapur (dari price list)</li>
+    <li>Admin gudang update status ke <code>in_transit</code> saat barang dikirim</li>
+    <li>Setelah <code>confirmed</code> (dari KR) → stok gudang berkurang, stok dapur bertambah</li>
+    <li>Bisa print DO sebagai surat jalan</li>
+  </ul>
+  <pre><code>GET    /api/supply-chain/do              — Daftar DO
+POST   /api/supply-chain/do              — Buat DO manual
+GET    /api/supply-chain/do/:id          — Detail DO
+PATCH  /api/supply-chain/do/:id          — Update DO (hanya draft)
+POST   /api/supply-chain/do/:id/send     — Kirim DO (draft → in_transit)
+GET    /api/supply-chain/do/:id/print    — Data untuk print DO</code></pre>
+
+  <h4>4.4.3 Kitchen Receiving (KR)</h4>
+  <p>Konfirmasi penerimaan bahan oleh dapur.</p>
+  <p><strong>Status:</strong> <span class="badge badge-yellow">pending</span> <span class="badge badge-green">complete</span> <span class="badge badge-red">discrepancy</span></p>
+  <ul>
+    <li>Kitchen admin input qty aktual yang diterima</li>
+    <li>Selisih (variance) dicatat sebagai discrepancy</li>
+    <li>Satu DO hanya bisa punya satu KR (duplicate prevention)</li>
+    <li>Setelah KR complete → auto-create Invoice Dapur</li>
+    <li>Notifikasi ke admin jika ada discrepancy</li>
+  </ul>
+  <pre><code>GET    /api/supply-chain/kr                  — Daftar KR
+POST   /api/supply-chain/kr                  — Buat KR baru
+GET    /api/supply-chain/kr/:id              — Detail KR
+POST   /api/supply-chain/kr/:id/complete     — Selesaikan KR</code></pre>
+
+  <h4>4.4.4 Daftar Harga (Price List View)</h4>
+  <p>Kitchen admin melihat harga aktif dari price list.</p>
+  <pre><code>GET    /api/price-list/active        — Harga aktif semua item</code></pre>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 4.5-4.7: Finance, Laporan, Pengaturan -->
+<div class="content page-break" id="sec4-5">
+  <h2>4. Modul &amp; Fitur <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>4.5 Keuangan / Arus Kas</h3>
+  <p><strong>Akses:</strong> <span class="badge badge-blue">admin</span> <span class="badge badge-purple">super_admin</span> <span class="badge badge-green">finance</span></p>
+
+  <h4>4.5.1 Pembayaran Vendor (Arus Kas)</h4>
+  <p>Manajemen pembayaran hutang ke vendor.</p>
+  <ul>
+    <li>Sync dari GRN → generate payment records otomatis</li>
+    <li>Summary per vendor dengan aging hutang</li>
+    <li>Upload bukti pembayaran → status <code>pending</code> → approve → <code>paid</code></li>
+    <li>Kirim notifikasi WhatsApp ke vendor setelah pembayaran</li>
+  </ul>
+  <p><strong>Status:</strong> <span class="badge badge-red">unpaid</span> <span class="badge badge-yellow">pending</span> <span class="badge badge-green">paid</span></p>
+  <pre><code>GET    /api/cashflow                 — Daftar cashflow payments
+POST   /api/cashflow                 — Buat payment manual
+GET    /api/cashflow/summary         — Summary per vendor
+PATCH  /api/cashflow/:id/upload      — Upload bukti bayar
+PATCH  /api/cashflow/:id/approve     — Approve pembayaran</code></pre>
+
+  <h4>4.5.2 Tagihan Dapur</h4>
+  <p>Invoice per transaksi (per KR) yang auto-generated.</p>
+  <ul>
+    <li>Auto-generated saat KR complete</li>
+    <li>Rekap bulanan per dapur</li>
+    <li>Kitchen admin upload bukti bayar → Finance approve → <code>paid</code></li>
+    <li>Export PDF invoice</li>
+  </ul>
+  <p><strong>Status:</strong> <span class="badge badge-blue">issued</span> <span class="badge badge-yellow">pending</span> <span class="badge badge-green">paid</span></p>
+  <pre><code>GET    /api/invoices                 — Daftar invoice dapur
+GET    /api/invoices/:id             — Detail invoice
+PATCH  /api/invoices/:id/upload      — Upload bukti bayar
+PATCH  /api/invoices/:id/approve     — Approve pembayaran
+GET    /api/invoices/:id/pdf         — Export PDF
+GET    /api/kitchen-billing/summary  — Rekap bulanan per dapur</code></pre>
+
+  <h4>4.5.3 Anggaran Dapur</h4>
+  <p>Budget per dapur per periode (2 mingguan).</p>
+  <ul>
+    <li>Buat anggaran per dapur per periode</li>
+    <li>Validasi saat IR dibuat: jika total IR &gt; sisa anggaran → IR ditolak</li>
+    <li>Warning saat penggunaan mendekati limit (misal: 80%)</li>
+    <li>Log setiap transaksi yang mempengaruhi budget</li>
+    <li>Anggaran harian (dailyBudget) opsional</li>
+  </ul>
+  <p><strong>Status:</strong> <span class="badge badge-green">active</span> <span class="badge badge-gray">closed</span></p>
+  <pre><code>GET    /api/budgets                  — Daftar anggaran
+POST   /api/budgets                  — Buat anggaran baru
+GET    /api/budgets/:id              — Detail anggaran
+PATCH  /api/budgets/:id              — Update anggaran
+GET    /api/budgets/active/:dapurId  — Anggaran aktif per dapur</code></pre>
+
+  <h4>4.5.4 Log Anggaran</h4>
+  <p>Audit trail penggunaan budget per dapur.</p>
+  <ul>
+    <li>Riwayat semua transaksi yang mempengaruhi anggaran</li>
+    <li>Filter per dapur, per periode</li>
+    <li>Export CSV</li>
+  </ul>
+  <pre><code>GET    /api/budget-logs              — Daftar log anggaran
+GET    /api/budget-logs/export       — Export CSV</code></pre>
+
+  <h4>4.5.5 Pengeluaran Operasional</h4>
+  <p>Pencatatan expense non-PO.</p>
+  <p><strong>Kategori:</strong> <code>vendor_payment</code>, <code>operational</code>, <code>utility</code>, <code>salary</code>, <code>maintenance</code>, <code>other</code></p>
+  <p><strong>Status:</strong> <span class="badge badge-gray">recorded</span> <span class="badge badge-yellow">approved</span> <span class="badge badge-green">paid</span></p>
+  <pre><code>GET    /api/expenses                 — Daftar pengeluaran
+POST   /api/expenses                 — Catat pengeluaran baru
+PATCH  /api/expenses/:id             — Update pengeluaran
+PATCH  /api/expenses/:id/approve     — Approve pengeluaran
+DELETE /api/expenses/:id             — Hapus pengeluaran</code></pre>
+
+  <h4>4.5.6 Dashboard Finance</h4>
+  <p>KPI dan tren keuangan.</p>
+  <ul>
+    <li>KPI: Revenue, COGS, Gross Profit, Net Profit</li>
+    <li>Tren bulanan (chart)</li>
+    <li>Perbandingan antar dapur</li>
+    <li>Gross Margin %, Net Margin %</li>
+  </ul>
+  <pre><code>GET    /api/finance/dashboard        — KPI summary
+GET    /api/finance/trends           — Tren bulanan
+GET    /api/finance/by-dapur         — Breakdown per dapur</code></pre>
+
+  <h4>4.5.7 Laporan Keuangan</h4>
+  <p>P&amp;L (Laba Rugi) dan Balance Sheet (Neraca).</p>
+  <table>
+    <thead><tr><th>Formula</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Revenue</strong></td><td>Total Invoice Dapur (totalAmount)</td></tr>
+      <tr><td><strong>COGS</strong></td><td>Total Vendor Invoice (totalAmount)</td></tr>
+      <tr><td><strong>Gross Profit</strong></td><td>Revenue - COGS</td></tr>
+      <tr><td><strong>Expenses</strong></td><td>Total Pengeluaran Operasional</td></tr>
+      <tr><td><strong>Net Profit</strong></td><td>Gross Profit - Expenses</td></tr>
+    </tbody>
+  </table>
+  <pre><code>GET    /api/finance/reports          — P&amp;L dan Balance Sheet
+GET    /api/finance/pl               — Profit &amp; Loss detail
+GET    /api/finance/balance-sheet    — Neraca detail</code></pre>
+
+  <h4>4.5.8 Vendor Invoice</h4>
+  <p>Akumulasi GRN per vendor per periode menjadi satu invoice.</p>
+  <ul>
+    <li>Kumpulkan semua GRN vendor dalam periode tertentu</li>
+    <li>Prevent double billing: <code>grnId</code> unique per vendor invoice</li>
+    <li>Status flow: <code>draft</code> → <code>issued</code> → <code>paid</code></li>
+  </ul>
+  <pre><code>GET    /api/vendor-invoices              — Daftar vendor invoice
+POST   /api/vendor-invoices              — Buat vendor invoice baru
+GET    /api/vendor-invoices/:id          — Detail vendor invoice
+PATCH  /api/vendor-invoices/:id/issue    — Issue invoice
+PATCH  /api/vendor-invoices/:id/pay      — Tandai lunas</code></pre>
+
+  <h3 id="sec4-6">4.6 Laporan Operasional</h3>
+  <p><strong>Akses:</strong> <span class="badge badge-blue">admin</span> <span class="badge badge-purple">super_admin</span> <span class="badge badge-green">finance</span> <span class="badge badge-yellow">owner</span></p>
+  <p>Laporan yang tersedia:</p>
+  <ol>
+    <li><strong>Laporan Pembelian</strong> — Rekap PO dan GRN per periode</li>
+    <li><strong>Laporan Internal Request</strong> — Rekap IR per dapur per periode</li>
+    <li><strong>Laporan Distribusi</strong> — Rekap DO dan KR per periode</li>
+    <li><strong>Laporan Stok Gudang</strong> — Posisi stok + item stok rendah</li>
+    <li><strong>Laporan Invoice Dapur</strong> — Rekap tagihan per dapur</li>
+  </ol>
+  <p>Semua laporan bisa di-download sebagai PDF.</p>
+  <pre><code>GET    /api/reports/purchase         — Laporan pembelian
+GET    /api/reports/ir               — Laporan internal request
+GET    /api/reports/distribution     — Laporan distribusi
+GET    /api/reports/stock            — Laporan stok
+GET    /api/reports/invoices         — Laporan invoice dapur
+GET    /api/reports/export/:type     — Export PDF</code></pre>
+
+  <h3 id="sec4-7">4.7 Pengaturan</h3>
+
+  <h4>4.7.1 Pengguna &amp; Akses</h4>
+  <p><strong>Akses:</strong> <span class="badge badge-blue">admin</span> <span class="badge badge-purple">super_admin</span></p>
+  <ul>
+    <li>CRUD user</li>
+    <li>Reset password user</li>
+    <li>Assign role dan dapur (untuk kitchen_admin)</li>
+    <li>Filter per role</li>
+  </ul>
+  <pre><code>GET    /api/users                    — Daftar user
+POST   /api/users                    — Buat user baru
+PATCH  /api/users/:id                — Update user
+DELETE /api/users/:id                — Hapus user
+POST   /api/users/:id/reset-password — Reset password</code></pre>
+
+  <h4>4.7.2 Profil Saya</h4>
+  <p><strong>Akses:</strong> Semua role</p>
+  <ul>
+    <li>Edit nama</li>
+    <li>Ganti password sendiri</li>
+  </ul>
+
+  <h4>4.7.3 Audit Log</h4>
+  <p><strong>Akses:</strong> <span class="badge badge-purple">super_admin</span> <span class="badge badge-yellow">owner</span></p>
+  <ul>
+    <li>Riwayat semua aktivitas sistem</li>
+    <li>Filter per user, per aksi, per entitas, per tanggal</li>
+    <li>Export</li>
+  </ul>
+  <pre><code>GET    /api/audit                    — Daftar audit log
+GET    /api/audit/export             — Export audit log</code></pre>
+
+  <h4>4.7.4 Admin Panel</h4>
+  <p><strong>Akses:</strong> <span class="badge badge-purple">super_admin</span> only</p>
+  <ul>
+    <li>System settings (key-value)</li>
+    <li>Feature toggles</li>
+    <li>Announcements (info/warning/success/error)</li>
+    <li>Monitoring sistem</li>
+  </ul>
+  <pre><code>GET    /api/admin/settings               — Daftar settings
+PATCH  /api/admin/settings               — Update setting
+GET    /api/admin/announcements          — Daftar pengumuman
+POST   /api/admin/announcements          — Buat pengumuman
+PATCH  /api/admin/announcements/:id      — Update pengumuman
+DELETE /api/admin/announcements/:id      — Hapus pengumuman</code></pre>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 5: ALUR BISNIS -->
+<div class="content page-break" id="sec5">
+  <div class="section-header">
+    <h2>5. Alur Bisnis</h2>
+    <p>Flow diagram proses bisnis utama sistem ERP MBG</p>
+  </div>
+
+  <h3 id="sec5-1">5.1 Flow Pembelian (Purchase Flow)</h3>
+  <div class="diagram">
+<pre>
++---------------------------------------------------------------------+
+|                        FLOW PEMBELIAN                               |
++---------------------------------------------------------------------+
+
+  [Admin/Super Admin]
+       |
+       v
+  +-------------+
+  |  Buat PO    |  -- Pilih vendor, item, qty, harga (dari price list/manual)
+  |  (draft)    |  -- Tentukan gudang tujuan atau Direct Delivery ke dapur
+  +------+------+
+         |
+         | Submit
+         v
+  +-----------------+
+  | pending_approval|  -- Notifikasi ke Owner/Admin/Finance
+  +------+----------+
+         |
+    +----+----+
+    |         |
+  Approve   Reject
+    |         |
+    v         v
+  +------+  +----------+
+  | open |  | cancelled|
+  +--+---+  +----------+
+     |
+     v
+  +------------------------------------------------------+
+  |  Buat GRN (Goods Receipt)                            |
+  |  -- Input qty aktual yang diterima dari vendor       |
+  |  -- Bisa partial (GRN pertama -&gt; PO status: partial) |
+  |  -- Setelah semua qty diterima -&gt; PO status: received|
+  +------------------+-----------------------------------+
+                     |
+         +-----------+-----------+
+         |                       |
+    Normal GRN              Direct Delivery
+         |                       |
+         v                       v
+  Stok Gudang +           Stok Dapur +
+  (Moving Avg HPP)        (Moving Avg HPP)
+         |
+         v
+  +----------------------+
+  |  Vendor Invoice      |  -- Akumulasi GRN per vendor per periode
+  |  (draft -&gt; issued)   |  -- Prevent double billing (grnId unique)
+  +----------+-----------+
+             |
+             v
+  +----------------------+
+  |  Bayar Vendor        |  -- Upload bukti bayar
+  |  (pending -&gt; paid)   |  -- Approve oleh Finance
+  +----------------------+
+</pre>
+  </div>
+
+  <h3 id="sec5-2">5.2 Flow Distribusi (Supply Chain Flow)</h3>
+  <div class="diagram">
+<pre>
++---------------------------------------------------------------------+
+|                      FLOW DISTRIBUSI                                |
++---------------------------------------------------------------------+
+
+  [Kitchen Admin]
+       |
+       v
+  +-----------------------------------------------------+
+  |  Buat Internal Request (IR)                         |
+  |  -- Pilih item dan qty yang dibutuhkan              |
+  |  -- Sistem cek anggaran aktif dapur                 |
+  +----------------------+------------------------------+
+                         |
+              +----------+-----------+
+              |                      |
+         Budget OK            Budget Tidak Cukup
+              |                      |
+              v                      v
+         IR: pending           IR: ditolak otomatis
+              |                 (notifikasi ke kitchen admin)
+              |
+         Notifikasi ke Admin
+              |
+    +---------+---------+
+    |                   |
+  Approve            Reject
+    |                   |
+    v                   v
+  IR: approved      IR: rejected
+  Budget reserved   (notifikasi ke kitchen admin)
+    |
+    v
+  +------------------------------------------------------+
+  |  DO Auto-Created (draft)                             |
+  |  -- Berisi item dari IR                              |
+  |  -- Harga jual (sellPrice) dari price list           |
+  +----------------------+-------------------------------+
+                         |
+                    Admin kirim DO
+                         |
+                         v
+                  DO: in_transit
+                  (notifikasi ke kitchen admin)
+                         |
+                         v
+  +------------------------------------------------------+
+  |  Kitchen Receiving (KR)                              |
+  |  -- Kitchen admin input qty aktual diterima          |
+  |  -- Sistem hitung variance (aktual - expected)       |
+  +----------------------+-------------------------------+
+                         |
+              +----------+-----------+
+              |                      |
+         Qty sesuai            Ada selisih
+              |                      |
+              v                      v
+         KR: complete          KR: discrepancy
+              |                (notifikasi ke admin)
+              |
+    +---------+------------------------------------------+
+    |                                                    |
+    v                                                    v
+  Stok Gudang -                              Invoice Dapur auto-created
+  Stok Dapur +                               (status: issued)
+  (berdasarkan qty aktual KR)
+                                                         |
+                                             Kitchen admin upload bukti bayar
+                                                         |
+                                                         v
+                                             Invoice: pending
+                                                         |
+                                             Finance approve
+                                                         |
+                                                         v
+                                             Invoice: paid
+</pre>
+  </div>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 5.3-5.4: Flow Keuangan & Anggaran -->
+<div class="content page-break" id="sec5-3">
+  <h2>5. Alur Bisnis <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>5.3 Flow Keuangan</h3>
+  <div class="diagram">
+<pre>
++---------------------------------------------------------------------+
+|                      FLOW KEUANGAN                                  |
++---------------------------------------------------------------------+
+
+  TAGIHAN DAPUR:
+  -------------
+  KR Complete
+       |
+       v
+  Invoice Dapur auto-created (issued)
+       |
+       v
+  Kitchen Admin upload bukti bayar
+       |
+       v
+  Invoice: pending
+       |
+       v
+  Finance approve
+       |
+       v
+  Invoice: paid [OK]
+
+  PEMBAYARAN VENDOR:
+  -----------------
+  GRN dibuat
+       |
+       v
+  Vendor Invoice (draft) -- akumulasi GRN per periode
+       |
+       v
+  Vendor Invoice issued
+       |
+       v
+  Finance bayar vendor (upload bukti)
+       |
+       v
+  Vendor Invoice: paid [OK]
+  Notifikasi WhatsApp ke vendor
+
+  LAPORAN KEUANGAN:
+  -----------------
+  Revenue  = Sigma Invoice Dapur (paid + pending)
+  COGS     = Sigma Vendor Invoice (paid + issued)
+  Gross P  = Revenue - COGS
+  Expenses = Sigma Pengeluaran Operasional
+  Net P    = Gross Profit - Expenses
+</pre>
+  </div>
+
+  <h3 id="sec5-4">5.4 Flow Anggaran Dapur</h3>
+  <div class="diagram">
+<pre>
++---------------------------------------------------------------------+
+|                    FLOW ANGGARAN DAPUR                              |
++---------------------------------------------------------------------+
+
+  Admin buat anggaran per dapur per periode (2 mingguan)
+       |
+       v
+  Budget aktif: budgetAmount = X, usedAmount = 0
+       |
+       v
+  Kitchen Admin buat IR
+       |
+       v
+  Sistem cek: total IR &lt;= (budgetAmount - usedAmount)?
+       |
+    +--+--+
+    |     |
+   Ya    Tidak
+    |     |
+    v     v
+  IR OK  IR ditolak
+    |    (notifikasi: anggaran tidak cukup)
+    |
+  IR Approved
+    |
+    v
+  Budget reserved: usedAmount += total IR
+  Budget Log: transactionType = 'ir_reserved'
+    |
+    v
+  Jika IR dibatalkan/ditolak:
+  Budget reversed: usedAmount -= total IR
+  Budget Log: transactionType = 'ir_reversed'
+    |
+    v
+  Warning jika usedAmount &gt;= 80% budgetAmount
+</pre>
+  </div>
+
+  <div class="info-box tip">
+    <strong>Catatan Penting:</strong> Budget di-reserve saat IR diapprove, bukan saat IR dibuat. Jika IR dibatalkan atau ditolak setelah approval, budget akan di-reverse secara otomatis.
+  </div>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 6: INTEGRASI & NOTIFIKASI -->
+<div class="content page-break" id="sec6">
+  <div class="section-header">
+    <h2>6. Integrasi &amp; Notifikasi</h2>
+    <p>WebSocket real-time, Telegram Bot, WhatsApp, dan konfigurasi integrasi</p>
+  </div>
+
+  <h3 id="sec6-1">6.1 Sistem Notifikasi Real-time</h3>
+  <p>Notifikasi dikirim via <strong>WebSocket</strong> ke browser user yang sedang login.</p>
+
+  <h4>Tipe Notifikasi</h4>
+  <table>
+    <thead><tr><th>Tipe</th><th>Trigger</th><th>Penerima</th></tr></thead>
+    <tbody>
+      <tr><td><code>ir_pending_approval</code></td><td>IR baru dibuat</td><td>Admin, Super Admin</td></tr>
+      <tr><td><code>ir_approved</code></td><td>IR diapprove</td><td>Kitchen Admin pembuat</td></tr>
+      <tr><td><code>ir_rejected</code></td><td>IR direject</td><td>Kitchen Admin pembuat</td></tr>
+      <tr><td><code>po_pending_approval</code></td><td>PO baru dibuat</td><td>Owner, Admin, Finance</td></tr>
+      <tr><td><code>po_approved</code></td><td>PO diapprove</td><td>Admin pembuat</td></tr>
+      <tr><td><code>po_rejected</code></td><td>PO direject</td><td>Admin pembuat</td></tr>
+      <tr><td><code>do_created</code></td><td>DO auto-created dari IR</td><td>Kitchen Admin dapur tujuan</td></tr>
+      <tr><td><code>do_delivered</code></td><td>DO status → in_transit</td><td>Kitchen Admin dapur tujuan</td></tr>
+      <tr><td><code>kr_complete</code></td><td>KR selesai</td><td>Admin, Super Admin</td></tr>
+      <tr><td><code>kr_discrepancy</code></td><td>KR ada selisih</td><td>Admin, Super Admin</td></tr>
+      <tr><td><code>low_stock</code></td><td>Stok item &lt; minStock</td><td>Admin, Super Admin</td></tr>
+      <tr><td><code>general</code></td><td>Pengumuman sistem</td><td>Semua user</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="sec6-2">6.2 Telegram Integration</h3>
+  <p>Untuk critical events, notifikasi dikirim via <strong>Telegram Bot</strong>.</p>
+
+  <h4>Konfigurasi</h4>
+  <pre><code>TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id</code></pre>
+
+  <h4>Events yang dikirim ke Telegram</h4>
+  <ul>
+    <li>Stok rendah (<code>low_stock</code>)</li>
+    <li>IR pending approval</li>
+    <li>KR discrepancy</li>
+  </ul>
+
+  <h3 id="sec6-3">6.3 WhatsApp Notification</h3>
+  <p>Notifikasi pembayaran vendor dikirim via WhatsApp setelah pembayaran dikonfirmasi oleh Finance.</p>
+  <div class="info-box tip">
+    <strong>Catatan:</strong> WhatsApp notification dikirim otomatis saat status Vendor Invoice berubah ke <code>paid</code>. Nomor telepon vendor diambil dari field <code>phone</code> di tabel <code>vendors</code>.
+  </div>
+
+  <h3 id="sec6-4">6.4 WebSocket</h3>
+  <p><strong>Endpoint:</strong> <code>ws://[domain]/ws</code></p>
+
+  <h4>Implementasi</h4>
+  <table>
+    <thead><tr><th>Komponen</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Server</td><td>Node.js <code>ws</code> library, di-attach ke HTTP server yang sama</td></tr>
+      <tr><td>Client</td><td>Browser WebSocket API</td></tr>
+      <tr><td>Autentikasi</td><td>Session token dari Better Auth</td></tr>
+      <tr><td>Reconnect</td><td>Otomatis di sisi client</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 7: DEPLOYMENT & INFRASTRUKTUR -->
+<div class="content page-break" id="sec7">
+  <div class="section-header">
+    <h2>7. Deployment &amp; Infrastruktur</h2>
+    <p>Struktur direktori, environment variables, Nginx, PM2, dan prosedur deployment</p>
+  </div>
+
+  <h3 id="sec7-1">7.1 Struktur Direktori</h3>
+  <pre><code>/project-root
+├── backend/
+│   ├── src/
+│   │   ├── db/
+│   │   │   ├── schema/        — Drizzle schema definitions
+│   │   │   └── index.ts       — Database connection
+│   │   ├── lib/               — Business logic utilities
+│   │   ├── middleware/        — Auth &amp; audit middleware
+│   │   └── routes/            — API route handlers
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/        — Reusable UI components
+│   │   ├── pages/             — Page components per modul
+│   │   ├── hooks/             — Custom React hooks
+│   │   └── lib/               — Utilities, API client, auth
+│   ├── dist/                  — Build output (served oleh backend)
+│   └── package.json
+└── deploy.sh                  — Deployment script</code></pre>
+
+  <h3 id="sec7-2">7.2 Environment Variables</h3>
+  <h4>Backend (.env)</h4>
+  <pre><code># Database
+DATABASE_URL=libsql://[database].turso.io
+DATABASE_AUTH_TOKEN=your_auth_token
+
+# Auth
+BETTER_AUTH_SECRET=your_secret_key
+BETTER_AUTH_URL=https://rmb.manggalautama.web.id
+
+# Frontend
+FRONTEND_URL=https://rmb.manggalautama.web.id
+
+# Server
+PORT=3000
+
+# Telegram
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id</code></pre>
+
+  <h3 id="sec7-3">7.3 Konfigurasi Nginx</h3>
+  <pre><code>server {
+    listen 80;
+    server_name rmb.manggalautama.web.id;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name rmb.manggalautama.web.id;
+
+    ssl_certificate /etc/letsencrypt/live/rmb.manggalautama.web.id/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/rmb.manggalautama.web.id/privkey.pem;
+
+    # API Routes
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # WebSocket
+    location /ws {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    # Frontend SPA (fallback ke backend untuk serving)
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+    }
+}</code></pre>
+
+  <h3 id="sec7-4">7.4 PM2 Configuration</h3>
+  <pre><code>{
+  "apps": [{
+    "name": "erp-mbg",
+    "script": "src/index.ts",
+    "interpreter": "node",
+    "interpreter_args": "--loader ts-node/esm",
+    "cwd": "/path/to/backend",
+    "env": {
+      "NODE_ENV": "production",
+      "PORT": "3000"
+    },
+    "restart_delay": 5000,
+    "max_restarts": 10,
+    "watch": false
+  }]
+}</code></pre>
+
+  <h3 id="sec7-5">7.5 Deployment Script</h3>
+  <pre><code>#!/bin/bash
+# deploy.sh -- Script deployment otomatis
+
+# 1. Pull latest code
+git pull origin main
+
+# 2. Install backend dependencies
+cd backend &amp;&amp; npm install
+
+# 3. Run database migrations
+node migrate.mjs
+
+# 4. Build frontend
+cd ../frontend &amp;&amp; npm install &amp;&amp; npm run build
+
+# 5. Restart backend dengan PM2
+cd ../backend &amp;&amp; pm2 restart erp-mbg
+
+echo "Deployment selesai!"</code></pre>
+
+  <h3 id="sec7-6">7.6 Database Migration</h3>
+  <p>Migrasi database dilakukan secara manual menggunakan script <code>.mjs</code>:</p>
+  <pre><code># Jalankan migrasi terbaru
+node backend/migrate16.mjs
+
+# Reset database (HATI-HATI: menghapus semua data)
+node backend/reset-db.mjs
+
+# Seed data demo
+node backend/seed-demo.mjs
+
+# Buat admin baru
+node backend/create-admin.mjs</code></pre>
+
+  <div class="info-box warning">
+    <strong>&#9888; Perhatian:</strong> Perintah <code>reset-db.mjs</code> akan menghapus SEMUA data. Pastikan sudah backup sebelum menjalankan perintah ini di production.
+  </div>
+
+  <h3 id="sec7-7">7.7 Monitoring &amp; Maintenance</h3>
+
+  <h4>Cek Status PM2</h4>
+  <pre><code>pm2 status
+pm2 logs erp-mbg
+pm2 monit</code></pre>
+
+  <h4>Backup Database</h4>
+  <pre><code># SQLite file backup
+cp /path/to/database.db /backup/database-$(date +%Y%m%d).db</code></pre>
+
+  <h4>Health Check</h4>
+  <pre><code>GET /api/health
+Response: { "status": "ok", "version": "1.1.0", "service": "ERP MBG API" }</code></pre>
+
+  <table>
+    <thead><tr><th>Perintah</th><th>Fungsi</th></tr></thead>
+    <tbody>
+      <tr><td><code>pm2 status</code></td><td>Lihat status semua proses PM2</td></tr>
+      <tr><td><code>pm2 logs erp-mbg</code></td><td>Lihat log aplikasi real-time</td></tr>
+      <tr><td><code>pm2 monit</code></td><td>Monitor CPU &amp; memory usage</td></tr>
+      <tr><td><code>pm2 restart erp-mbg</code></td><td>Restart aplikasi</td></tr>
+      <tr><td><code>pm2 reload erp-mbg</code></td><td>Reload tanpa downtime (graceful)</td></tr>
+      <tr><td><code>GET /api/health</code></td><td>Health check endpoint</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">Dokumentasi Teknis ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- CLOSING -->
+<div class="content" style="text-align:center; padding: 40px 20px;">
+  <hr>
+  <p style="color:#718096; font-size:10pt; margin-top:20px;">
+    <em>Dokumentasi ini dibuat berdasarkan kode sumber aktual sistem ERP MBG versi 1.1.0</em>
+  </p>
+  <p style="color:#a0aec0; font-size:9pt; margin-top:8px;">
+    &copy; 2025 PT. Manggala Utama Indonesia &mdash; https://rmb.manggalautama.web.id
+  </p>
+</div>
+
+</body>
+</html>
