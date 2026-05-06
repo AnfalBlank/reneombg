@@ -978,7 +978,7 @@ app.post('/kitchen-receiving/:doId/confirm', requireAuth, requireRole('super_adm
         }
     }
 
-    return c.json({ success: true, hasDiscrepancy, totalWasteValue, totalActualValue, journalId, invoiceId, invoiceNumber })
+    return c.json({ success: true, hasDiscrepancy, totalWasteValue, totalActualValue, invoiceId, invoiceNumber })
 })
 
 

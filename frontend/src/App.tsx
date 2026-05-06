@@ -16,7 +16,6 @@ import ReturnItemsPage from './pages/inventory/ReturnItemsPage'
 import InternalRequestPage from './pages/supply-chain/InternalRequestPage'
 import DeliveryOrderPage from './pages/supply-chain/DeliveryOrderPage'
 import KitchenReceivingPage from './pages/supply-chain/KitchenReceivingPage'
-import ConsumptionPage from './pages/supply-chain/ConsumptionPage'
 import DOPrintPage from './pages/supply-chain/DOPrintPage'
 import ReportsPage from './pages/finance/ReportsPage'
 import FinanceDashboard from './pages/finance/FinanceDashboard'
@@ -76,7 +75,6 @@ export default function App() {
                         <Route path="supply-chain/delivery-orders" element={<DeliveryOrderPage />} />
                         <Route path="supply-chain/delivery-orders/:id/print" element={<DOPrintPage />} />
                         <Route path="supply-chain/kitchen-receiving" element={<KitchenReceivingPage />} />
-                        <Route path="supply-chain/consumption" element={<ConsumptionPage />} />
                         <Route path="supply-chain/price-list" element={<PriceListViewPage />} />
 
                         {/* Legacy redirects */}

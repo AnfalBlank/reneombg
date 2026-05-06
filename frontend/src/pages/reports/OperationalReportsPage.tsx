@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
     FileText, Download, ShoppingCart, Truck, Package,
-    ClipboardList, BarChart3, ChevronRight, Printer
+    ClipboardList, Receipt, ChevronRight, Printer, DollarSign
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -12,14 +12,15 @@ import { api, ApiResponse } from '../../lib/api'
 import { fmtDate, fmtRp } from '../../lib/utils'
 import { downloadPDF, pdfFmt } from '../../lib/pdf'
 
-type ReportType = 'purchase' | 'internal-requests' | 'distribution' | 'inventory' | 'consumption'
+// Laporan yang tersedia — sesuai modul aktual
+type ReportType = 'purchase' | 'internal-requests' | 'distribution' | 'inventory' | 'invoices'
 
 const reportTypes: Array<{ key: ReportType; label: string; icon: typeof FileText; desc: string; color: string }> = [
     { key: 'purchase', label: 'Laporan Pembelian', icon: ShoppingCart, desc: 'PO & Goods Receipt dari vendor', color: '#4f7cff' },
     { key: 'internal-requests', label: 'Laporan Internal Request', icon: ClipboardList, desc: 'Permintaan bahan dapur ke gudang', color: '#f59e0b' },
     { key: 'distribution', label: 'Laporan Distribusi', icon: Truck, desc: 'Delivery Order & Kitchen Receiving', color: '#22c55e' },
-    { key: 'inventory', label: 'Laporan Stok', icon: Package, desc: 'Posisi stok gudang & dapur', color: '#a680d0' },
-    { key: 'consumption', label: 'Laporan Pemakaian Bahan', icon: BarChart3, desc: 'Konsumsi bahan per item', color: '#38bdf8' },
+    { key: 'inventory', label: 'Laporan Stok Gudang', icon: Package, desc: 'Posisi stok gudang aktual', color: '#a680d0' },
+    { key: 'invoices', label: 'Laporan Invoice Dapur', icon: DollarSign, desc: 'Tagihan ke dapur & status pembayaran', color: '#ef4444' },
 ]
 
 const statusLabels: Record<string, string> = {
@@ -28,6 +29,7 @@ const statusLabels: Record<string, string> = {
     open: 'Open', partial: 'Partial', received: 'Selesai', cancelled: 'Ditolak',
     draft: 'Draft', delivered: 'Terkirim', confirmed: 'Selesai',
     complete: 'Selesai', discrepancy: 'Selisih',
+    issued: 'Belum Bayar', paid: 'Lunas',
 }
 
 export default function OperationalReportsPage() {
@@ -42,24 +44,30 @@ export default function OperationalReportsPage() {
     if (startDate) params.set('startDate', startDate)
     if (endDate) params.set('endDate', endDate)
 
+    // Laporan invoice dapur pakai endpoint /invoices langsung
+    const isInvoiceReport = selected === 'invoices'
     const { data: res, isLoading } = useQuery({
         queryKey: ['reports', selected, startDate, endDate],
-        queryFn: () => api.get<ApiResponse<any>>(`/reports/${selected}?${params.toString()}`),
+        queryFn: () => isInvoiceReport
+            ? api.get<any>(`/invoices?${params.toString()}`)
+            : api.get<ApiResponse<any>>(`/reports/${selected}?${params.toString()}`),
         enabled: !!selected,
     })
 
-    const report = res?.data
+    const report = isInvoiceReport ? null : res?.data
+    const invoiceData = isInvoiceReport ? (res?.data || []) : []
+    const invoiceSummary = isInvoiceReport ? (res?.summary || {}) : {}
     const summary = report?.summary || {}
 
     // ── PDF Generator ──────────────────────────────────────────────
     const printReport = () => {
-        if (!selected || !report) return
+        if (!selected) return
         const rt = reportTypes.find(r => r.key === selected)!
         const period = `${new Date(startDate).toLocaleDateString('id-ID')} — ${new Date(endDate).toLocaleDateString('id-ID')}`
         let body = ''
 
         if (selected === 'purchase') {
-            const poRows = (report.purchaseOrders || []).map((p: any, i: number) =>
+            const poRows = (report?.purchaseOrders || []).map((p: any, i: number) =>
                 `<tr><td>${i + 1}</td><td class="mono">${p.poNumber}</td><td>${p.vendor?.name || '-'}</td><td>${new Date(p.orderDate).toLocaleDateString('id-ID')}</td><td>${statusLabels[p.status] || p.status}</td><td class="right bold">${pdfFmt(p.totalAmount)}</td></tr>`
             ).join('')
             body = `
@@ -73,7 +81,7 @@ export default function OperationalReportsPage() {
                 <table><thead><tr><th>No</th><th>No. PO</th><th>Vendor</th><th>Tanggal</th><th>Status</th><th class="right">Total</th></tr></thead><tbody>${poRows}</tbody></table>
             `
         } else if (selected === 'internal-requests') {
-            const irRows = (report.requests || []).map((r: any, i: number) =>
+            const irRows = (report?.requests || []).map((r: any, i: number) =>
                 `<tr><td>${i + 1}</td><td class="mono">${r.irNumber}</td><td>${r.dapur?.name || '-'}</td><td>${r.gudang?.name || '-'}</td><td>${new Date(r.requestDate).toLocaleDateString('id-ID')}</td><td>${statusLabels[r.status] || r.status}</td><td>${r.items?.length || 0}</td></tr>`
             ).join('')
             body = `
@@ -85,7 +93,7 @@ export default function OperationalReportsPage() {
                 <table><thead><tr><th>No</th><th>No. IR</th><th>Dapur</th><th>Gudang</th><th>Tanggal</th><th>Status</th><th>Item</th></tr></thead><tbody>${irRows}</tbody></table>
             `
         } else if (selected === 'distribution') {
-            const doRows = (report.deliveryOrders || []).map((d: any, i: number) =>
+            const doRows = (report?.deliveryOrders || []).map((d: any, i: number) =>
                 `<tr><td>${i + 1}</td><td class="mono">${d.doNumber}</td><td>${d.dapur?.name || '-'}</td><td>${d.gudang?.name || '-'}</td><td>${statusLabels[d.status] || d.status}</td><td class="right bold">${pdfFmt(d.totalValue)}</td></tr>`
             ).join('')
             body = `
@@ -99,30 +107,31 @@ export default function OperationalReportsPage() {
                 <table><thead><tr><th>No</th><th>No. DO</th><th>Dapur</th><th>Gudang</th><th>Status</th><th class="right">Nilai</th></tr></thead><tbody>${doRows}</tbody></table>
             `
         } else if (selected === 'inventory') {
-            const stockRows = [...(report.gudangStocks || []), ...(report.dapurStocks || [])].map((s: any, i: number) =>
-                `<tr><td>${i + 1}</td><td>${s.item?.name || '-'}</td><td>${s.item?.sku || '-'}</td><td>${s.locationType === 'gudang' ? s.gudang?.name : s.dapur?.name}</td><td>${s.locationType}</td><td class="right">${s.qty}</td><td class="right">${pdfFmt(s.avgCost)}</td><td class="right bold">${pdfFmt(s.totalValue)}</td></tr>`
+            const stockRows = (report?.gudangStocks || []).map((s: any, i: number) =>
+                `<tr><td>${i + 1}</td><td>${s.item?.name || '-'}</td><td>${s.item?.sku || '-'}</td><td>${s.gudang?.name || '-'}</td><td class="right">${s.qty}</td><td class="right">${pdfFmt(s.avgCost)}</td><td class="right bold">${pdfFmt(s.totalValue)}</td></tr>`
             ).join('')
             body = `
                 <div style="display:flex;gap:24px;margin-bottom:20px">
                     <div><strong>Total SKU:</strong> ${summary.totalSKU}</div>
-                    <div><strong>Nilai Gudang:</strong> ${pdfFmt(summary.totalGudangValue)}</div>
-                    <div><strong>Nilai Dapur:</strong> ${pdfFmt(summary.totalDapurValue)}</div>
+                    <div><strong>Nilai Stok:</strong> ${pdfFmt(summary.totalGudangValue)}</div>
                     <div><strong>Stok Rendah:</strong> ${summary.lowStockCount}</div>
                 </div>
-                <h2>Posisi Stok</h2>
-                <table><thead><tr><th>No</th><th>Item</th><th>SKU</th><th>Lokasi</th><th>Tipe</th><th class="right">Qty</th><th class="right">HPP</th><th class="right">Nilai</th></tr></thead><tbody>${stockRows}</tbody></table>
+                <h2>Posisi Stok Gudang</h2>
+                <table><thead><tr><th>No</th><th>Item</th><th>SKU</th><th>Gudang</th><th class="right">Qty</th><th class="right">HPP</th><th class="right">Nilai</th></tr></thead><tbody>${stockRows}</tbody></table>
             `
-        } else if (selected === 'consumption') {
-            const cRows = (report.byItem || []).map((c: any, i: number) =>
-                `<tr><td>${i + 1}</td><td>${c.name}</td><td class="right">${c.qty.toLocaleString('id-ID')}</td><td class="right bold">${pdfFmt(c.cost)}</td></tr>`
+        } else if (selected === 'invoices') {
+            const invRows = invoiceData.map((inv: any, i: number) =>
+                `<tr><td>${i + 1}</td><td class="mono">${inv.invoiceNumber}</td><td>${new Date(inv.createdAt).toLocaleDateString('id-ID')}</td><td>${inv.dapurName || '-'}</td><td class="mono">${inv.doNumber || '-'}</td><td class="mono">${inv.krNumber || '-'}</td><td class="right bold">${pdfFmt(inv.totalAmount)}</td><td>${statusLabels[inv.status] || inv.status}</td></tr>`
             ).join('')
             body = `
                 <div style="display:flex;gap:24px;margin-bottom:20px">
-                    <div><strong>Total Transaksi:</strong> ${summary.total}</div>
-                    <div><strong>Total Biaya:</strong> ${pdfFmt(summary.totalCost)}</div>
+                    <div><strong>Total Invoice:</strong> ${invoiceData.length}</div>
+                    <div><strong>Total Tagihan:</strong> ${pdfFmt(invoiceSummary.grandTotal || invoiceData.reduce((a: number, i: any) => a + i.totalAmount, 0))}</div>
+                    <div><strong>Lunas:</strong> ${pdfFmt(invoiceSummary.totalPaid || 0)}</div>
+                    <div><strong>Belum Bayar:</strong> ${pdfFmt(invoiceSummary.totalUnpaid || 0)}</div>
                 </div>
-                <h2>Pemakaian per Item</h2>
-                <table><thead><tr><th>No</th><th>Item</th><th class="right">Qty</th><th class="right">Total Biaya</th></tr></thead><tbody>${cRows}</tbody></table>
+                <h2>Daftar Invoice Dapur</h2>
+                <table><thead><tr><th>No</th><th>No. Invoice</th><th>Tanggal</th><th>Dapur</th><th>No. DO</th><th>No. KR</th><th class="right">Total</th><th>Status</th></tr></thead><tbody>${invRows}</tbody></table>
             `
         }
 
@@ -143,7 +152,7 @@ export default function OperationalReportsPage() {
             </div>
 
             {/* Report Type Selector */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                 {reportTypes.map(rt => (
                     <button
                         key={rt.key}
@@ -182,15 +191,15 @@ export default function OperationalReportsPage() {
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                        <Button icon={<Download size={14} />} onClick={printReport} disabled={!report}>Download PDF</Button>
-                        <Button icon={<Printer size={14} />} variant="secondary" onClick={printReport} disabled={!report}>Cetak</Button>
+                        <Button icon={<Download size={14} />} onClick={printReport} disabled={!report && invoiceData.length === 0}>Download PDF</Button>
+                        <Button icon={<Printer size={14} />} variant="secondary" onClick={printReport} disabled={!report && invoiceData.length === 0}>Cetak</Button>
                     </div>
                 </div>
             )}
 
-            {/* Report Content */}
             {selected && isLoading && <div style={{ padding: 24, textAlign: 'center', color: 'var(--color-text-muted)' }}>Memuat laporan...</div>}
 
+            {/* ── Laporan Pembelian ── */}
             {selected === 'purchase' && report && (
                 <>
                     <SummaryCards items={[
@@ -208,9 +217,22 @@ export default function OperationalReportsPage() {
                                 <strong>{fmtRp(p.totalAmount)}</strong>,
                             ])} />
                     </Card>
+                    <Card title="Daftar Goods Receipt" noPadding>
+                        <DataTable headers={['No. GRN', 'Tanggal', 'Vendor', 'Gudang', 'Jml Item', 'Total', 'Status']}
+                            rows={(report.goodsReceipts || []).map((g: any) => [
+                                <span className={styles.mono}>{g.grnNumber}</span>,
+                                fmtDate(g.receivedDate),
+                                g.po?.vendor?.name || '-',
+                                g.gudang?.name || '-',
+                                g.items?.length || 0,
+                                <strong>{fmtRp(g.totalAmount)}</strong>,
+                                <Badge label={g.status === 'complete' ? 'Selesai' : 'Partial'} color={g.status === 'complete' ? 'green' : 'yellow'} />,
+                            ])} />
+                    </Card>
                 </>
             )}
 
+            {/* ── Laporan Internal Request ── */}
             {selected === 'internal-requests' && report && (
                 <>
                     <SummaryCards items={[
@@ -228,62 +250,96 @@ export default function OperationalReportsPage() {
                 </>
             )}
 
+            {/* ── Laporan Distribusi ── */}
             {selected === 'distribution' && report && (
                 <>
                     <SummaryCards items={[
                         { label: 'Total DO', value: summary.totalDO, color: '#22c55e' },
                         { label: 'Total KR', value: summary.totalKR, color: '#4f7cff' },
-                        { label: 'Nilai DO', value: fmtRp(summary.totalDOValue), color: '#f59e0b' },
+                        { label: 'Nilai DO (Harga Jual)', value: fmtRp(summary.totalDOValue), color: '#f59e0b' },
                         { label: 'Nilai KR Aktual', value: fmtRp(summary.totalKRValue), color: '#ef4444' },
                     ]} />
                     <Card title="Daftar Delivery Order" noPadding>
-                        <DataTable headers={['No. DO', 'Dapur', 'Gudang', 'Ref IR', 'Status', 'Nilai']}
+                        <DataTable headers={['No. DO', 'Dapur', 'Gudang', 'Ref IR', 'Status', 'Nilai Jual']}
                             rows={(report.deliveryOrders || []).map((d: any) => [
                                 <span className={styles.mono}>{d.doNumber}</span>,
-                                d.dapur?.name, d.gudang?.name, <span className={styles.mono}>{d.request?.irNumber || '-'}</span>,
+                                d.dapur?.name, d.gudang?.name,
+                                <span className={styles.mono}>{d.request?.irNumber || '-'}</span>,
                                 <Badge label={statusLabels[d.status] || d.status} color={d.status === 'confirmed' ? 'green' : d.status === 'delivered' ? 'blue' : 'gray'} />,
                                 <strong>{fmtRp(d.totalValue)}</strong>,
                             ])} />
                     </Card>
+                    <Card title="Daftar Kitchen Receiving" noPadding>
+                        <DataTable headers={['No. KR', 'Tanggal', 'Dapur', 'Ref DO', 'Status', 'Nilai Aktual']}
+                            rows={(report.kitchenReceivings || []).map((k: any) => [
+                                <span className={styles.mono}>{k.krNumber}</span>,
+                                fmtDate(k.receivedDate),
+                                k.dapur?.name || '-',
+                                <span className={styles.mono}>{k.deliveryOrder?.doNumber || '-'}</span>,
+                                <Badge label={statusLabels[k.status] || k.status} color={k.status === 'complete' ? 'green' : k.status === 'discrepancy' ? 'yellow' : 'gray'} />,
+                                <strong>{fmtRp(k.totalActualValue)}</strong>,
+                            ])} />
+                    </Card>
                 </>
             )}
 
+            {/* ── Laporan Stok Gudang ── */}
             {selected === 'inventory' && report && (
                 <>
                     <SummaryCards items={[
                         { label: 'Total SKU', value: summary.totalSKU, color: '#a680d0' },
-                        { label: 'Nilai Gudang', value: fmtRp(summary.totalGudangValue), color: '#4f7cff' },
-                        { label: 'Nilai Dapur', value: fmtRp(summary.totalDapurValue), color: '#22c55e' },
+                        { label: 'Nilai Stok Gudang', value: fmtRp(summary.totalGudangValue), color: '#4f7cff' },
                         { label: 'Stok Rendah', value: summary.lowStockCount, color: '#ef4444' },
                     ]} />
                     <Card title="Stok Gudang" noPadding>
-                        <DataTable headers={['Item', 'SKU', 'Lokasi', 'Qty', 'HPP', 'Nilai']}
+                        <DataTable headers={['Item', 'SKU', 'Gudang', 'Qty', 'Satuan', 'HPP', 'Nilai']}
                             rows={(report.gudangStocks || []).map((s: any) => [
-                                s.item?.name, <span className={styles.mono}>{s.item?.sku}</span>,
-                                s.gudang?.name, s.qty, fmtRp(s.avgCost), <strong>{fmtRp(s.totalValue)}</strong>,
+                                s.item?.name,
+                                <span className={styles.mono}>{s.item?.sku}</span>,
+                                s.gudang?.name,
+                                <strong style={{ color: s.qty <= (s.item?.minStock || 0) ? '#ef4444' : 'inherit' }}>{s.qty}</strong>,
+                                s.item?.uom || '-',
+                                fmtRp(s.avgCost),
+                                <strong>{fmtRp(s.totalValue)}</strong>,
                             ])} />
                     </Card>
-                    <Card title="Stok Dapur" noPadding>
-                        <DataTable headers={['Item', 'SKU', 'Lokasi', 'Qty', 'HPP', 'Nilai']}
-                            rows={(report.dapurStocks || []).map((s: any) => [
-                                s.item?.name, <span className={styles.mono}>{s.item?.sku}</span>,
-                                s.dapur?.name, s.qty, fmtRp(s.avgCost), <strong>{fmtRp(s.totalValue)}</strong>,
-                            ])} />
-                    </Card>
+                    {(report.lowStock || []).length > 0 && (
+                        <Card title="⚠️ Item Stok Rendah" noPadding>
+                            <DataTable headers={['Item', 'SKU', 'Stok Saat Ini', 'Minimum', 'Satuan']}
+                                rows={(report.lowStock || []).map((s: any) => [
+                                    s.item?.name,
+                                    <span className={styles.mono}>{s.item?.sku}</span>,
+                                    <strong style={{ color: '#ef4444' }}>{s.qty}</strong>,
+                                    s.item?.minStock || 0,
+                                    s.item?.uom || '-',
+                                ])} />
+                        </Card>
+                    )}
                 </>
             )}
 
-            {selected === 'consumption' && report && (
+            {/* ── Laporan Invoice Dapur ── */}
+            {selected === 'invoices' && !isLoading && (
                 <>
                     <SummaryCards items={[
-                        { label: 'Total Transaksi', value: summary.total, color: '#38bdf8' },
-                        { label: 'Total Biaya', value: fmtRp(summary.totalCost), color: '#ef4444' },
+                        { label: 'Total Invoice', value: invoiceData.length, color: '#ef4444' },
+                        { label: 'Total Tagihan', value: fmtRp(invoiceSummary.grandTotal || invoiceData.reduce((a: number, i: any) => a + i.totalAmount, 0)), color: '#4f7cff' },
+                        { label: 'Lunas', value: fmtRp(invoiceSummary.totalPaid || 0), color: '#22c55e' },
+                        { label: 'Belum Bayar', value: fmtRp(invoiceSummary.totalUnpaid || 0), color: '#f59e0b' },
                     ]} />
-                    <Card title="Pemakaian per Item" noPadding>
-                        <DataTable headers={['Item', 'Total Qty', 'Total Biaya']}
-                            rows={(report.byItem || []).map((c: any) => [
-                                c.name, c.qty.toLocaleString('id-ID'),
-                                <strong style={{ color: 'var(--color-danger)' }}>{fmtRp(c.cost)}</strong>,
+                    <Card title="Daftar Invoice Dapur" noPadding>
+                        <DataTable headers={['No. Invoice', 'Tanggal', 'Dapur', 'No. DO', 'No. KR', 'Total', 'Status']}
+                            rows={invoiceData.map((inv: any) => [
+                                <span className={styles.mono}>{inv.invoiceNumber}</span>,
+                                fmtDate(inv.createdAt),
+                                inv.dapurName || '-',
+                                <span className={styles.mono}>{inv.doNumber || '-'}</span>,
+                                <span className={styles.mono}>{inv.krNumber || '-'}</span>,
+                                <strong style={{ color: '#4f7cff' }}>{fmtRp(inv.totalAmount)}</strong>,
+                                <Badge
+                                    label={inv.status === 'paid' ? 'Lunas' : inv.status === 'pending' ? 'Pending' : 'Belum Bayar'}
+                                    color={inv.status === 'paid' ? 'green' : inv.status === 'pending' ? 'yellow' : 'red'}
+                                />,
                             ])} />
                     </Card>
                 </>

@@ -29,7 +29,6 @@ const breadcrumbMap: Record<string, string> = {
     requests: 'Internal Request',
     'delivery-orders': 'Delivery Order',
     'kitchen-receiving': 'Kitchen Receiving',
-    consumption: 'Pemakaian Bahan',
     finance: 'Arus Kas',
     cashflow: 'Pembayaran',
     invoices: 'Invoice Dapur',

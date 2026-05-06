@@ -74,7 +74,6 @@ function buildNav(role: string): NavItem[] {
             scChildren.push({ label: 'Delivery Order', path: '/supply-chain/delivery-orders', icon: Truck })
         }
         scChildren.push({ label: 'Kitchen Receiving', path: '/supply-chain/kitchen-receiving', icon: UtensilsCrossed })
-        scChildren.push({ label: 'Pemakaian Bahan', path: '/supply-chain/consumption', icon: Receipt })
         // Kitchen admin can view active price list
         if (role === 'kitchen_admin') {
             scChildren.push({ label: 'Daftar Harga', path: '/supply-chain/price-list', icon: DollarSign })
