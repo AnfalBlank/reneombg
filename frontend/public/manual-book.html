@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Book — ERP MBG (Reneo MBG)</title>
+<title>Manual Book — Sistem ERP MBG v1.1.0</title>
 <style>
   @page { size: A4; margin: 20mm 18mm 25mm 18mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,14 +30,16 @@
   /* TOC */
   .toc { page-break-after: always; }
   .toc h2 { font-size: 18pt; margin-bottom: 20px; color: #1a1a2e; border-bottom: 3px solid #0f3460; padding-bottom: 8px; }
-  .toc-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #cbd5e0; font-size: 11pt; }
+  .toc-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dotted #cbd5e0; font-size: 11pt; }
   .toc-item a { color: #0f3460; text-decoration: none; }
-  .toc-section { font-weight: 700; margin-top: 12px; }
+  .toc-item a:hover { text-decoration: underline; }
+  .toc-section { font-weight: 700; margin-top: 10px; }
 
   /* Headings */
   h2 { font-size: 18pt; color: #0f3460; margin: 30px 0 16px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
   h3 { font-size: 13pt; color: #1a1a2e; margin: 22px 0 10px; }
-  h4 { font-size: 11pt; color: #2d3748; margin: 16px 0 8px; }
+  h4 { font-size: 11pt; color: #2d3748; margin: 16px 0 8px; font-weight: 700; }
+  p { margin-bottom: 10px; }
 
   /* Steps */
   .steps { counter-reset: step; margin: 12px 0; padding-left: 0; }
@@ -45,11 +47,9 @@
   .steps li::before { counter-increment: step; content: counter(step); position: absolute; left: -15px; top: 6px; width: 28px; height: 28px; background: #0f3460; color: #fff; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
   .steps li:last-child { border-left-color: transparent; }
 
-  /* Screenshot placeholder */
-  .screenshot { border: 2px dashed #cbd5e0; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; background: #f7fafc; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .screenshot img { max-width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; }
-  .screenshot .placeholder { color: #a0aec0; font-size: 10pt; font-style: italic; }
-  .screenshot .caption { font-size: 9pt; color: #718096; margin-top: 8px; font-style: italic; }
+  /* Regular lists */
+  ul { padding-left: 20px; margin: 8px 0; }
+  ul li { margin-bottom: 4px; }
 
   /* Info boxes */
   .info-box { padding: 12px 16px; border-radius: 8px; margin: 12px 0; font-size: 10pt; }
@@ -60,7 +60,7 @@
   /* Table */
   table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; }
   th { background: #0f3460; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
-  td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
   tr:nth-child(even) { background: #f7fafc; }
 
   /* Flow diagram */
@@ -76,6 +76,13 @@
   .badge-blue { background: #bee3f8; color: #2a4365; }
   .badge-gray { background: #e2e8f0; color: #4a5568; }
 
+  /* Role section */
+  .role-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .role-card h4 { color: #0f3460; margin-top: 0; }
+
+  /* Procedure section */
+  .procedure-time { background: #0f3460; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 9pt; font-weight: 700; display: inline-block; margin-bottom: 10px; }
+
   /* Footer */
   .page-footer { text-align: center; font-size: 8pt; color: #a0aec0; margin-top: 40px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
 
@@ -84,13 +91,22 @@
   .print-bar button { background: #fff; color: #0f3460; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 11pt; }
   .print-bar button:hover { background: #ebf8ff; }
   .print-spacer { height: 56px; }
+
+  /* Status table */
+  .status-list { margin: 8px 0; padding-left: 0; list-style: none; }
+  .status-list li { padding: 4px 0; }
+
+  /* Tips checklist */
+  .checklist { list-style: none; padding-left: 0; }
+  .checklist li { padding: 3px 0; }
+  .checklist li::before { content: ''; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <!-- Print Bar -->
 <div class="print-bar no-print">
-  <span>&#128214; Manual Book ERP MBG v1.2.0 &#8212; Siap cetak ke PDF</span>
+  <span>&#128214; Manual Book ERP MBG v1.1.0 &#8212; Siap cetak ke PDF</span>
   <div>
     <button onclick="window.print()">&#128424; Cetak / Save PDF</button>
   </div>
@@ -101,9 +117,9 @@
 <div class="cover">
   <img src="/logo.png" alt="Logo" onerror="this.style.display='none'">
   <h1>MANUAL BOOK</h1>
-  <div class="subtitle">Sistem ERP MBG (Reneo MBG)</div>
+  <div class="subtitle">Sistem ERP MBG</div>
   <div style="font-size:11pt; color:#a0aec0;">Panduan Lengkap Penggunaan Aplikasi</div>
-  <div class="version">Versi 1.2.0 &#8212; Mei 2026</div>
+  <div class="version">Versi 1.1.0</div>
   <div class="company">
     <strong>PT. Manggala Utama Indonesia</strong><br>
     Solusi Sistem Terintegrasi<br>
@@ -115,329 +131,416 @@
 <div class="content toc">
   <h2>Daftar Isi</h2>
 
-  <div class="toc-item toc-section"><a href="#sec1">1. Login &amp; Navigasi</a></div>
-  <div class="toc-item toc-section"><a href="#sec2">2. Dashboard</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-1">2.1 Dashboard Operasional</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-2">2.2 Executive Dashboard (Owner)</a></div>
-  <div class="toc-item toc-section"><a href="#sec3">3. Master Data</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-1">3.1 Item / SKU</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-2">3.2 Vendor</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-3">3.3 Dapur / Unit</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-4">3.4 Resep / BOM</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-5">3.5 Price List (BARU)</a></div>
-  <div class="toc-item toc-section"><a href="#sec4">4. Pembelian</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-1">4.1 Purchase Order</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-2">4.2 Goods Receipt</a></div>
-  <div class="toc-item toc-section"><a href="#sec5">5. Supply Chain (Distribusi)</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-1">5.1 Internal Request</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-2">5.2 Delivery Order</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-3">5.3 Kitchen Receiving</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-4">5.4 Pemakaian Bahan</a></div>
-  <div class="toc-item toc-section"><a href="#sec6">6. Inventori</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-1">6.1 Stok Gudang</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-2">6.2 Stock Opname</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-3">6.3 Pengembalian Barang</a></div>
-  <div class="toc-item toc-section"><a href="#sec7">7. Keuangan (Arus Kas)</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-1">7.1 Pembayaran Vendor</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-2">7.2 Tagihan Dapur</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-3">7.3 Anggaran Dapur</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-4">7.4 Log Anggaran (BARU)</a></div>
-  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-5">7.5 Pengeluaran Operasional</a></div>
-  <div class="toc-item toc-section"><a href="#sec8">8. Pembukuan</a></div>
-  <div class="toc-item toc-section"><a href="#sec9">9. Laporan</a></div>
-  <div class="toc-item toc-section"><a href="#sec10">10. Approval Center</a></div>
-  <div class="toc-item toc-section"><a href="#sec11">11. Notifikasi &amp; Chat</a></div>
-  <div class="toc-item toc-section"><a href="#sec12">12. Telegram Bot</a></div>
-  <div class="toc-item toc-section"><a href="#sec13">13. Pengaturan</a></div>
-  <div class="toc-item toc-section"><a href="#sec14">14. Role &amp; Hak Akses</a></div>
-  <div class="toc-item toc-section"><a href="#sec15">15. Flow Diagram</a></div>
-  <div class="toc-item toc-section"><a href="#sec16">16. FAQ &amp; Troubleshooting</a></div>
+  <div class="toc-item toc-section"><a href="#sec1">1. Pendahuluan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-1">1.1 Tentang Sistem ERP MBG</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-2">1.2 Cara Mengakses Sistem</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-3">1.3 Cara Login</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-4">1.4 Cara Logout</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec1-5">1.5 Navigasi Umum</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec2">2. Panduan per Role</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-1">2.1 Owner</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-2">2.2 Super Admin</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-3">2.3 Admin (Admin Pusat)</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-4">2.4 Kitchen Admin (Admin Dapur)</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec2-5">2.5 Finance</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec3">3. Panduan Fitur per Modul</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-1">3.1 Master Data</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-2">3.2 Pembelian</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-3">3.3 Inventori</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-4">3.4 Supply Chain</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-5">3.5 Keuangan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-6">3.6 Laporan Operasional</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec3-7">3.7 Pengaturan</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec4">4. Prosedur Harian per Role</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-1">4.1 Admin Dapur &#8212; Prosedur Harian</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-2">4.2 Admin Pusat &#8212; Prosedur Harian</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-3">4.3 Finance &#8212; Prosedur Harian</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec4-4">4.4 Owner &#8212; Prosedur Harian</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec5">5. Prosedur Mingguan per Role</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-1">5.1 Admin Dapur &#8212; Prosedur Mingguan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-2">5.2 Admin Pusat &#8212; Prosedur Mingguan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-3">5.3 Finance &#8212; Prosedur Mingguan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec5-4">5.4 Owner &#8212; Prosedur Mingguan</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec6">6. Prosedur Bulanan per Role</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-1">6.1 Admin Dapur &#8212; Prosedur Bulanan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-2">6.2 Admin Pusat &#8212; Prosedur Bulanan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-3">6.3 Finance &#8212; Prosedur Bulanan</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec6-4">6.4 Owner &#8212; Prosedur Bulanan</a></div>
+
+  <div class="toc-item toc-section"><a href="#sec7">7. FAQ &amp; Troubleshooting</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-1">7.1 Pertanyaan Umum</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-2">7.2 Troubleshooting Umum</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-3">7.3 Kontak Support</a></div>
+  <div class="toc-item" style="padding-left:20px;"><a href="#sec7-4">7.4 Tips &amp; Best Practices</a></div>
 </div>
 
-<!-- SECTION 1: LOGIN & NAVIGASI -->
+<!-- SECTION 1: PENDAHULUAN -->
 <div class="content page-break" id="sec1">
-  <h2>1. Login &amp; Navigasi</h2>
+  <h2>1. Pendahuluan</h2>
 
-  <h3>1.1 Login ke Sistem</h3>
-  <p>Untuk mengakses sistem ERP MBG, Anda memerlukan akun yang telah didaftarkan oleh Super Admin.</p>
+  <h3 id="sec1-1">1.1 Tentang Sistem ERP MBG</h3>
+  <p>Sistem ERP MBG adalah aplikasi manajemen operasional berbasis web yang dirancang untuk mengelola seluruh rantai pasokan bisnis katering/makanan multi-dapur. Sistem ini membantu:</p>
+  <ul>
+    <li><strong>Admin Pusat</strong> mengelola pembelian bahan baku, distribusi ke dapur, dan keuangan</li>
+    <li><strong>Admin Dapur</strong> meminta bahan, mengkonfirmasi penerimaan, dan memantau anggaran</li>
+    <li><strong>Finance</strong> memantau arus kas, tagihan, dan laporan keuangan</li>
+    <li><strong>Owner</strong> memantau kinerja bisnis secara keseluruhan</li>
+  </ul>
 
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Halaman Login ERP MBG</div>
-    <div class="caption">Gambar 1.1 &#8212; Halaman login dengan form email dan password</div>
-  </div>
-
+  <h3 id="sec1-2">1.2 Cara Mengakses Sistem</h3>
   <ol class="steps">
-    <li>Buka browser dan akses URL <strong>https://rmb.manggalautama.web.id</strong></li>
-    <li>Masukkan <strong>Email</strong> yang telah didaftarkan</li>
+    <li>Buka browser (Chrome, Firefox, atau Edge terbaru)</li>
+    <li>Ketik alamat: <strong>https://rmb.manggalautama.web.id</strong></li>
+    <li>Halaman login akan muncul</li>
+  </ol>
+
+  <h3 id="sec1-3">1.3 Cara Login</h3>
+  <ol class="steps">
+    <li>Masukkan <strong>Email</strong> yang sudah didaftarkan oleh Admin</li>
     <li>Masukkan <strong>Password</strong> Anda</li>
-    <li>Klik tombol <strong>Masuk</strong></li>
-    <li>Sistem akan mengarahkan ke Dashboard sesuai role Anda</li>
+    <li>Klik tombol <strong>"Masuk"</strong></li>
+    <li>Sistem akan mengarahkan Anda ke halaman sesuai role</li>
+  </ol>
+  <div class="info-box tip">
+    &#128161; <strong>Catatan:</strong> Jika lupa password, hubungi Admin Pusat untuk reset password.
+  </div>
+
+  <h3 id="sec1-4">1.4 Cara Logout</h3>
+  <ol class="steps">
+    <li>Klik ikon profil di pojok kanan atas</li>
+    <li>Pilih <strong>"Keluar"</strong></li>
   </ol>
 
-  <div class="info-box tip">
-    &#128161; <strong>Tip:</strong> Jika lupa password, hubungi Super Admin untuk melakukan reset password melalui menu Pengaturan &#8594; Pengguna.
-  </div>
-
-  <h3>1.2 Navigasi Sidebar</h3>
-  <p>Setelah login, Anda akan melihat sidebar navigasi di sisi kiri layar. Menu yang tampil berbeda sesuai role pengguna.</p>
-
+  <h3 id="sec1-5">1.5 Navigasi Umum</h3>
+  <p>Setelah login, Anda akan melihat:</p>
   <ul>
-    <li><strong>Sidebar kiri:</strong> Menu utama (berbeda per role)</li>
-    <li><strong>Header atas:</strong> Logo, notifikasi &#128276;, chat &#128172;, profil</li>
-    <li><strong>Klik menu</strong> untuk membuka halaman</li>
-    <li><strong>Submenu:</strong> Klik grup menu untuk expand/collapse</li>
+    <li><strong>Sidebar kiri</strong>: Menu navigasi sesuai role Anda</li>
+    <li><strong>Header atas</strong>: Notifikasi (ikon lonceng), profil pengguna</li>
+    <li><strong>Area utama</strong>: Konten halaman yang sedang dibuka</li>
   </ul>
 
-  <h3>1.3 Logout</h3>
-  <p>Klik ikon <strong>Logout</strong> (&#8618;) di bagian bawah sidebar untuk keluar dari sistem.</p>
-
-  <div class="info-box warning">
-    &#9888;&#65039; <strong>Perhatian:</strong> Selalu logout setelah selesai menggunakan sistem, terutama jika menggunakan komputer bersama.
-  </div>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
-<!-- SECTION 2: DASHBOARD -->
+<!-- SECTION 2: PANDUAN PER ROLE -->
 <div class="content page-break" id="sec2">
-  <h2>2. Dashboard</h2>
-  <p>Dashboard adalah halaman utama setelah login. Tampilan berbeda sesuai role pengguna.</p>
+  <h2>2. Panduan per Role</h2>
 
-  <h3 id="sec2-1">2.1 Dashboard Operasional (Admin, Finance, Super Admin)</h3>
-  <p>Dashboard standar untuk pengguna operasional.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Halaman Dashboard Operasional ERP MBG</div>
-    <div class="caption">Gambar 2.1 &#8212; Dashboard dengan summary cards, grafik jurnal, dan alert stok</div>
+  <h3 id="sec2-1">2.1 Owner</h3>
+  <div class="role-card">
+    <h4>&#9989; Anda bisa mengakses:</h4>
+    <ul>
+      <li>&#128202; <strong>Executive Dashboard</strong> &#8212; KPI bisnis (revenue, profit, tren)</li>
+      <li>&#9989; <strong>Approval Center</strong> &#8212; Approve/reject PO dan IR jika diperlukan</li>
+      <li>&#128203; <strong>Laporan Operasional</strong> &#8212; Laporan pembelian, distribusi, stok</li>
+      <li>&#128176; <strong>Laporan Keuangan</strong> &#8212; P&amp;L dan Neraca</li>
+      <li>&#128269; <strong>Audit Log</strong> &#8212; Riwayat semua aktivitas sistem</li>
+    </ul>
+    <h4>&#10060; Anda TIDAK bisa:</h4>
+    <ul>
+      <li>Membuat atau mengedit data operasional (PO, IR, DO, dll)</li>
+      <li>Mengakses Master Data</li>
+      <li>Mengakses Admin Panel</li>
+    </ul>
+    <p><strong>Halaman pertama setelah login:</strong> Executive Dashboard</p>
   </div>
 
-  <table>
-    <thead>
-      <tr><th>Komponen</th><th>Keterangan</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Kartu Ringkasan</td><td>Total pembelian, stok aktif, nilai stok, COGS</td></tr>
-      <tr><td>Grafik Distribusi Jurnal</td><td>Pie chart tipe jurnal</td></tr>
-      <tr><td>Alert Stok Rendah</td><td>Ticker berjalan, klik untuk lihat detail item</td></tr>
-      <tr><td>Quick Actions</td><td>Buat PO, Buat IR, Cek Stok, dll (sesuai role)</td></tr>
-    </tbody>
-  </table>
-
-  <h3 id="sec2-2">2.2 Executive Dashboard (Owner)</h3>
-  <p>Dashboard khusus untuk role <strong>Owner</strong> dengan fokus pada kinerja keuangan dan operasional. Owner otomatis diarahkan ke halaman ini saat login.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Executive Dashboard &#8212; KPI Cards, P&amp;L Chart, Dapur Performance</div>
-    <div class="caption">Gambar 2.2 &#8212; Executive Dashboard dengan KPI keuangan dan grafik tren</div>
+  <h3 id="sec2-2">2.2 Super Admin</h3>
+  <div class="role-card">
+    <h4>&#9989; Anda bisa mengakses SEMUA fitur, termasuk:</h4>
+    <ul>
+      <li>Semua yang bisa dilakukan Admin</li>
+      <li>&#9881;&#65039; <strong>Admin Panel</strong> &#8212; System settings, feature toggles, pengumuman</li>
+      <li>&#128269; <strong>Audit Log</strong> &#8212; Riwayat semua aktivitas</li>
+    </ul>
+    <h4>Tanggung jawab utama:</h4>
+    <ul>
+      <li>Konfigurasi sistem</li>
+      <li>Manajemen user dan role</li>
+      <li>Monitoring sistem</li>
+    </ul>
   </div>
 
-  <table>
-    <thead>
-      <tr><th>Komponen</th><th>Keterangan</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>KPI Cards</td><td>Revenue, COGS, Gross Profit, Net Profit + margin %</td></tr>
-      <tr><td>Operational Summary</td><td>Total PO, GRN, IR, Stok Kritis</td></tr>
-      <tr><td>Pending Approvals</td><td>Banner amber jika ada IR/PO menunggu &#8594; klik langsung ke Approval</td></tr>
-      <tr><td>Chart P&amp;L Trend</td><td>Revenue vs COGS vs Profit per periode</td></tr>
-      <tr><td>Dapur Performance</td><td>COGS per dapur (bar chart)</td></tr>
-      <tr><td>Expense Breakdown</td><td>Komposisi pengeluaran (pie chart)</td></tr>
-      <tr><td>Recent Activity</td><td>5 jurnal terakhir</td></tr>
-    </tbody>
-  </table>
-
-  <div class="info-box tip">
-    &#128161; <strong>Tip:</strong> Klik banner <em>Pending Approvals</em> untuk langsung membuka halaman Approval Center dan memproses IR/PO yang menunggu.
+  <h3 id="sec2-3">2.3 Admin (Admin Pusat)</h3>
+  <div class="role-card">
+    <h4>&#9989; Anda bisa mengakses:</h4>
+    <ul>
+      <li>&#128230; <strong>Master Data</strong> &#8212; Item, Vendor, Dapur, Gudang, Resep, Price List</li>
+      <li>&#128717; <strong>Pembelian</strong> &#8212; Buat PO, terima barang (GRN)</li>
+      <li>&#127981; <strong>Inventori</strong> &#8212; Stok gudang, stock opname, pengembalian</li>
+      <li>&#128666; <strong>Supply Chain</strong> &#8212; Approve IR, kelola DO, monitor KR</li>
+      <li>&#128176; <strong>Finance</strong> &#8212; Arus kas, tagihan, anggaran, laporan keuangan</li>
+      <li>&#128203; <strong>Laporan</strong> &#8212; Semua laporan operasional</li>
+      <li>&#9881;&#65039; <strong>Pengaturan</strong> &#8212; Kelola user (tanpa Admin Panel)</li>
+    </ul>
+    <h4>Tanggung jawab utama:</h4>
+    <ul>
+      <li>Mengelola seluruh operasional harian</li>
+      <li>Approve permintaan dari dapur</li>
+      <li>Memastikan stok gudang mencukupi</li>
+      <li>Mengelola pembayaran vendor</li>
+    </ul>
   </div>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
-<!-- SECTION 3: MASTER DATA -->
-<div class="content page-break" id="sec3">
-  <h2>3. Master Data</h2>
-  <p>Master Data adalah data dasar yang digunakan di seluruh modul sistem. Pastikan data master terisi lengkap sebelum memulai transaksi.</p>
-
-  <!-- 3.1 Item / SKU -->
-  <h3 id="sec3-1">3.1 Item / SKU</h3>
-  <p>Kelola daftar item/bahan yang digunakan dalam operasional. Setiap item memiliki kode SKU unik yang di-generate otomatis.</p>
-
-  <h4>Menambah Item Baru</h4>
-  <ol class="steps">
-    <li>Buka <strong>Master Data &#8594; Item / SKU</strong></li>
-    <li>Klik tombol <strong>+ Tambah Item</strong></li>
-    <li>Isi form: Nama, Kategori, Satuan (UOM), Min. Stok</li>
-    <li>SKU otomatis di-generate (ITM-0001, dst)</li>
-    <li>Klik <strong>Simpan</strong></li>
-  </ol>
-
-  <!-- 3.2 Vendor -->
-  <h3 id="sec3-2">3.2 Vendor</h3>
-  <p>Kelola data vendor/supplier yang menyediakan bahan baku.</p>
-
-  <h4>Menambah Vendor</h4>
-  <ol class="steps">
-    <li>Buka <strong>Master Data &#8594; Vendor</strong></li>
-    <li>Klik <strong>+ Tambah Vendor</strong></li>
-    <li>Isi form: Nama, Kontak Person, <strong>Nomor Telepon</strong>, Email, Kategori</li>
-    <li>Klik <strong>Simpan</strong></li>
-  </ol>
-
-  <div class="info-box important">
-    &#128241; <strong>Penting &#8212; Notifikasi WhatsApp:</strong> Isi nomor telepon vendor dengan format internasional (contoh: 08123456789 atau +628123456789) agar fitur kirim notifikasi WhatsApp berfungsi otomatis saat pembayaran lunas.
-  </div>
-
-  <!-- 3.3 Dapur / Unit -->
-  <h3 id="sec3-3">3.3 Dapur / Unit</h3>
-  <p>Kelola data dapur/unit operasional yang menjadi tujuan distribusi bahan.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Master Data &#8594; Dapur / Unit</strong></li>
-    <li>Klik <strong>+ Tambah Dapur</strong></li>
-    <li>Isi form: Nama, Lokasi, PIC (Person in Charge)</li>
-    <li>Klik <strong>Simpan</strong></li>
-  </ol>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- 3.4 Resep / BOM + 3.5 Price List -->
 <div class="content page-break">
-  <h2>3. Master Data <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+  <h2>2. Panduan per Role <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
 
-  <h3 id="sec3-4">3.4 Resep / BOM (Bill of Materials)</h3>
-  <p>Kelola resep menu beserta komposisi bahan. Resep digunakan untuk menghitung kebutuhan bahan saat membuat Internal Request.</p>
-
-  <h4>Membuat Resep Manual</h4>
-  <ol class="steps">
-    <li>Buka <strong>Master Data &#8594; Resep / BOM</strong></li>
-    <li>Klik <strong>+ Buat Resep</strong></li>
-    <li>Isi nama menu, kode, dan default porsi</li>
-    <li>Tambahkan bahan: pilih item, qty, satuan</li>
-    <li>Klik <strong>Simpan</strong></li>
-  </ol>
-
-  <h4>Melihat Harga di BOM</h4>
-  <ol class="steps">
-    <li>Klik <strong>Detail</strong> pada resep</li>
-    <li>Tabel bahan menampilkan kolom <strong>Harga Beli</strong> dan <strong>Harga Jual</strong> (dari Price List aktif)</li>
-    <li><strong>Total HPP</strong> dan <strong>Total Harga Jual</strong> dihitung otomatis</li>
-    <li><strong>Scaling Simulator</strong>: ubah target porsi &#8594; total HPP &amp; harga jual update proporsional</li>
-  </ol>
-
-  <h3 id="sec3-5">3.5 Price List <span class="badge badge-blue">BARU</span></h3>
-  <p>Kelola daftar harga baku per item dengan tanggal berlaku. Harga ini digunakan sebagai referensi otomatis di PO, BOM, dan estimasi anggaran IR.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Halaman Price List dengan daftar harga dan riwayat per item</div>
-    <div class="caption">Gambar 3.1 &#8212; Price List dengan badge "Akan Berlaku" dan accordion riwayat harga</div>
+  <h3 id="sec2-4">2.4 Kitchen Admin (Admin Dapur)</h3>
+  <div class="role-card">
+    <h4>&#9989; Anda bisa mengakses (hanya untuk dapur Anda):</h4>
+    <ul>
+      <li>&#128221; <strong>Internal Request</strong> &#8212; Buat permintaan bahan ke gudang</li>
+      <li>&#128230; <strong>Delivery Order</strong> &#8212; Lihat DO yang dikirim ke dapur Anda</li>
+      <li>&#9989; <strong>Kitchen Receiving</strong> &#8212; Konfirmasi penerimaan bahan</li>
+      <li>&#128181; <strong>Daftar Harga</strong> &#8212; Lihat harga aktif item</li>
+      <li>&#129534; <strong>Tagihan Dapur</strong> &#8212; Lihat dan bayar tagihan dapur Anda</li>
+      <li>&#128176; <strong>Anggaran Dapur</strong> &#8212; Pantau penggunaan anggaran</li>
+    </ul>
+    <h4>&#10060; Anda TIDAK bisa:</h4>
+    <ul>
+      <li>Mengakses data dapur lain</li>
+      <li>Membuat PO atau mengelola gudang</li>
+      <li>Mengakses laporan keuangan</li>
+    </ul>
+    <p><strong>Halaman pertama setelah login:</strong> Dashboard (Supply Chain)</p>
   </div>
 
-  <h4>Menambah Harga</h4>
-  <ol class="steps">
-    <li>Buka <strong>Master Data &#8594; Price List</strong></li>
-    <li>Klik <strong>+ Tambah Harga</strong></li>
-    <li>Pilih item, isi harga beli, harga jual, dan tanggal berlaku</li>
-    <li>Klik <strong>Simpan</strong></li>
-    <li>Warning muncul otomatis jika harga jual &lt; harga beli</li>
-  </ol>
-
-  <h4>Import Harga Massal via Excel</h4>
-  <ol class="steps">
-    <li>Klik <strong>Download Template</strong> &#8594; isi harga di Excel</li>
-    <li>Klik <strong>Import Excel</strong> &#8594; upload file</li>
-    <li>Sistem memproses per baris (partial success)</li>
-    <li>Ringkasan hasil: berhasil / gagal / error per baris ditampilkan</li>
-  </ol>
-
-  <h4>Melihat Riwayat Harga</h4>
-  <ul>
-    <li>Klik baris item &#8594; accordion riwayat harga terbuka</li>
-    <li>Badge <span class="badge badge-blue">Akan Berlaku</span> untuk harga dengan tanggal di masa depan</li>
-    <li>Harga aktif = entry dengan effectiveDate terbesar &#8804; tanggal transaksi</li>
-  </ul>
-
-  <div class="info-box tip">
-    &#128161; <strong>Tip:</strong> Jika harga tidak auto-fill di PO, pastikan sudah ada Price List entry untuk item tersebut dengan tanggal berlaku &#8804; tanggal order.
+  <h3 id="sec2-5">2.5 Finance</h3>
+  <div class="role-card">
+    <h4>&#9989; Anda bisa mengakses:</h4>
+    <ul>
+      <li>&#128717; <strong>Pembelian</strong> &#8212; Lihat PO dan GRN (tidak bisa buat/edit)</li>
+      <li>&#128176; <strong>Finance</strong> &#8212; Dashboard, Arus Kas, Tagihan Dapur, Vendor Invoice, Anggaran, Pengeluaran, Analisis</li>
+      <li>&#128203; <strong>Laporan</strong> &#8212; Semua laporan operasional dan keuangan</li>
+    </ul>
+    <h4>Tanggung jawab utama:</h4>
+    <ul>
+      <li>Approve pembayaran tagihan dapur</li>
+      <li>Bayar vendor</li>
+      <li>Monitor arus kas</li>
+      <li>Buat laporan keuangan</li>
+    </ul>
   </div>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
-<!-- SECTION 4: PEMBELIAN -->
-<div class="content page-break" id="sec4">
-  <h2>4. Pembelian</h2>
-  <p>Modul pembelian mengelola proses pengadaan barang dari vendor, mulai dari pembuatan PO hingga penerimaan barang di gudang.</p>
+<!-- SECTION 3: PANDUAN FITUR PER MODUL -->
+<div class="content page-break" id="sec3">
+  <h2>3. Panduan Fitur per Modul</h2>
 
-  <!-- 4.1 Purchase Order -->
-  <h3 id="sec4-1">4.1 Purchase Order (PO)</h3>
+  <h3 id="sec3-1">3.1 Master Data</h3>
 
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Form pembuatan Purchase Order dengan indikator deviasi harga</div>
-    <div class="caption">Gambar 4.1 &#8212; Form PO dengan auto-fill harga dari Price List dan badge deviasi</div>
+  <h4>3.1.1 Mengelola Item / SKU</h4>
+  <p><strong>Cara menambah item baru:</strong></p>
+  <ol class="steps">
+    <li>Buka menu <strong>Master Data &#8594; Item/SKU</strong></li>
+    <li>Klik tombol <strong>"+ Tambah Item"</strong></li>
+    <li>Isi form: Nama Item, Kategori, Satuan (UOM), Stok Minimum, Deskripsi (opsional)</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+    <li>SKU akan di-generate otomatis (contoh: PR-0001 untuk Protein)</li>
+  </ol>
+
+  <p><strong>Cara mengedit item:</strong></p>
+  <ol class="steps">
+    <li>Klik ikon pensil (&#9999;&#65039;) pada baris item yang ingin diedit</li>
+    <li>Ubah data yang diperlukan</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+  </ol>
+
+  <p><strong>Cara menonaktifkan item:</strong></p>
+  <ol class="steps">
+    <li>Klik ikon pensil (&#9999;&#65039;) pada item</li>
+    <li>Matikan toggle <strong>"Aktif"</strong></li>
+    <li>Klik <strong>"Simpan"</strong></li>
+  </ol>
+  <div class="info-box tip">
+    &#128161; <strong>Catatan:</strong> Item yang sudah digunakan dalam transaksi tidak bisa dihapus, hanya bisa dinonaktifkan.
   </div>
 
-  <h4>Membuat PO</h4>
+  <h4>3.1.2 Mengelola Vendor</h4>
   <ol class="steps">
-    <li>Buka <strong>Pembelian &#8594; Purchase Order</strong></li>
-    <li>Klik <strong>+ Buat PO Manual</strong></li>
-    <li>Pilih <strong>Vendor</strong> dan <strong>Gudang</strong> tujuan, isi tanggal order</li>
-    <li>Tambahkan item: pilih item &#8594; <strong>harga otomatis terisi dari Price List</strong></li>
-    <li>Jika harga diubah manual &#8594; badge deviasi muncul (<span class="badge badge-yellow">kuning &gt;0%</span>, <span class="badge badge-red">merah &gt;10%</span>)</li>
-    <li>Jika deviasi &gt;10% &#8594; dialog konfirmasi muncul sebelum simpan</li>
-    <li>Klik <strong>Simpan PO</strong></li>
+    <li>Buka menu <strong>Master Data &#8594; Vendor</strong></li>
+    <li>Klik <strong>"+ Tambah Vendor"</strong></li>
+    <li>Isi form: Nama Vendor, Kategori, Kontak Person, Telepon, Email, Alamat</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+    <li>Kode vendor akan di-generate otomatis (VND-001)</li>
   </ol>
 
-  <h4>Pengiriman Langsung ke Dapur (Direct Delivery) <span class="badge badge-blue">BARU</span></h4>
+  <h4>3.1.3 Mengelola Dapur</h4>
   <ol class="steps">
-    <li>Saat membuat PO, centang checkbox <strong>"Pengiriman Langsung ke Dapur"</strong></li>
-    <li>Pilih dapur tujuan dari dropdown</li>
-    <li>PO akan ditandai badge <span class="badge badge-blue">DIRECT</span></li>
-    <li>Saat GRN dikonfirmasi: stok gudang <strong>tidak berubah</strong>, budget dapur dipotong langsung</li>
+    <li>Buka menu <strong>Master Data &#8594; Dapur</strong></li>
+    <li>Klik <strong>"+ Tambah Dapur"</strong></li>
+    <li>Isi form: Nama Dapur, Kode (auto-generate), Lokasi, PIC, Kapasitas (pax)</li>
+    <li>Klik <strong>"Simpan"</strong></li>
   </ol>
 
-  <h4>Approve PO</h4>
+  <h4>3.1.4 Mengelola Price List</h4>
   <ol class="steps">
-    <li>Buka PO dengan status <span class="badge badge-yellow">Pending Approval</span></li>
-    <li>Review detail PO (vendor, item, harga)</li>
-    <li>Klik <strong>Approve PO</strong> &#8594; status berubah menjadi <span class="badge badge-green">Open</span></li>
+    <li>Buka menu <strong>Master Data &#8594; Price List</strong></li>
+    <li>Klik <strong>"+ Tambah Harga"</strong></li>
+    <li>Isi form: Item, Harga Beli (HPP), Harga Jual, Tanggal Berlaku, Catatan (opsional)</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+  </ol>
+  <div class="info-box important">
+    &#128308; <strong>Penting:</strong> Harga aktif adalah entry dengan tanggal berlaku terbaru yang tidak melebihi tanggal hari ini. Untuk mengubah harga, tambahkan entry baru dengan tanggal berlaku yang lebih baru &#8212; jangan edit entry lama agar riwayat harga terjaga.
+  </div>
+
+  <p><strong>Cara import harga dari Excel:</strong></p>
+  <ol class="steps">
+    <li>Klik <strong>"Import Excel"</strong></li>
+    <li>Download template Excel terlebih dahulu</li>
+    <li>Isi template sesuai format</li>
+    <li>Upload file Excel</li>
+    <li>Review data yang akan diimport</li>
+    <li>Klik <strong>"Konfirmasi Import"</strong></li>
   </ol>
 
+  <h4>3.1.5 Mengelola Resep / BOM</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Master Data &#8594; Resep</strong></li>
+    <li>Klik <strong>"+ Tambah Resep"</strong></li>
+    <li>Isi header resep: Nama Resep, Yield Default (jumlah porsi), Deskripsi (opsional)</li>
+    <li>Tambahkan bahan-bahan: klik <strong>"+ Tambah Bahan"</strong>, pilih item, isi qty per yield, pilih satuan</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+    <li>Sistem akan menghitung HPP otomatis dari price list aktif</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- 3.2 PEMBELIAN -->
+<div class="content page-break" id="sec3-2">
+  <h2>3. Panduan Fitur per Modul <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>3.2 Pembelian</h3>
+
+  <h4>3.2.1 Membuat Purchase Order (PO)</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Pembelian &#8594; Purchase Order</strong></li>
+    <li>Klik <strong>"+ Buat PO"</strong></li>
+    <li>Isi header PO: Vendor, Gudang Tujuan, Tanggal PO, Estimasi Tiba</li>
+    <li>Centang <strong>Direct Delivery</strong> jika barang langsung ke dapur (bypass gudang), lalu pilih Dapur Tujuan</li>
+    <li>Tambahkan item: klik <strong>"+ Tambah Item"</strong>, pilih item, isi qty (harga otomatis dari price list)</li>
+    <li>Review total PO</li>
+    <li>Klik <strong>"Simpan &amp; Submit"</strong></li>
+    <li>PO akan masuk status <span class="badge badge-yellow">Pending Approval</span></li>
+  </ol>
   <div class="info-box warning">
-    &#9888;&#65039; <strong>Perhatian:</strong> PO yang sudah di-approve tidak dapat diedit. Pastikan semua data sudah benar sebelum approve.
+    &#9888;&#65039; <strong>Perhatian:</strong> PO yang sudah disubmit tidak bisa diedit. Jika ada kesalahan, hubungi Admin/Finance untuk reject, lalu buat PO baru.
   </div>
 
-  <!-- 4.2 Goods Receipt -->
-  <h3 id="sec4-2">4.2 Goods Receipt (Penerimaan Barang)</h3>
+  <p><strong>Status PO:</strong></p>
+  <table>
+    <thead><tr><th>Status</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-gray">Draft</span></td><td>Belum disubmit</td></tr>
+      <tr><td><span class="badge badge-yellow">Pending Approval</span></td><td>Menunggu persetujuan</td></tr>
+      <tr><td><span class="badge badge-green">Open</span></td><td>Disetujui, siap untuk GRN</td></tr>
+      <tr><td><span class="badge badge-blue">Partial</span></td><td>Sebagian sudah diterima</td></tr>
+      <tr><td><span class="badge badge-green">Received</span></td><td>Semua sudah diterima</td></tr>
+      <tr><td><span class="badge badge-red">Cancelled</span></td><td>Dibatalkan</td></tr>
+    </tbody>
+  </table>
 
-  <h4>Regular GR (ke Gudang)</h4>
+  <h4>3.2.2 Approve / Reject PO</h4>
   <ol class="steps">
-    <li>Buka PO yang statusnya <span class="badge badge-green">Open</span></li>
-    <li>Klik <strong>Receive Aktual</strong></li>
-    <li>Input qty aktual yang diterima per item</li>
-    <li>Klik <strong>Konfirmasi</strong> &#8594; stok gudang bertambah</li>
-    <li>Record pembayaran vendor otomatis dibuat di Pembayaran Vendor</li>
+    <li>Buka menu <strong>Approval Center</strong> atau <strong>Pembelian &#8594; Purchase Order</strong></li>
+    <li>Cari PO dengan status <span class="badge badge-yellow">Pending Approval</span></li>
+    <li>Klik PO untuk melihat detail</li>
+    <li>Klik <strong>"Approve"</strong> atau <strong>"Reject"</strong></li>
+    <li>Jika reject, isi alasan penolakan</li>
+    <li>Klik <strong>"Konfirmasi"</strong></li>
   </ol>
 
-  <h4>Direct Delivery GR (langsung ke Dapur)</h4>
+  <h4>3.2.3 Membuat Goods Receipt (GRN)</h4>
+  <p><strong>Prasyarat:</strong> PO harus berstatus <span class="badge badge-green">Open</span> atau <span class="badge badge-blue">Partial</span></p>
   <ol class="steps">
-    <li>Buka PO yang bertanda <span class="badge badge-blue">DIRECT</span></li>
-    <li>Klik <strong>Receive Direct</strong></li>
-    <li>Input qty aktual per item</li>
-    <li>Klik <strong>Konfirmasi</strong> &#8594; stok gudang <strong>TIDAK berubah</strong>, budget dapur dipotong</li>
+    <li>Buka menu <strong>Pembelian &#8594; Penerimaan Barang (GRN)</strong></li>
+    <li>Klik <strong>"+ Buat GRN"</strong></li>
+    <li>Pilih PO yang akan diterima</li>
+    <li>Isi tanggal penerimaan</li>
+    <li>Untuk setiap item, isi <strong>qty aktual</strong> yang diterima (bisa berbeda dari qty PO)</li>
+    <li>Isi nomor batch dan tanggal kadaluarsa jika ada</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+    <li>Stok gudang akan otomatis bertambah, HPP diupdate menggunakan Moving Average</li>
   </ol>
-
   <div class="info-box tip">
-    &#128161; <strong>Tip:</strong> Setelah Goods Receipt, tagihan vendor otomatis muncul di menu <strong>Arus Kas &#8594; Pembayaran Vendor</strong> untuk proses pembayaran.
+    &#128161; <strong>Catatan:</strong> Jika qty yang diterima kurang dari PO, PO akan berstatus Partial. Buat GRN lagi untuk sisa qty.
   </div>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
-<!-- SECTION 5: SUPPLY CHAIN -->
-<div class="content page-break" id="sec5">
-  <h2>5. Supply Chain (Distribusi)</h2>
-  <p>Modul Supply Chain mengelola alur distribusi bahan dari gudang pusat ke dapur/unit operasional.</p>
+<!-- 3.3 INVENTORI -->
+<div class="content page-break" id="sec3-3">
+  <h2>3. Panduan Fitur per Modul <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>3.3 Inventori</h3>
+
+  <h4>3.3.1 Melihat Stok Gudang</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Inventori &#8594; Stok Gudang</strong></li>
+    <li>Gunakan filter: per gudang, per kategori item, cari nama item</li>
+  </ol>
+  <table>
+    <thead><tr><th>Kolom</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td>SKU &amp; Nama Item</td><td>Kode dan nama item</td></tr>
+      <tr><td>Kategori</td><td>Kategori item</td></tr>
+      <tr><td>Stok Saat Ini</td><td>Jumlah stok tersedia</td></tr>
+      <tr><td>Satuan</td><td>Unit of measure</td></tr>
+      <tr><td>HPP Rata-rata</td><td>Moving Average cost</td></tr>
+      <tr><td>Nilai Stok</td><td>qty &times; HPP</td></tr>
+      <tr><td>Stok Minimum</td><td>Batas minimum alert</td></tr>
+      <tr><td>Status</td><td>Normal / &#9888;&#65039; Stok Rendah</td></tr>
+    </tbody>
+  </table>
+
+  <h4>3.3.2 Melakukan Stock Opname</h4>
+  <p><strong>Kapan dilakukan:</strong> Secara berkala (mingguan/bulanan) untuk memastikan stok sistem sesuai fisik.</p>
+  <ol class="steps">
+    <li>Buka menu <strong>Inventori &#8594; Stock Opname</strong></li>
+    <li>Klik <strong>"+ Buat Opname"</strong></li>
+    <li>Pilih lokasi (gudang atau dapur)</li>
+    <li>Sistem menampilkan semua item dengan stok sistem</li>
+    <li>Hitung stok fisik dan isi kolom <strong>"Qty Aktual"</strong> untuk setiap item</li>
+    <li>Sistem otomatis menghitung selisih</li>
+    <li>Klik <strong>"Selesaikan Opname"</strong></li>
+    <li>Stok sistem akan diupdate ke qty aktual, selisih dicatat untuk laporan</li>
+  </ol>
+  <div class="info-box important">
+    &#128308; <strong>Perhatian:</strong> Setelah opname diselesaikan, tidak bisa dibatalkan. Pastikan semua qty aktual sudah benar sebelum klik "Selesaikan".
+  </div>
+
+  <h4>3.3.3 Pengembalian Barang</h4>
+  <p>Untuk mengembalikan barang dari dapur ke gudang:</p>
+  <ol class="steps">
+    <li>Buka menu <strong>Inventori &#8594; Pengembalian</strong></li>
+    <li>Klik <strong>"+ Buat Return"</strong></li>
+    <li>Pilih KR yang menjadi dasar return</li>
+    <li>Pilih item yang dikembalikan</li>
+    <li>Isi qty yang dikembalikan dan alasan pengembalian</li>
+    <li>Klik <strong>"Submit"</strong></li>
+    <li>Tunggu approval dari Admin</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- 3.4 SUPPLY CHAIN -->
+<div class="content page-break" id="sec3-4">
+  <h2>3. Panduan Fitur per Modul <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>3.4 Supply Chain</h3>
 
   <div class="flow">
     <div class="flow-step">Internal Request</div>
@@ -453,993 +556,1036 @@
     <div class="flow-step">Invoice</div>
   </div>
 
-  <!-- 5.1 Internal Request -->
-  <h3 id="sec5-1">5.1 Internal Request (IR)</h3>
-  <p>Internal Request adalah permintaan bahan dari dapur ke gudang pusat. Sistem memvalidasi anggaran secara real-time.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Form Internal Request dengan banner anggaran dan daftar item</div>
-    <div class="caption">Gambar 5.1 &#8212; Form IR menampilkan banner budget dan estimasi nilai real-time</div>
-  </div>
-
-  <h4>Membuat IR</h4>
+  <h4>3.4.1 Membuat Internal Request (IR)</h4>
+  <p><strong>Siapa yang bisa:</strong> Kitchen Admin (untuk dapur sendiri), Admin, Super Admin</p>
   <ol class="steps">
-    <li>Buka <strong>Supply Chain &#8594; Internal Request</strong></li>
-    <li>Klik <strong>+ Buat Request</strong></li>
-    <li>Pilih <strong>Dapur Peminta</strong> dan <strong>Gudang Sumber</strong></li>
-    <li>Perhatikan <strong>banner anggaran</strong>:
-      <ul style="margin-top:6px; padding-left:20px;">
-        <li><span class="badge badge-green">Hijau</span>: sisa anggaran cukup</li>
-        <li><span class="badge badge-red">Merah</span>: estimasi melebihi anggaran &#8594; tombol Submit dinonaktifkan</li>
-        <li><span class="badge badge-yellow">Kuning</span>: anggaran belum ditetapkan</li>
-      </ul>
-    </li>
-    <li>Tambahkan item: pilih item, masukkan qty</li>
-    <li>Klik <strong>Simpan Request</strong></li>
+    <li>Buka menu <strong>Supply Chain &#8594; Internal Request</strong></li>
+    <li>Klik <strong>"+ Buat Request"</strong></li>
+    <li>Pilih <strong>Gudang</strong> sumber</li>
+    <li>Tambahkan item: klik <strong>"+ Tambah Item"</strong>, pilih item, isi qty yang dibutuhkan</li>
+    <li>Isi catatan jika perlu</li>
+    <li>Klik <strong>"Submit"</strong></li>
   </ol>
-
-  <h4>Jika IR Ditolak karena Budget</h4>
-  <ul>
-    <li>Modal <strong>BUDGET_EXCEEDED</strong> muncul dengan detail: sisa, estimasi, kekurangan</li>
-    <li>Saran alternatif item yang lebih murah ditampilkan</li>
-    <li>Klik <strong>Gunakan Alternatif</strong> untuk ganti item otomatis</li>
-  </ul>
-
-  <h4>Approve IR</h4>
-  <ol class="steps">
-    <li>Buka IR dengan status <span class="badge badge-yellow">Pending</span></li>
-    <li>Klik <strong>Setujui</strong> &#8594; DO otomatis dibuat</li>
-    <li>Notifikasi dikirim ke peminta (web + Telegram)</li>
-  </ol>
-
-  <h4>Tolak IR <span class="badge badge-blue">BARU</span></h4>
-  <ol class="steps">
-    <li>Buka IR dengan status <span class="badge badge-yellow">Pending</span></li>
-    <li>Klik <strong>Tolak</strong> &#8594; IR dibatalkan</li>
-    <li>Budget reservation di-reverse otomatis</li>
-    <li>Notifikasi dikirim ke peminta</li>
-  </ol>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- 5.2 DO, 5.3 KR, 5.4 Pemakaian -->
-<div class="content page-break">
-  <h2>5. Supply Chain <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
-
-  <h3 id="sec5-2">5.2 Delivery Order (DO)</h3>
-  <p>Delivery Order dibuat otomatis setelah IR di-approve. Admin gudang melengkapi harga dan mengirim barang.</p>
-
-  <h4>Melengkapi DO (Input Harga)</h4>
-  <ol class="steps">
-    <li>Buka <strong>Supply Chain &#8594; Delivery Order</strong></li>
-    <li>Pilih DO dengan status <span class="badge badge-gray">Draft</span></li>
-    <li>Klik <strong>Edit</strong> &#8594; input harga jual per item</li>
-    <li>Klik <strong>Simpan</strong></li>
-  </ol>
-
-  <h4>Konfirmasi Pengiriman</h4>
-  <ol class="steps">
-    <li>Klik <strong>Kirim</strong> pada DO yang sudah lengkap</li>
-    <li>Stok gudang berkurang sesuai qty</li>
-    <li>Status berubah menjadi <span class="badge badge-blue">Terkirim</span></li>
-    <li>Notifikasi dikirim ke admin dapur (web + Telegram)</li>
-    <li>Surat jalan bisa di-print (PDF)</li>
-  </ol>
-
-  <!-- 5.3 Kitchen Receiving -->
-  <h3 id="sec5-3">5.3 Kitchen Receiving (KR)</h3>
-  <p>Kitchen Receiving adalah proses penerimaan barang di dapur. Admin dapur memverifikasi qty aktual yang diterima.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Supply Chain &#8594; Kitchen Receiving</strong></li>
-    <li>Di bagian <strong>Menunggu Penerimaan</strong>, klik <strong>Terima Barang</strong></li>
-    <li>Popup tabel muncul: kolom Dikirim, Diterima, Selisih, Alasan</li>
-    <li>Input qty aktual yang diterima (default = qty dikirim)</li>
-    <li>Jika ada item ditolak, isi kolom <strong>Alasan</strong></li>
-    <li>Klik <strong>Konfirmasi Penerimaan</strong></li>
-  </ol>
-
-  <div class="info-box important">
-    &#128308; <strong>Penting:</strong> Setelah konfirmasi KR, sistem otomatis: (1) menambah stok dapur, (2) membuat invoice, (3) mencatat item ditolak ke Pengembalian, (4) membuat jurnal distribusi, (5) mengirim notifikasi Telegram.
-  </div>
-
-  <!-- 5.4 Pemakaian Bahan -->
-  <h3 id="sec5-4">5.4 Pemakaian Bahan</h3>
-  <p>Catat penggunaan bahan di dapur untuk mengurangi stok dapur.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Supply Chain &#8594; Pemakaian Bahan</strong></li>
-    <li>Pilih dapur, item, dan qty yang dipakai</li>
-    <li>Klik <strong>Simpan</strong> &#8594; stok dapur berkurang</li>
-  </ol>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- SECTION 6: INVENTORI -->
-<div class="content page-break" id="sec6">
-  <h2>6. Inventori</h2>
-  <p>Modul Inventori mengelola stok barang di gudang utama, termasuk stock opname dan pengembalian barang.</p>
-
-  <!-- 6.1 Stok Gudang -->
-  <h3 id="sec6-1">6.1 Stok Gudang</h3>
-  <p>Halaman ini <strong>hanya menampilkan stok gudang utama</strong>. Stok dapur tidak ditampilkan di sini.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Halaman Stok Gudang dengan tabel stok gudang utama</div>
-    <div class="caption">Gambar 6.1 &#8212; Daftar stok gudang utama dengan indikator stok minimum</div>
-  </div>
-
-  <ol class="steps">
-    <li>Buka <strong>Inventori &#8594; Stok Gudang</strong></li>
-    <li>Lihat stok per gudang utama</li>
-    <li>Item dengan stok di bawah minimum ditandai <span class="badge badge-red">merah</span></li>
-    <li>Gunakan filter search dan gudang untuk mempersempit tampilan</li>
-  </ol>
-
   <div class="info-box tip">
-    &#128161; <strong>Catatan:</strong> Stok dapur tidak dimonitor di halaman ini. Jika Anda mencari stok dapur, gunakan laporan distribusi atau cek langsung di halaman Kitchen Receiving.
+    &#128161; <strong>Yang terjadi setelah submit:</strong> Sistem mengecek anggaran dapur. Jika anggaran cukup &#8594; IR masuk status Pending, notifikasi dikirim ke Admin. Jika anggaran tidak cukup &#8594; IR ditolak otomatis.
   </div>
 
-  <!-- 6.2 Stock Opname -->
-  <h3 id="sec6-2">6.2 Stock Opname</h3>
-  <p>Stock Opname digunakan untuk mencocokkan stok fisik dengan stok di sistem.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Inventori &#8594; Stock Opname</strong></li>
-    <li>Klik <strong>+ Buat Stock Opname</strong></li>
-    <li>Pilih gudang yang akan di-opname</li>
-    <li>Input qty fisik per item</li>
-    <li>Selisih otomatis terhitung (fisik &#8722; sistem)</li>
-    <li>Klik <strong>Simpan</strong></li>
-    <li>Hasil opname bisa di-view dan download PDF</li>
-  </ol>
-
-  <!-- 6.3 Pengembalian Barang -->
-  <h3 id="sec6-3">6.3 Pengembalian Barang</h3>
-  <p>Item yang ditolak saat Kitchen Receiving otomatis masuk ke daftar pengembalian.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Inventori &#8594; Pengembalian</strong></li>
-    <li>Lihat daftar item <span class="badge badge-yellow">Pending Return</span> (dari KR partial)</li>
-    <li>Klik <strong>Detail</strong> untuk lihat info lengkap (alasan penolakan, qty)</li>
-    <li>Klik <strong>Approve</strong> untuk mengembalikan item ke gudang</li>
-    <li>Stok gudang bertambah kembali sesuai qty yang dikembalikan</li>
-  </ol>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- SECTION 7: KEUANGAN (ARUS KAS) -->
-<div class="content page-break" id="sec7">
-  <h2>7. Keuangan (Arus Kas)</h2>
-  <p>Modul Keuangan mengelola seluruh arus kas operasional: pembayaran vendor, tagihan dapur, anggaran, log anggaran, dan pengeluaran operasional.</p>
-
-  <!-- 7.1 Pembayaran Vendor -->
-  <h3 id="sec7-1">7.1 Pembayaran Vendor</h3>
-  <p>Halaman ini memiliki <strong>3 tab</strong> untuk mengelola pembayaran ke vendor secara lengkap.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Pembayaran Vendor &#8212; Tab Summary per Vendor dengan kartu vendor dan aging badge</div>
-    <div class="caption">Gambar 7.1 &#8212; Tab Summary per Vendor dengan expand GRN dan tombol notifikasi WA</div>
-  </div>
-
-  <h4>Tab 1: Summary per Vendor</h4>
-  <ol class="steps">
-    <li>Buka <strong>Arus Kas &#8594; Pembayaran Vendor</strong></li>
-    <li>Klik <strong>Sync Data</strong> untuk generate record dari GRN</li>
-    <li>Kartu per vendor muncul dengan aging badge (<span class="badge badge-red">&gt;30 hari</span>, <span class="badge badge-yellow">&gt;14 hari</span>)</li>
-    <li>Klik vendor untuk expand &#8594; lihat list GRN (No. GRN, No. PO, tanggal, total, status)</li>
-    <li>Klik GRN untuk expand &#8594; lihat detail item (nama, SKU, qty, harga, total)</li>
-  </ol>
-
-  <h4>Upload Bukti Bayar</h4>
-  <ol class="steps">
-    <li>Klik <strong>Upload Bukti</strong> pada baris GRN (status: <span class="badge badge-red">Belum Bayar</span>)</li>
-    <li>Pilih file JPG/PDF</li>
-    <li>Klik <strong>Upload</strong> &#8594; status menjadi <span class="badge badge-yellow">Pending</span></li>
-  </ol>
-
-  <h4>Approve Pembayaran</h4>
-  <ol class="steps">
-    <li>Klik <strong>Approve</strong> pada baris GRN (status: <span class="badge badge-yellow">Pending</span>)</li>
-    <li>Status berubah menjadi <span class="badge badge-green">Lunas</span></li>
-  </ol>
-
-  <h4>Kirim Notifikasi WhatsApp <span class="badge badge-blue">BARU</span></h4>
-
-  <p><strong>Per GRN/PO (sudah lunas):</strong></p>
-  <ol class="steps">
-    <li>Klik tombol <strong>WA</strong> (hijau) di baris GRN yang sudah lunas</li>
-    <li>WhatsApp terbuka dengan pesan detail 1 PO</li>
-  </ol>
-
-  <p><strong>Rekap Vendor (semua transaksi):</strong></p>
-  <ol class="steps">
-    <li>Klik <strong>Kirim Rekap</strong> / <strong>Kirim Notifikasi</strong> di header kartu vendor</li>
-    <li>Pesan WA berisi: &#9989; daftar PO lunas + total dibayar, &#8987; daftar PO outstanding + total outstanding</li>
-    <li>Jika nomor vendor sudah diisi &#8594; WA langsung terbuka ke kontak vendor</li>
-    <li>Jika belum &#8594; WA terbuka, pilih kontak manual</li>
-  </ol>
-
-  <h4>Tab 2: Per Transaksi</h4>
-  <p>Tabel semua GRN payment. Upload bukti dan approve pembayaran per baris transaksi.</p>
-
-  <h4>Tab 3: Pendapatan Dapur</h4>
-  <p>Tabel income dari Kitchen Receiving &#8212; rekap pendapatan per dapur.</p>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- 7.2 Tagihan Dapur -->
-<div class="content page-break">
-  <h2>7. Keuangan <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
-
-  <h3 id="sec7-2">7.2 Tagihan Dapur</h3>
-  <p>Halaman Tagihan Dapur menggabungkan Invoice Dapur dan Tagihan Dapur dalam <strong>2 tab</strong>. Invoice terbit otomatis setelah Kitchen Receiving dikonfirmasi.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Tagihan Dapur &#8212; Tab Per Transaksi dan Tab Rekap Bulanan</div>
-    <div class="caption">Gambar 7.2 &#8212; Tagihan Dapur dengan 2 tab: Per Transaksi dan Rekap Bulanan</div>
-  </div>
-
-  <h4>Tab 1: Per Transaksi</h4>
-  <ol class="steps">
-    <li>Buka <strong>Arus Kas &#8594; Tagihan Dapur</strong></li>
-    <li>Tab "Per Transaksi" aktif secara default</li>
-    <li>Filter: search, dapur, bulan, tahun, status</li>
-    <li>Klik <strong>Bayar</strong> &#8594; upload bukti &#8594; klik <strong>Upload &amp; Ajukan</strong></li>
-    <li>Status berubah menjadi <span class="badge badge-yellow">Pending</span></li>
-    <li>Finance klik <strong>Approve</strong> &#8594; status menjadi <span class="badge badge-green">Lunas</span></li>
-    <li>Klik <strong>PDF</strong> untuk cetak invoice per transaksi</li>
-  </ol>
-
-  <h4>Tab 2: Rekap Bulanan</h4>
-  <ol class="steps">
-    <li>Klik tab <strong>"Rekap Bulanan"</strong></li>
-    <li>Pilih bulan, tahun, dan dapur</li>
-    <li>Kartu per dapur muncul dengan status lunas/belum</li>
-    <li>Klik <strong>Bayar</strong> untuk catat pembayaran bulanan</li>
-    <li>Cetak invoice rekap per dapur</li>
-  </ol>
-
-  <div class="info-box tip">
-    &#128161; <strong>Tip:</strong> Admin Dapur hanya melihat tagihan dapurnya sendiri dan tidak bisa melakukan approve pembayaran.
-  </div>
-
-  <!-- 7.3 Anggaran Dapur -->
-  <h3 id="sec7-3">7.3 Anggaran Dapur</h3>
-  <p>Kelola anggaran operasional per dapur per periode. Sistem memantau penggunaan anggaran secara real-time.</p>
-
-  <h4>Membuat Anggaran</h4>
-  <ol class="steps">
-    <li>Buka <strong>Arus Kas &#8594; Anggaran Dapur</strong></li>
-    <li>Klik <strong>+ Buat Anggaran</strong></li>
-    <li>Pilih dapur tujuan</li>
-    <li>Tentukan tanggal mulai &amp; akhir periode</li>
-    <li>Masukkan nominal anggaran (format Rp otomatis)</li>
-    <li>Isi <strong>Anggaran Harian</strong> (opsional)</li>
-    <li>Klik <strong>Simpan</strong></li>
-  </ol>
-
-  <h4>Monitoring Anggaran</h4>
+  <p><strong>Status IR:</strong></p>
   <table>
-    <thead>
-      <tr><th>Indikator</th><th>Kondisi</th><th>Status</th></tr>
-    </thead>
+    <thead><tr><th>Status</th><th>Keterangan</th></tr></thead>
     <tbody>
-      <tr><td>Progress Bar</td><td>&lt; 80% terpakai</td><td><span class="badge badge-green">Hijau &#8212; Aman</span></td></tr>
-      <tr><td>Progress Bar</td><td>80% &#8211; 99% terpakai</td><td><span class="badge badge-yellow">Kuning &#8212; Hampir Habis</span></td></tr>
-      <tr><td>Progress Bar</td><td>&#8805; 100% terpakai</td><td><span class="badge badge-red">Merah &#8212; OVER BUDGET</span></td></tr>
+      <tr><td><span class="badge badge-yellow">Pending</span></td><td>Menunggu approval Admin</td></tr>
+      <tr><td><span class="badge badge-green">Approved</span></td><td>Disetujui, DO sedang disiapkan</td></tr>
+      <tr><td><span class="badge badge-red">Rejected</span></td><td>Ditolak</td></tr>
+      <tr><td><span class="badge badge-blue">In Transit</span></td><td>Barang sedang dikirim</td></tr>
+      <tr><td><span class="badge badge-green">Fulfilled</span></td><td>Semua barang sudah diterima</td></tr>
+      <tr><td><span class="badge badge-blue">Partial Received</span></td><td>Sebagian sudah diterima</td></tr>
+      <tr><td><span class="badge badge-gray">Cancelled</span></td><td>Dibatalkan</td></tr>
     </tbody>
   </table>
 
-  <ul>
-    <li>Klik <strong>Lihat Log</strong> &#8594; buka Log Anggaran dengan filter dapur otomatis</li>
-    <li>Klik <strong>Detail</strong> untuk lihat breakdown invoice yang memotong anggaran</li>
-  </ul>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- 7.4 Log Anggaran + 7.5 Pengeluaran Operasional -->
-<div class="content page-break">
-  <h2>7. Keuangan <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
-
-  <h3 id="sec7-4">7.4 Log Anggaran <span class="badge badge-blue">BARU</span></h3>
-  <p>Log Anggaran adalah audit trail setiap transaksi yang mempengaruhi anggaran dapur. Dapat diakses langsung dari tombol "Lihat Log" di halaman Anggaran Dapur, atau melalui menu utama.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Halaman Log Anggaran dengan tabel transaksi dan summary harian</div>
-    <div class="caption">Gambar 7.3 &#8212; Log Anggaran dengan filter dapur, tanggal, jenis transaksi, dan export CSV</div>
+  <h4>3.4.2 Approve / Reject Internal Request</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Supply Chain &#8594; Internal Request</strong> atau <strong>Approval Center</strong></li>
+    <li>Cari IR dengan status <span class="badge badge-yellow">Pending</span></li>
+    <li>Klik IR untuk melihat detail, review item dan ketersediaan stok</li>
+    <li>Klik <strong>"Approve"</strong> atau <strong>"Reject"</strong> (jika reject, isi alasan)</li>
+    <li>Klik <strong>"Konfirmasi"</strong></li>
+  </ol>
+  <div class="info-box tip">
+    &#128161; <strong>Setelah approve:</strong> IR status berubah ke Approved, DO otomatis dibuat dengan status Draft, anggaran dapur di-reserve, notifikasi dikirim ke Kitchen Admin.
   </div>
 
+  <h4>3.4.3 Mengirim Delivery Order (DO)</h4>
   <ol class="steps">
-    <li>Buka <strong>Arus Kas &#8594; Log Anggaran</strong></li>
-    <li>Filter: dapur, rentang tanggal, jenis transaksi</li>
-    <li>Lihat setiap transaksi yang mempengaruhi anggaran</li>
-    <li>Summary harian ditampilkan di bawah tabel</li>
-    <li>Klik <strong>Export CSV</strong> untuk download data</li>
+    <li>Buka menu <strong>Supply Chain &#8594; Delivery Order</strong></li>
+    <li>Cari DO dengan status <span class="badge badge-gray">Draft</span></li>
+    <li>Klik DO untuk melihat detail, verifikasi item dan qty</li>
+    <li>Pastikan stok gudang mencukupi</li>
+    <li>Klik <strong>"Kirim"</strong> (status berubah ke In Transit)</li>
+    <li>Notifikasi dikirim ke Kitchen Admin dapur tujuan</li>
+    <li>Untuk mencetak surat jalan: klik <strong>"Print DO"</strong></li>
   </ol>
 
+  <h4>3.4.4 Konfirmasi Kitchen Receiving (KR)</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Supply Chain &#8594; Kitchen Receiving</strong></li>
+    <li>Cari DO yang sudah berstatus In Transit atau Delivered</li>
+    <li>Klik <strong>"Buat KR"</strong></li>
+    <li>Untuk setiap item, isi <strong>qty aktual</strong> yang diterima</li>
+    <li>Isi catatan jika ada selisih</li>
+    <li>Klik <strong>"Konfirmasi Penerimaan"</strong></li>
+  </ol>
+  <div class="info-box important">
+    &#128308; <strong>Penting:</strong> Setelah KR dikonfirmasi: stok gudang berkurang, stok dapur bertambah, Invoice Dapur otomatis dibuat. Satu DO hanya bisa punya satu KR.
+  </div>
+
+  <h4>3.4.5 Melihat Daftar Harga</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Supply Chain &#8594; Daftar Harga</strong></li>
+    <li>Lihat harga aktif semua item</li>
+    <li>Gunakan search untuk mencari item tertentu</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- 3.5 KEUANGAN -->
+<div class="content page-break" id="sec3-5">
+  <h2>3. Panduan Fitur per Modul <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>3.5 Keuangan</h3>
+
+  <h4>3.5.1 Mengelola Tagihan Dapur</h4>
+  <p><strong>Untuk Finance/Admin &#8212; Melihat dan approve tagihan:</strong></p>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Filter per dapur, per periode, per status</li>
+    <li>Klik tagihan untuk melihat detail</li>
+    <li>Cari tagihan dengan status <span class="badge badge-yellow">Pending</span> (sudah ada bukti bayar)</li>
+    <li>Review bukti pembayaran yang diupload</li>
+    <li>Klik <strong>"Approve Pembayaran"</strong> &#8594; status berubah ke <span class="badge badge-green">Paid</span></li>
+  </ol>
+
+  <p><strong>Untuk Kitchen Admin &#8212; Upload bukti pembayaran:</strong></p>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Cari tagihan dengan status <span class="badge badge-blue">Issued</span></li>
+    <li>Klik tagihan, lalu klik <strong>"Upload Bukti Bayar"</strong></li>
+    <li>Pilih file gambar/PDF bukti transfer</li>
+    <li>Klik <strong>"Submit"</strong> &#8594; status berubah ke <span class="badge badge-yellow">Pending</span></li>
+  </ol>
+
+  <h4>3.5.2 Mengelola Anggaran Dapur</h4>
+  <p><strong>Membuat anggaran baru:</strong></p>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Anggaran Dapur</strong></li>
+    <li>Klik <strong>"+ Buat Anggaran"</strong></li>
+    <li>Isi form: Dapur, Periode Mulai, Periode Selesai, Total Anggaran (Rp), Anggaran Harian (opsional), Catatan (opsional)</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+  </ol>
+
+  <p><strong>Memantau penggunaan anggaran:</strong></p>
   <table>
-    <thead>
-      <tr><th>Kolom</th><th>Keterangan</th></tr>
-    </thead>
+    <thead><tr><th>Indikator Warna</th><th>Kondisi</th></tr></thead>
     <tbody>
-      <tr><td>Tanggal</td><td>Waktu transaksi</td></tr>
-      <tr><td>Dapur</td><td>Dapur yang terdampak</td></tr>
-      <tr><td>Jenis Transaksi</td><td>IR Reserved, IR Cancelled, Direct Delivery, dll</td></tr>
-      <tr><td>Nomor Referensi</td><td>No. IR / No. PO terkait</td></tr>
-      <tr><td>Jumlah</td><td>Nilai transaksi (+ atau &#8722;)</td></tr>
-      <tr><td>Saldo Sebelum</td><td>Sisa anggaran sebelum transaksi</td></tr>
-      <tr><td>Saldo Sesudah</td><td>Sisa anggaran setelah transaksi</td></tr>
+      <tr><td><span class="badge badge-green">&#128994; Hijau</span></td><td>&lt; 70% terpakai</td></tr>
+      <tr><td><span class="badge badge-yellow">&#128993; Kuning</span></td><td>70&#8211;90% terpakai (warning)</td></tr>
+      <tr><td><span class="badge badge-red">&#128308; Merah</span></td><td>&gt; 90% terpakai (kritis)</td></tr>
     </tbody>
   </table>
 
-  <div class="info-box tip">
-    &#128161; <strong>Tip:</strong> Log dibuat otomatis saat ada transaksi IR, PO Direct Delivery, atau pembatalan IR yang mempengaruhi anggaran. Pastikan ada anggaran aktif untuk dapur tersebut.
-  </div>
-
-  <!-- 7.5 Pengeluaran Operasional -->
-  <h3 id="sec7-5">7.5 Pengeluaran Operasional</h3>
-  <p>Catat pengeluaran operasional di luar pembelian bahan (misalnya: gaji, utilitas, transportasi, maintenance).</p>
-
+  <h4>3.5.3 Melihat Log Anggaran</h4>
   <ol class="steps">
-    <li>Buka <strong>Arus Kas &#8594; Pengeluaran Operasional</strong></li>
-    <li>Klik <strong>+ Catat Pengeluaran</strong></li>
-    <li>Isi form: Kategori, Jumlah (Rp), Deskripsi</li>
-    <li>Upload lampiran (opsional)</li>
-    <li>Klik <strong>Simpan</strong></li>
+    <li>Buka menu <strong>Finance &#8594; Log Anggaran</strong></li>
+    <li>Filter per dapur, per periode</li>
+    <li>Setiap baris menampilkan: tanggal, tipe transaksi, nomor dokumen referensi, jumlah, saldo sebelum dan sesudah</li>
+    <li>Klik <strong>"Export CSV"</strong> untuk download data</li>
   </ol>
 
-  <div class="info-box tip">
-    &#128161; <strong>Catatan:</strong> Pengeluaran Operasional berbeda dari Pembayaran Vendor. Pembayaran Vendor otomatis dari GRN, sedangkan Pengeluaran Operasional diinput manual untuk biaya non-pembelian.
-  </div>
+  <h4>3.5.4 Mengelola Pembayaran Vendor (Arus Kas)</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Arus Kas</strong></li>
+    <li>Lihat daftar pembayaran yang perlu dilakukan, filter per vendor/status</li>
+    <li>Klik pembayaran yang ingin diproses</li>
+    <li>Klik <strong>"Upload Bukti Bayar"</strong>, upload file bukti transfer</li>
+    <li>Klik <strong>"Submit"</strong> &#8594; status: Pending</li>
+    <li>Approve &#8594; status: Paid</li>
+    <li>Notifikasi WhatsApp otomatis dikirim ke vendor</li>
+  </ol>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <h4>3.5.5 Mengelola Vendor Invoice</h4>
+  <p><strong>Membuat Vendor Invoice:</strong></p>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Vendor Invoice</strong></li>
+    <li>Klik <strong>"+ Buat Invoice Vendor"</strong></li>
+    <li>Pilih vendor dan tentukan periode (tanggal mulai &#8211; selesai)</li>
+    <li>Sistem menampilkan semua GRN vendor dalam periode yang belum ditagih</li>
+    <li>Review dan konfirmasi, klik <strong>"Buat Invoice"</strong> &#8594; status: Draft</li>
+  </ol>
+  <p><strong>Issue Invoice:</strong> Buka detail &#8594; klik <strong>"Issue Invoice"</strong> &#8594; status: Issued</p>
+  <p><strong>Tandai Lunas:</strong> Buka detail &#8594; klik <strong>"Tandai Lunas"</strong> &#8594; isi tanggal bayar dan metode &#8594; Konfirmasi &#8594; status: Paid</p>
+
+  <h4>3.5.6 Mencatat Pengeluaran Operasional</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Pengeluaran</strong></li>
+    <li>Klik <strong>"+ Catat Pengeluaran"</strong></li>
+    <li>Isi form: Kategori, Deskripsi, Jumlah (Rp), Bukti (opsional), Catatan (opsional)</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+  </ol>
+
+  <h4>3.5.7 Melihat Dashboard Finance</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Dashboard</strong></li>
+    <li>Pilih periode (bulan/tahun)</li>
+    <li>Lihat KPI: Revenue, COGS, Gross Profit, Net Profit, Gross Margin %, Net Margin %</li>
+    <li>Lihat grafik tren bulanan dan perbandingan per dapur</li>
+  </ol>
+
+  <h4>3.5.8 Laporan Keuangan (P&amp;L &amp; Neraca)</h4>
+  <ol class="steps">
+    <li>Buka menu <strong>Finance &#8594; Laporan Keuangan</strong></li>
+    <li>Pilih periode dan jenis laporan: <strong>Laba Rugi (P&amp;L)</strong> atau <strong>Neraca (Balance Sheet)</strong></li>
+    <li>Klik <strong>"Generate Laporan"</strong></li>
+    <li>Bisa di-export ke PDF</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
-<!-- SECTION 8: PEMBUKUAN -->
-<div class="content page-break" id="sec8">
-  <h2>8. Pembukuan</h2>
-  <p>Modul Pembukuan mencatat seluruh transaksi keuangan dalam bentuk jurnal akuntansi dan buku besar.</p>
+<!-- 3.6 LAPORAN & 3.7 PENGATURAN -->
+<div class="content page-break" id="sec3-6">
+  <h2>3. Panduan Fitur per Modul <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
 
-  <h3>8.1 Jurnal Umum</h3>
-  <p>Jurnal otomatis dibuat dari transaksi: distribusi, konsumsi bahan, dan waste. Anda juga bisa menambah jurnal manual.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Pembukuan &#8594; Jurnal Umum</strong></li>
-    <li>Lihat daftar jurnal yang sudah tercatat</li>
-    <li>Untuk menambah jurnal manual, klik <strong>+ Tambah Jurnal</strong></li>
-    <li>Isi tanggal, akun debit, akun kredit, nominal, dan keterangan</li>
-    <li>Klik <strong>Simpan</strong></li>
-    <li>Gunakan filter periode untuk melihat jurnal per bulan/tahun</li>
-  </ol>
-
-  <h3>8.2 General Ledger (Buku Besar)</h3>
-  <p>Buku besar menampilkan ringkasan transaksi per akun COA (Chart of Accounts).</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Pembukuan &#8594; General Ledger</strong></li>
-    <li>Pilih akun COA yang ingin dilihat</li>
-    <li>Filter per periode (bulan/tahun)</li>
-    <li>Lihat saldo awal, mutasi debit/kredit, dan saldo akhir</li>
-  </ol>
-
-  <h3>8.3 Tutup Buku</h3>
-  <p>Tutup periode akuntansi untuk mengunci jurnal pada periode tersebut.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Pembukuan &#8594; Tutup Buku</strong></li>
-    <li>Pilih periode yang akan ditutup</li>
-    <li>Klik <strong>Tutup Periode</strong></li>
-    <li>Jurnal pada periode tersebut tidak bisa diedit lagi</li>
-  </ol>
-
-  <div class="info-box important">
-    &#128308; <strong>Penting:</strong> Tutup buku bersifat permanen. Pastikan semua jurnal sudah benar sebelum menutup periode.
-  </div>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- SECTION 9: LAPORAN -->
-<div class="content page-break" id="sec9">
-  <h2>9. Laporan</h2>
-  <p>Modul Laporan menyediakan berbagai jenis laporan operasional dan keuangan yang bisa dilihat online maupun diunduh sebagai PDF.</p>
-
-  <h3>9.1 Laporan Operasional</h3>
+  <h3>3.6 Laporan Operasional</h3>
   <ol class="steps">
     <li>Buka menu <strong>Laporan</strong></li>
-    <li>Pilih jenis laporan yang diinginkan</li>
-    <li>Atur filter periode (bulan/tahun)</li>
-    <li>Lihat summary cards dan detail tabel</li>
-    <li>Klik <strong>Download PDF</strong> untuk mengunduh laporan</li>
+    <li>Pilih jenis laporan: Laporan Pembelian, Laporan Internal Request, Laporan Distribusi, Laporan Stok, Laporan Invoice Dapur</li>
+    <li>Atur filter periode</li>
+    <li>Klik <strong>"Generate"</strong></li>
+    <li>Klik <strong>"Download PDF"</strong> untuk export</li>
   </ol>
 
-  <table>
-    <thead>
-      <tr><th>No</th><th>Jenis Laporan</th><th>Keterangan</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>1</td><td>Laporan Pembelian</td><td>Rekap PO dan Goods Receipt per periode</td></tr>
-      <tr><td>2</td><td>Laporan Internal Request</td><td>Rekap IR per dapur per periode</td></tr>
-      <tr><td>3</td><td>Laporan Distribusi</td><td>Rekap DO dan KR per periode</td></tr>
-      <tr><td>4</td><td>Laporan Inventori</td><td>Stok gudang utama, mutasi stok</td></tr>
-      <tr><td>5</td><td>Laporan Jurnal</td><td>Rekap jurnal akuntansi per periode</td></tr>
-      <tr><td>6</td><td>Laporan Konsumsi</td><td>Pemakaian bahan per dapur per periode</td></tr>
-    </tbody>
-  </table>
+  <h3 id="sec3-7">3.7 Pengaturan</h3>
 
-  <h3>9.2 Laporan Keuangan</h3>
+  <h4>3.7.1 Mengelola Pengguna</h4>
+  <p><strong>Menambah user baru:</strong></p>
   <ol class="steps">
-    <li>Buka <strong>Arus Kas &#8594; Laporan Keuangan</strong></li>
-    <li>Tab <strong>Laba Rugi (P&amp;L)</strong>: Revenue, COGS, Gross Profit, Net Profit</li>
-    <li>Tab <strong>Neraca (Balance Sheet)</strong>: Aset, Kewajiban, Ekuitas</li>
-    <li>Filter per dapur dan periode</li>
-    <li>Export PDF</li>
+    <li>Buka menu <strong>Pengaturan &#8594; Pengguna</strong></li>
+    <li>Klik <strong>"+ Tambah User"</strong></li>
+    <li>Isi form: Nama, Email, Password, Role, Dapur (wajib untuk kitchen_admin)</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+    <li>Informasikan email dan password ke user</li>
   </ol>
 
-  <h3>9.3 Dashboard Finance</h3>
-  <ul>
-    <li>KPI keuangan + chart interaktif</li>
-    <li>Filter per dapur dan periode</li>
-    <li>Top Expenses, Recent Transactions</li>
-  </ul>
+  <p><strong>Reset password user:</strong></p>
+  <ol class="steps">
+    <li>Cari user di daftar</li>
+    <li>Klik ikon kunci (&#128273;)</li>
+    <li>Masukkan password baru</li>
+    <li>Klik <strong>"Reset"</strong></li>
+  </ol>
 
-  <h3>9.4 Analisis Keuangan</h3>
-  <ul>
-    <li>Rasio keuangan: Gross Margin, Net Margin, COGS Ratio</li>
-    <li>Tren margin per periode</li>
-    <li>Efisiensi per dapur (radar chart)</li>
-    <li>Alerts &amp; insights otomatis</li>
-  </ul>
+  <p><strong>Mengubah role user:</strong></p>
+  <ol class="steps">
+    <li>Klik ikon pensil (&#9999;&#65039;) pada user</li>
+    <li>Ubah role; jika role = kitchen_admin, pilih dapur yang sesuai</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+  </ol>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <h4>3.7.2 Mengubah Profil Sendiri</h4>
+  <ol class="steps">
+    <li>Klik nama/foto profil di pojok kanan atas</li>
+    <li>Pilih <strong>"Profil Saya"</strong></li>
+    <li>Ubah nama jika perlu</li>
+    <li>Untuk ganti password: isi Password Lama, Password Baru, Konfirmasi password baru</li>
+    <li>Klik <strong>"Simpan"</strong></li>
+  </ol>
+
+  <h4>3.7.3 Melihat Audit Log</h4>
+  <p><strong>Untuk Super Admin dan Owner:</strong></p>
+  <ol class="steps">
+    <li>Buka menu <strong>Pengaturan &#8594; Audit Log</strong></li>
+    <li>Filter berdasarkan: User, Aksi (create, update, delete, approve, dll), Entitas (PO, IR, DO, dll), Tanggal</li>
+    <li>Setiap baris menampilkan: Waktu, User, Aksi, Entitas, Deskripsi, IP Address</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
-<!-- SECTION 10: APPROVAL CENTER -->
-<div class="content page-break" id="sec10">
-  <h2>10. Approval Center</h2>
-  <p>Approval Center adalah pusat persetujuan terpusat untuk semua dokumen yang memerlukan approval (IR + PO).</p>
+<!-- SECTION 4: PROSEDUR HARIAN -->
+<div class="content page-break" id="sec4">
+  <h2>4. Prosedur Harian per Role</h2>
 
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Halaman Approval Center dengan daftar item pending dan tombol Setujui/Tolak</div>
-    <div class="caption">Gambar 10.1 &#8212; Approval Center dengan tombol Setujui dan Tolak untuk IR dan PO</div>
-  </div>
+  <h3 id="sec4-1">4.1 Admin Dapur (Kitchen Admin) &#8212; Prosedur Harian</h3>
 
+  <div class="procedure-time">&#127774; Pagi (07:00 &#8211; 08:00)</div>
+
+  <h4>1. Cek Notifikasi</h4>
+  <p>Buka sistem dan lihat notifikasi di ikon lonceng. Perhatikan:</p>
+  <ul>
+    <li>&#9989; IR Approved &#8594; DO sudah disiapkan</li>
+    <li>&#128666; DO In Transit &#8594; Barang sedang dalam perjalanan</li>
+    <li>&#10060; IR Rejected &#8594; Perlu tindak lanjut</li>
+  </ul>
+
+  <h4>2. Cek Status DO yang Sedang Berjalan</h4>
   <ol class="steps">
-    <li>Buka menu <strong>Approval</strong></li>
-    <li>Lihat semua item yang menunggu persetujuan (IR + PO)</li>
-    <li>Klik pada item untuk melihat detail</li>
-    <li>Klik <strong>Setujui</strong> &#8594; item diproses, notifikasi dikirim ke peminta</li>
-    <li>Klik <strong>Tolak</strong> &#8594; item dibatalkan, notifikasi dikirim ke peminta</li>
-    <li>Lihat history: siapa yang mengajukan, siapa yang approve/tolak, kapan</li>
+    <li>Buka <strong>Supply Chain &#8594; Delivery Order</strong></li>
+    <li>Filter status: In Transit atau Delivered</li>
+    <li>Catat DO yang perlu dikonfirmasi hari ini</li>
   </ol>
 
+  <h4>3. Cek Anggaran Dapur</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Anggaran Dapur</strong></li>
+    <li>Lihat sisa anggaran periode berjalan</li>
+    <li>Jika sisa anggaran &lt; 20%, pertimbangkan prioritas permintaan</li>
+  </ol>
+
+  <div class="procedure-time">&#9728;&#65039; Siang (10:00 &#8211; 12:00)</div>
+
+  <h4>4. Konfirmasi Kitchen Receiving (KR)</h4>
+  <p>Jika ada barang yang tiba dari gudang:</p>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Kitchen Receiving</strong></li>
+    <li>Klik <strong>"Buat KR"</strong> untuk DO yang sudah tiba</li>
+    <li>Hitung fisik barang yang diterima</li>
+    <li>Input qty aktual untuk setiap item</li>
+    <li>Jika ada selisih, catat alasannya</li>
+    <li>Klik <strong>"Konfirmasi Penerimaan"</strong></li>
+  </ol>
   <div class="info-box important">
-    &#128308; <strong>Catatan:</strong> IR yang ditolak statusnya menjadi "Ditolak" (bukan "Menunggu") setelah di-refresh. Budget reservation di-reverse otomatis saat IR ditolak.
+    &#128308; <strong>Penting:</strong> Lakukan KR segera setelah barang tiba. Jangan tunda lebih dari 1 hari.
   </div>
 
-  <h3>Filter &amp; History</h3>
-  <ul>
-    <li><strong>Filter status:</strong> Menunggu / Disetujui / Ditolak</li>
-    <li><strong>Filter tipe:</strong> IR / PO</li>
-    <li><strong>History:</strong> siapa yang minta, siapa yang approve/tolak, kapan</li>
-  </ul>
+  <h4>5. Buat Internal Request (IR) untuk Kebutuhan Besok/Lusa</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Internal Request</strong></li>
+    <li>Klik <strong>"+ Buat Request"</strong></li>
+    <li>Pilih gudang sumber, tambahkan item dengan qty yang tepat</li>
+    <li>Cek estimasi total vs sisa anggaran</li>
+    <li>Klik <strong>"Submit"</strong></li>
+  </ol>
+  <div class="info-box tip">
+    &#128161; <strong>Tips:</strong> Buat IR minimal 1&#8211;2 hari sebelum kebutuhan untuk memberi waktu proses approval dan pengiriman.
+  </div>
 
-  <h3>Jenis Dokumen yang Memerlukan Approval</h3>
+  <div class="procedure-time">&#127774; Sore (15:00 &#8211; 17:00)</div>
+
+  <h4>6. Cek Tagihan Dapur</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Lihat tagihan dengan status <span class="badge badge-blue">Issued</span> (belum dibayar)</li>
+    <li>Jika ada tagihan yang perlu dibayar: siapkan bukti transfer, upload bukti bayar, submit untuk approval Finance</li>
+  </ol>
+
+  <h4>7. Review IR yang Pending</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Internal Request</strong></li>
+    <li>Cek IR yang masih <span class="badge badge-yellow">Pending</span></li>
+    <li>Jika ada IR yang sudah lama pending, follow up ke Admin Pusat</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<div class="content page-break" id="sec4-2">
+  <h2>4. Prosedur Harian per Role <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>4.2 Admin Pusat &#8212; Prosedur Harian</h3>
+
+  <div class="procedure-time">&#127774; Pagi (08:00 &#8211; 09:00)</div>
+
+  <h4>1. Cek Notifikasi dan Approval Queue</h4>
+  <ol class="steps">
+    <li>Buka <strong>Approval Center</strong></li>
+    <li>Lihat semua item yang menunggu approval: IR Pending dari dapur-dapur, PO Pending Approval</li>
+    <li>Prioritaskan berdasarkan urgensi</li>
+  </ol>
+
+  <h4>2. Approve / Reject Internal Request</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Internal Request</strong> atau <strong>Approval Center</strong></li>
+    <li>Untuk setiap IR Pending: cek item yang diminta, cek ketersediaan stok gudang, cek anggaran dapur</li>
+    <li>Approve jika stok cukup dan anggaran OK; Reject dengan alasan jika tidak bisa dipenuhi</li>
+    <li>Setelah approve &#8594; DO otomatis dibuat</li>
+  </ol>
+
+  <div class="procedure-time">&#9728;&#65039; Pagi (09:00 &#8211; 11:00)</div>
+
+  <h4>3. Proses Delivery Order</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Delivery Order</strong></li>
+    <li>Cari DO dengan status <span class="badge badge-gray">Draft</span></li>
+    <li>Verifikasi item dan qty, siapkan barang di gudang</li>
+    <li>Klik <strong>"Kirim"</strong> saat barang sudah siap dikirim</li>
+    <li>Print DO sebagai surat jalan jika diperlukan</li>
+  </ol>
+
+  <h4>4. Monitor Stok Gudang</h4>
+  <ol class="steps">
+    <li>Buka <strong>Inventori &#8594; Stok Gudang</strong></li>
+    <li>Perhatikan item dengan status &#9888;&#65039; <strong>Stok Rendah</strong></li>
+    <li>Catat item yang perlu segera dipesan</li>
+  </ol>
+
+  <div class="procedure-time">&#9728;&#65039; Siang (11:00 &#8211; 13:00)</div>
+
+  <h4>5. Buat Purchase Order (jika diperlukan)</h4>
+  <ol class="steps">
+    <li>Buka <strong>Pembelian &#8594; Purchase Order</strong></li>
+    <li>Klik <strong>"+ Buat PO"</strong></li>
+    <li>Pilih vendor dan item yang perlu dibeli, isi qty dan harga</li>
+    <li>Submit PO untuk approval</li>
+  </ol>
+
+  <h4>6. Proses GRN (jika ada barang tiba dari vendor)</h4>
+  <ol class="steps">
+    <li>Buka <strong>Pembelian &#8594; Penerimaan Barang</strong></li>
+    <li>Klik <strong>"+ Buat GRN"</strong>, pilih PO yang barangnya tiba</li>
+    <li>Input qty aktual yang diterima</li>
+    <li>Simpan &#8594; stok gudang otomatis bertambah</li>
+  </ol>
+
+  <div class="procedure-time">&#127774; Sore (14:00 &#8211; 17:00)</div>
+
+  <h4>7. Monitor KR dan Discrepancy</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Kitchen Receiving</strong></li>
+    <li>Cek KR dengan status Discrepancy</li>
+    <li>Tindak lanjuti selisih yang ada</li>
+  </ol>
+
+  <h4>8. Cek Notifikasi Stok Rendah</h4>
+  <ol class="steps">
+    <li>Buka <strong>Inventori &#8594; Stok Gudang</strong>, filter: Stok Rendah</li>
+    <li>Buat PO untuk item yang perlu segera dipesan</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<div class="content page-break" id="sec4-3">
+  <h2>4. Prosedur Harian per Role <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>4.3 Finance &#8212; Prosedur Harian</h3>
+
+  <div class="procedure-time">&#127774; Pagi (08:00 &#8211; 09:30)</div>
+
+  <h4>1. Cek Dashboard Finance</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Dashboard</strong></li>
+    <li>Review KPI hari ini: Revenue vs target, Outstanding tagihan, Hutang vendor yang jatuh tempo</li>
+  </ol>
+
+  <h4>2. Cek Tagihan Dapur yang Pending</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Filter status: <span class="badge badge-yellow">Pending</span> (sudah ada bukti bayar)</li>
+    <li>Review bukti pembayaran dan approve tagihan yang valid</li>
+  </ol>
+
+  <div class="procedure-time">&#9728;&#65039; Siang (10:00 &#8211; 12:00)</div>
+
+  <h4>3. Proses Pembayaran Vendor</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Arus Kas</strong></li>
+    <li>Lihat daftar pembayaran vendor yang jatuh tempo</li>
+    <li>Proses transfer bank, upload bukti transfer ke sistem, approve pembayaran</li>
+    <li>Sistem otomatis kirim notifikasi WhatsApp ke vendor</li>
+  </ol>
+
+  <h4>4. Cek Vendor Invoice</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Vendor Invoice</strong></li>
+    <li>Cek invoice yang sudah <span class="badge badge-blue">Issued</span> dan belum dibayar</li>
+    <li>Prioritaskan berdasarkan tanggal jatuh tempo</li>
+  </ol>
+
+  <div class="procedure-time">&#127774; Sore (14:00 &#8211; 16:00)</div>
+
+  <h4>5. Catat Pengeluaran Operasional</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Pengeluaran</strong></li>
+    <li>Catat semua pengeluaran hari ini yang tidak melalui PO</li>
+    <li>Upload bukti pengeluaran</li>
+  </ol>
+
+  <h4>6. Review Arus Kas</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Arus Kas</strong></li>
+    <li>Review posisi kas hari ini</li>
+    <li>Identifikasi pembayaran yang perlu dilakukan besok</li>
+  </ol>
+
+  <h3 id="sec4-4">4.4 Owner &#8212; Prosedur Harian</h3>
+
+  <div class="procedure-time">&#127774; Pagi (09:00 &#8211; 10:00)</div>
+
+  <h4>1. Cek Executive Dashboard</h4>
+  <ol class="steps">
+    <li>Buka sistem &#8594; otomatis masuk ke <strong>Executive Dashboard</strong></li>
+    <li>Review KPI: Revenue hari ini vs kemarin, Gross Profit Margin, Net Profit</li>
+    <li>Perhatikan tren yang tidak normal</li>
+  </ol>
+
+  <h4>2. Cek Approval Center</h4>
+  <ol class="steps">
+    <li>Buka <strong>Approval Center</strong></li>
+    <li>Lihat apakah ada PO atau IR yang memerlukan approval Owner</li>
+    <li>Review dan approve/reject sesuai kebijakan</li>
+  </ol>
+
+  <div class="procedure-time">&#127774; Sore (16:00 &#8211; 17:00)</div>
+
+  <h4>3. Review Laporan Harian (opsional)</h4>
+  <ol class="steps">
+    <li>Buka <strong>Laporan &#8594; Laporan Operasional</strong></li>
+    <li>Pilih tanggal hari ini</li>
+    <li>Review aktivitas: PO yang dibuat/diapprove, IR yang diproses, DO yang dikirim, KR yang dikonfirmasi</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 5: PROSEDUR MINGGUAN -->
+<div class="content page-break" id="sec5">
+  <h2>5. Prosedur Mingguan per Role</h2>
+
+  <h3 id="sec5-1">5.1 Admin Dapur &#8212; Prosedur Mingguan</h3>
+
+  <div class="procedure-time">&#128197; Setiap Senin Pagi</div>
+
+  <h4>1. Review Penggunaan Anggaran Minggu Lalu</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Log Anggaran</strong></li>
+    <li>Filter periode: minggu lalu</li>
+    <li>Review semua transaksi yang mempengaruhi anggaran</li>
+    <li>Identifikasi item yang paling banyak dikonsumsi</li>
+  </ol>
+
+  <h4>2. Perencanaan Kebutuhan Minggu Ini</h4>
+  <ol class="steps">
+    <li>Estimasi kebutuhan bahan untuk minggu ini</li>
+    <li>Cek sisa anggaran</li>
+    <li>Buat IR untuk kebutuhan awal minggu</li>
+  </ol>
+
+  <h4>3. Cek Tagihan yang Belum Dibayar</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Filter status: <span class="badge badge-blue">Issued</span></li>
+    <li>Siapkan pembayaran untuk tagihan yang sudah jatuh tempo</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Setiap Jumat Sore</div>
+
+  <h4>4. Rekap Aktivitas Minggu Ini</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Internal Request</strong></li>
+    <li>Filter: minggu ini</li>
+    <li>Catat semua IR yang dibuat, diapprove, dan dipenuhi</li>
+  </ol>
+
+  <h4>5. Cek Stok Dapur (opsional)</h4>
+  <ol class="steps">
+    <li>Hitung fisik stok bahan di dapur</li>
+    <li>Bandingkan dengan catatan sistem</li>
+    <li>Laporkan ke Admin Pusat jika ada selisih signifikan</li>
+  </ol>
+
+  <h3 id="sec5-2">5.2 Admin Pusat &#8212; Prosedur Mingguan</h3>
+
+  <div class="procedure-time">&#128197; Setiap Senin Pagi</div>
+
+  <h4>1. Review Stok Gudang</h4>
+  <ol class="steps">
+    <li>Buka <strong>Inventori &#8594; Stok Gudang</strong></li>
+    <li>Identifikasi semua item dengan stok rendah</li>
+    <li>Buat PO untuk item yang perlu dipesan</li>
+  </ol>
+
+  <h4>2. Review PO yang Pending</h4>
+  <ol class="steps">
+    <li>Buka <strong>Pembelian &#8594; Purchase Order</strong></li>
+    <li>Cek PO yang sudah lama pending approval</li>
+    <li>Follow up ke approver jika perlu</li>
+  </ol>
+
+  <h4>3. Review DO yang Belum Dikonfirmasi</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Delivery Order</strong></li>
+    <li>Cek DO yang sudah In Transit lebih dari 2 hari</li>
+    <li>Follow up ke kitchen admin</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Setiap Jumat Sore</div>
+
+  <h4>4. Rekap Pembelian Minggu Ini</h4>
+  <ol class="steps">
+    <li>Buka <strong>Laporan &#8594; Laporan Pembelian</strong></li>
+    <li>Filter: minggu ini</li>
+    <li>Review total pembelian dan vendor</li>
+  </ol>
+
+  <h4>5. Rekap Distribusi Minggu Ini</h4>
+  <ol class="steps">
+    <li>Buka <strong>Laporan &#8594; Laporan Distribusi</strong></li>
+    <li>Filter: minggu ini</li>
+    <li>Review distribusi ke setiap dapur</li>
+  </ol>
+
+  <h4>6. Cek Discrepancy KR</h4>
+  <ol class="steps">
+    <li>Buka <strong>Supply Chain &#8594; Kitchen Receiving</strong></li>
+    <li>Filter status: Discrepancy</li>
+    <li>Tindak lanjuti semua discrepancy yang belum diselesaikan</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<div class="content page-break" id="sec5-3">
+  <h2>5. Prosedur Mingguan per Role <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>5.3 Finance &#8212; Prosedur Mingguan</h3>
+
+  <div class="procedure-time">&#128197; Setiap Senin Pagi</div>
+
+  <h4>1. Review Aging Hutang Vendor</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Arus Kas</strong></li>
+    <li>Lihat summary per vendor</li>
+    <li>Identifikasi vendor dengan hutang yang sudah lama</li>
+    <li>Prioritaskan pembayaran</li>
+  </ol>
+
+  <h4>2. Review Tagihan Dapur yang Outstanding</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Filter status: <span class="badge badge-blue">Issued</span> (belum dibayar)</li>
+    <li>Identifikasi tagihan yang sudah &gt; 7 hari</li>
+    <li>Follow up ke kitchen admin</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Setiap Jumat Sore</div>
+
+  <h4>3. Rekap Arus Kas Minggu Ini</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Arus Kas</strong></li>
+    <li>Review semua pembayaran minggu ini</li>
+    <li>Hitung total pengeluaran vs pemasukan</li>
+  </ol>
+
+  <h4>4. Update Vendor Invoice</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Vendor Invoice</strong></li>
+    <li>Cek GRN baru yang belum dimasukkan ke vendor invoice</li>
+    <li>Update atau buat vendor invoice baru jika diperlukan</li>
+  </ol>
+
+  <h3 id="sec5-4">5.4 Owner &#8212; Prosedur Mingguan</h3>
+
+  <div class="procedure-time">&#128197; Setiap Senin Pagi</div>
+
+  <h4>1. Review Kinerja Minggu Lalu</h4>
+  <ol class="steps">
+    <li>Buka <strong>Executive Dashboard</strong></li>
+    <li>Pilih periode: minggu lalu</li>
+    <li>Review: Revenue per dapur, Gross Profit Margin, Perbandingan dengan minggu sebelumnya</li>
+  </ol>
+
+  <h4>2. Review Laporan Operasional</h4>
+  <ol class="steps">
+    <li>Buka <strong>Laporan &#8594; Laporan Operasional</strong></li>
+    <li>Review aktivitas pembelian dan distribusi</li>
+    <li>Identifikasi anomali atau ketidakefisienan</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 6: PROSEDUR BULANAN -->
+<div class="content page-break" id="sec6">
+  <h2>6. Prosedur Bulanan per Role</h2>
+
+  <h3 id="sec6-1">6.1 Admin Dapur &#8212; Prosedur Bulanan</h3>
+
+  <div class="procedure-time">&#128197; Awal Bulan (Tanggal 1&#8211;3)</div>
+
+  <h4>1. Review Anggaran Bulan Lalu</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Anggaran Dapur</strong></li>
+    <li>Lihat anggaran periode yang baru selesai</li>
+    <li>Bandingkan: anggaran vs realisasi</li>
+    <li>Identifikasi item yang paling banyak dikonsumsi</li>
+  </ol>
+
+  <h4>2. Cek Tagihan Bulan Lalu</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Filter: bulan lalu</li>
+    <li>Pastikan semua tagihan sudah dibayar atau dalam proses</li>
+  </ol>
+
+  <h4>3. Koordinasi Anggaran Bulan Ini</h4>
+  <ol class="steps">
+    <li>Diskusikan kebutuhan anggaran dengan Admin Pusat/Finance</li>
+    <li>Pastikan anggaran periode baru sudah dibuat</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Akhir Bulan (Tanggal 25&#8211;31)</div>
+
+  <h4>4. Rekap Konsumsi Bulan Ini</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Log Anggaran</strong></li>
+    <li>Filter: bulan ini</li>
+    <li>Export CSV untuk arsip</li>
+  </ol>
+
+  <h4>5. Persiapan Kebutuhan Bulan Depan</h4>
+  <ol class="steps">
+    <li>Estimasi kebutuhan bahan bulan depan</li>
+    <li>Koordinasikan dengan Admin Pusat</li>
+  </ol>
+
+  <h3 id="sec6-2">6.2 Admin Pusat &#8212; Prosedur Bulanan</h3>
+
+  <div class="procedure-time">&#128197; Awal Bulan (Tanggal 1&#8211;5)</div>
+
+  <h4>1. Buat Anggaran Dapur Periode Baru</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Anggaran Dapur</strong></li>
+    <li>Klik <strong>"+ Buat Anggaran"</strong> untuk setiap dapur</li>
+    <li>Isi periode dan jumlah anggaran</li>
+    <li>Konfirmasi dengan Finance dan Owner</li>
+  </ol>
+
+  <h4>2. Review Stok Awal Bulan</h4>
+  <ol class="steps">
+    <li>Lakukan stock opname di gudang</li>
+    <li>Buka <strong>Inventori &#8594; Stock Opname</strong></li>
+    <li>Buat opname baru, input qty aktual semua item</li>
+    <li>Selesaikan opname</li>
+  </ol>
+
+  <h4>3. Review Vendor dan Price List</h4>
+  <ol class="steps">
+    <li>Cek apakah ada perubahan harga dari vendor</li>
+    <li>Buka <strong>Master Data &#8594; Price List</strong></li>
+    <li>Tambahkan entry harga baru dengan effective date bulan ini jika ada perubahan</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Akhir Bulan (Tanggal 25&#8211;31)</div>
+
+  <h4>4. Rekap Pembelian Bulanan</h4>
+  <ol class="steps">
+    <li>Buka <strong>Laporan &#8594; Laporan Pembelian</strong></li>
+    <li>Filter: bulan ini</li>
+    <li>Download PDF untuk arsip</li>
+  </ol>
+
+  <h4>5. Rekap Distribusi Bulanan</h4>
+  <ol class="steps">
+    <li>Buka <strong>Laporan &#8594; Laporan Distribusi</strong></li>
+    <li>Filter: bulan ini</li>
+    <li>Download PDF untuk arsip</li>
+  </ol>
+
+  <h4>6. Cek Semua PO yang Belum Selesai</h4>
+  <ol class="steps">
+    <li>Buka <strong>Pembelian &#8594; Purchase Order</strong></li>
+    <li>Filter status: Open atau Partial</li>
+    <li>Follow up ke vendor untuk PO yang sudah lama</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<div class="content page-break" id="sec6-3">
+  <h2>6. Prosedur Bulanan per Role <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>6.3 Finance &#8212; Prosedur Bulanan</h3>
+
+  <div class="procedure-time">&#128197; Awal Bulan (Tanggal 1&#8211;5)</div>
+
+  <h4>1. Buat Vendor Invoice Bulan Lalu</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Vendor Invoice</strong></li>
+    <li>Klik <strong>"+ Buat Invoice Vendor"</strong></li>
+    <li>Pilih vendor, periode: bulan lalu</li>
+    <li>Sistem menampilkan semua GRN yang belum ditagih</li>
+    <li>Buat invoice untuk setiap vendor, issue semua invoice</li>
+  </ol>
+
+  <h4>2. Rekap Tagihan Dapur Bulan Lalu</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Tagihan Dapur</strong></li>
+    <li>Filter: bulan lalu</li>
+    <li>Pastikan semua tagihan sudah <span class="badge badge-green">Paid</span> atau follow up yang belum</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Pertengahan Bulan (Tanggal 10&#8211;15)</div>
+
+  <h4>3. Bayar Vendor Invoice</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Vendor Invoice</strong></li>
+    <li>Filter status: <span class="badge badge-blue">Issued</span></li>
+    <li>Proses pembayaran sesuai jadwal, upload bukti bayar, tandai lunas</li>
+  </ol>
+
+  <h4>4. Catat Pengeluaran Operasional Bulanan</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Pengeluaran</strong></li>
+    <li>Catat pengeluaran rutin bulanan: gaji karyawan, tagihan utilitas, biaya maintenance</li>
+    <li>Upload bukti untuk setiap pengeluaran</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Akhir Bulan (Tanggal 25&#8211;31)</div>
+
+  <h4>5. Generate Laporan Keuangan Bulanan</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Laporan Keuangan</strong></li>
+    <li>Pilih periode: bulan ini</li>
+    <li>Generate <strong>Laporan Laba Rugi (P&amp;L)</strong></li>
+    <li>Generate <strong>Neraca (Balance Sheet)</strong></li>
+    <li>Download PDF untuk arsip dan presentasi ke Owner</li>
+  </ol>
+
+  <h4>6. Analisis Keuangan</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Analisis</strong></li>
+    <li>Review: Gross Margin per dapur, Tren revenue vs COGS, Efisiensi per dapur</li>
+    <li>Buat catatan untuk rekomendasi bulan depan</li>
+  </ol>
+
+  <h4>7. Rekap Arus Kas Bulanan</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Arus Kas</strong></li>
+    <li>Filter: bulan ini</li>
+    <li>Hitung total pemasukan dan pengeluaran, bandingkan dengan bulan sebelumnya</li>
+  </ol>
+
+  <h3 id="sec6-4">6.4 Owner &#8212; Prosedur Bulanan</h3>
+
+  <div class="procedure-time">&#128197; Awal Bulan (Tanggal 1&#8211;5)</div>
+
+  <h4>1. Review Laporan Keuangan Bulan Lalu</h4>
+  <ol class="steps">
+    <li>Buka <strong>Finance &#8594; Laporan Keuangan</strong></li>
+    <li>Review P&amp;L bulan lalu: apakah revenue sesuai target? Bagaimana gross margin? Apa pengeluaran terbesar?</li>
+    <li>Bandingkan dengan bulan sebelumnya</li>
+  </ol>
+
+  <h4>2. Review Executive Dashboard</h4>
+  <ol class="steps">
+    <li>Buka <strong>Executive Dashboard</strong></li>
+    <li>Pilih periode: bulan lalu</li>
+    <li>Review performa per dapur, identifikasi dapur yang perlu perhatian khusus</li>
+  </ol>
+
+  <div class="procedure-time">&#128197; Pertengahan Bulan (Tanggal 10&#8211;15)</div>
+
+  <h4>3. Review Laporan Operasional</h4>
+  <ol class="steps">
+    <li>Buka <strong>Laporan &#8594; Laporan Operasional</strong></li>
+    <li>Review semua laporan bulan berjalan</li>
+    <li>Identifikasi tren dan anomali</li>
+  </ol>
+
+  <h4>4. Approval Strategis</h4>
+  <ol class="steps">
+    <li>Buka <strong>Approval Center</strong></li>
+    <li>Review dan approve PO atau IR dengan nilai besar</li>
+    <li>Berikan arahan jika ada keputusan strategis yang diperlukan</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<!-- SECTION 7: FAQ & TROUBLESHOOTING -->
+<div class="content page-break" id="sec7">
+  <h2>7. FAQ &amp; Troubleshooting</h2>
+
+  <h3 id="sec7-1">7.1 Pertanyaan Umum</h3>
+
+  <h4>Q: Saya lupa password, bagaimana cara reset?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Hubungi Admin Pusat atau Super Admin. Mereka bisa reset password Anda melalui menu <strong>Pengaturan &#8594; Pengguna</strong>.
+  </div>
+
+  <h4>Q: Kenapa IR saya langsung ditolak saat submit?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Kemungkinan anggaran dapur Anda tidak mencukupi untuk total IR tersebut. Cek sisa anggaran di <strong>Finance &#8594; Anggaran Dapur</strong>. Jika anggaran memang tidak cukup, hubungi Admin Pusat untuk penambahan anggaran atau kurangi qty permintaan.
+  </div>
+
+  <h4>Q: Kenapa saya tidak bisa membuat KR untuk DO tertentu?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Ada beberapa kemungkinan: (1) DO belum berstatus In Transit atau Delivered &#8212; tunggu Admin mengirim DO; (2) KR sudah pernah dibuat untuk DO tersebut &#8212; satu DO hanya bisa punya satu KR; (3) Anda bukan kitchen admin dari dapur tujuan DO tersebut.
+  </div>
+
+  <h4>Q: Harga item di DO berbeda dari yang saya harapkan, kenapa?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Harga di DO menggunakan harga jual (sellPrice) dari price list yang berlaku pada tanggal DO dibuat. Jika harga berubah, pastikan Admin sudah mengupdate price list dengan effective date yang benar.
+  </div>
+
+  <h4>Q: Kenapa stok gudang tidak bertambah setelah GRN dibuat?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Stok gudang otomatis bertambah saat GRN disimpan. Jika tidak bertambah, coba refresh halaman. Jika masih tidak berubah, hubungi Super Admin untuk pengecekan.
+  </div>
+
+  <h4>Q: Saya tidak bisa melihat data dapur lain, apakah normal?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Ya, ini normal untuk role Kitchen Admin. Anda hanya bisa melihat data dapur yang ditugaskan ke akun Anda. Jika perlu akses ke dapur lain, hubungi Admin Pusat.
+  </div>
+
+  <h4>Q: Bagaimana cara mengubah harga item?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Jangan edit entry harga yang sudah ada. Tambahkan entry baru dengan harga baru dan <strong>effective date</strong> yang sesuai. Sistem akan otomatis menggunakan harga terbaru yang berlaku.
+  </div>
+
+  <h4>Q: Kenapa vendor invoice saya tidak bisa dibuat?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Pastikan: (1) Ada GRN dari vendor tersebut dalam periode yang dipilih; (2) GRN tersebut belum dimasukkan ke vendor invoice lain; (3) Anda memiliki akses Finance atau Admin.
+  </div>
+
+  <h4>Q: Bagaimana cara melihat riwayat harga suatu item?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Buka <strong>Master Data &#8594; Price List</strong>, cari item tersebut, lalu klik untuk melihat riwayat harga lengkap.
+  </div>
+
+  <h4>Q: Notifikasi saya tidak muncul, bagaimana?</h4>
+  <div class="info-box tip">
+    <strong>A:</strong> Coba: (1) Refresh halaman (F5); (2) Pastikan koneksi internet stabil; (3) Klik ikon lonceng di header untuk melihat semua notifikasi; (4) Jika masih tidak muncul, logout dan login kembali.
+  </div>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
+</div>
+
+<div class="content page-break" id="sec7-2">
+  <h2>7. FAQ &amp; Troubleshooting <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
+
+  <h3>7.2 Troubleshooting Umum</h3>
+
+  <h4>Masalah: Tidak bisa login</h4>
   <table>
-    <thead>
-      <tr><th>Dokumen</th><th>Diajukan Oleh</th><th>Di-approve Oleh</th></tr>
-    </thead>
+    <thead><tr><th>Penyebab</th><th>Solusi</th></tr></thead>
     <tbody>
-      <tr><td>Internal Request (IR)</td><td>Admin Dapur / Admin Pusat</td><td>Super Admin / Owner / Admin Pusat</td></tr>
-      <tr><td>Purchase Order (PO)</td><td>Admin Pusat</td><td>Super Admin / Owner</td></tr>
-      <tr><td>Pembayaran Vendor</td><td>Admin Pusat</td><td>Finance / Owner</td></tr>
-      <tr><td>Pembayaran Tagihan</td><td>Admin Dapur</td><td>Finance / Owner</td></tr>
+      <tr><td>Email/password salah</td><td>Coba lagi dengan hati-hati, perhatikan huruf besar/kecil</td></tr>
+      <tr><td>Akun dinonaktifkan</td><td>Hubungi Admin Pusat</td></tr>
+      <tr><td>Browser cache</td><td>Coba buka di tab incognito atau clear cache browser</td></tr>
+      <tr><td>Koneksi internet</td><td>Pastikan internet stabil</td></tr>
     </tbody>
   </table>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- SECTION 11: NOTIFIKASI & CHAT -->
-<div class="content page-break" id="sec11">
-  <h2>11. Notifikasi &amp; Chat</h2>
-
-  <h3>11.1 Notifikasi Web (Real-time)</h3>
-  <p>Sistem mengirim notifikasi real-time via WebSocket untuk setiap aktivitas penting.</p>
-
-  <ol class="steps">
-    <li>Klik ikon <strong>&#128276;</strong> di header atas</li>
-    <li>Badge merah menunjukkan jumlah notifikasi belum dibaca</li>
-    <li>Klik notifikasi untuk membuka halaman terkait</li>
-  </ol>
-
-  <h4>Notifikasi Otomatis Dikirim Untuk:</h4>
-  <ul>
-    <li>IR diajukan &#8594; notifikasi ke approver</li>
-    <li>IR di-approve &#8594; notifikasi ke peminta + DO dibuat</li>
-    <li>IR ditolak &#8594; notifikasi ke peminta</li>
-    <li>DO dikirim &#8594; notifikasi ke admin dapur</li>
-    <li>KR selesai &#8594; notifikasi ke admin gudang</li>
-    <li>PO diajukan &#8594; notifikasi ke approver</li>
-    <li>Pembayaran diajukan &#8594; notifikasi ke finance</li>
-  </ul>
-
-  <h3>11.2 Notifikasi WhatsApp <span class="badge badge-blue">BARU</span></h3>
-  <p>Kirim notifikasi pembayaran ke vendor via WhatsApp langsung dari halaman Pembayaran Vendor.</p>
-
-  <ul>
-    <li><strong>Per GRN:</strong> klik tombol WA hijau di baris GRN yang sudah lunas &#8594; pesan detail 1 PO</li>
-    <li><strong>Rekap Vendor:</strong> klik "Kirim Rekap" di header kartu vendor &#8594; pesan berisi semua PO lunas + outstanding</li>
-    <li>Nomor vendor diambil otomatis dari Master Data &#8594; Vendor</li>
-  </ul>
-
-  <h3>11.3 Chat Internal</h3>
-  <p>Fitur chat real-time antar pengguna sistem via WebSocket.</p>
-
-  <ol class="steps">
-    <li>Klik ikon <strong>&#128172;</strong> di header atas</li>
-    <li>Pilih kontak dari daftar pengguna</li>
-    <li>Ketik pesan dan tekan Enter atau klik kirim</li>
-    <li>Tanda centang: &#10003; terkirim, &#10003;&#10003; dibaca</li>
-    <li>Badge unread count muncul per kontak</li>
-  </ol>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- SECTION 12: TELEGRAM BOT -->
-<div class="content page-break" id="sec12">
-  <h2>12. Telegram Bot</h2>
-  <p>Sistem terintegrasi dengan Telegram Bot untuk notifikasi, upload IR, dan approve dokumen langsung dari Telegram.</p>
-
-  <div class="screenshot">
-    <div class="placeholder">&#128248; Screenshot: Percakapan Telegram Bot &#8212; /start, link email, upload Excel, approve</div>
-    <div class="caption">Gambar 12.1 &#8212; Contoh interaksi dengan Telegram Bot ERP MBG</div>
-  </div>
-
-  <h3>12.1 Menghubungkan Akun</h3>
-  <ol class="steps">
-    <li>Buka bot Telegram (link dari admin)</li>
-    <li>Ketik <strong>/start</strong></li>
-    <li>Bot meminta email &#8594; masukkan email yang terdaftar di sistem</li>
-    <li>Akun terhubung &#9989;</li>
-  </ol>
-
-  <h3>12.2 Upload IR via Telegram</h3>
-  <ol class="steps">
-    <li>Kirim file Excel (template SPPG) ke bot</li>
-    <li>Bot auto-detect: dapur, menu, item, qty</li>
-    <li>Item baru otomatis dibuat di master data</li>
-    <li>BOM otomatis dibuat jika menu belum ada</li>
-    <li>IR otomatis tersimpan di sistem</li>
-  </ol>
-
-  <h3>12.3 Notifikasi Otomatis via Telegram</h3>
-  <table>
-    <thead>
-      <tr><th>Event</th><th>Isi Notifikasi</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>&#9989; IR Disetujui</td><td>No. IR + No. DO yang dibuat</td></tr>
-      <tr><td>&#10060; IR Ditolak</td><td>No. IR + pesan penolakan</td></tr>
-      <tr><td>&#128666; DO Terkirim</td><td>No. DO + link surat jalan</td></tr>
-      <tr><td>&#128230; KR Selesai</td><td>No. IR, DO, KR + detail item diterima/ditolak + No. Invoice</td></tr>
-    </tbody>
-  </table>
-
+  <h4>Masalah: Halaman tidak bisa dibuka / error 403</h4>
   <div class="info-box warning">
-    &#9888;&#65039; <strong>Perhatian:</strong> Pastikan email yang di-link ke Telegram sama persis dengan email yang terdaftar di sistem ERP (termasuk huruf besar/kecil).
+    &#9888;&#65039; <strong>Penyebab:</strong> Anda tidak memiliki akses ke halaman tersebut sesuai role Anda.<br>
+    <strong>Solusi:</strong> Hubungi Admin Pusat untuk memastikan role Anda sudah benar.
   </div>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <h4>Masalah: Data tidak tersimpan / error saat simpan</h4>
+  <ol class="steps">
+    <li>Cek apakah semua field wajib sudah diisi (ditandai *)</li>
+    <li>Cek format data (angka, tanggal, dll)</li>
+    <li>Refresh halaman dan coba lagi</li>
+    <li>Jika masih error, screenshot pesan error dan laporkan ke Admin/Super Admin</li>
+  </ol>
+
+  <h4>Masalah: Laporan tidak bisa di-generate / download</h4>
+  <ol class="steps">
+    <li>Pastikan filter periode sudah diisi</li>
+    <li>Coba dengan periode yang lebih pendek</li>
+    <li>Pastikan browser mengizinkan download file</li>
+    <li>Coba browser lain</li>
+  </ol>
+
+  <h4>Masalah: Stok tidak sesuai antara sistem dan fisik</h4>
+  <ol class="steps">
+    <li>Lakukan <strong>Stock Opname</strong> untuk menyesuaikan stok</li>
+    <li>Catat alasan selisih</li>
+    <li>Laporkan ke Admin Pusat jika selisih signifikan</li>
+    <li>Admin Pusat bisa melihat riwayat pergerakan stok di <strong>Inventori &#8594; Stok Gudang &#8594; Riwayat</strong></li>
+  </ol>
+
+  <h4>Masalah: Anggaran sudah habis tapi masih perlu beli bahan</h4>
+  <ol class="steps">
+    <li>Hubungi Admin Pusat atau Finance</li>
+    <li>Minta penambahan anggaran atau pembuatan anggaran tambahan</li>
+    <li>Admin/Finance bisa update budgetAmount di <strong>Finance &#8594; Anggaran Dapur</strong></li>
+    <li>Setelah anggaran ditambah, buat IR kembali</li>
+  </ol>
+
+  <h4>Masalah: DO sudah dikirim tapi Kitchen Admin belum konfirmasi</h4>
+  <ol class="steps">
+    <li>Hubungi kitchen admin secara langsung</li>
+    <li>Pastikan barang sudah sampai</li>
+    <li>Minta kitchen admin segera buat KR</li>
+    <li>Jika kitchen admin tidak bisa akses sistem, bantu dari Admin Pusat</li>
+  </ol>
+
+  <h4>Masalah: Vendor Invoice sudah dibuat tapi ada GRN yang terlewat</h4>
+  <ol class="steps">
+    <li>Jika vendor invoice masih <span class="badge badge-gray">Draft</span> &#8594; edit dan tambahkan GRN yang terlewat</li>
+    <li>Jika sudah <span class="badge badge-blue">Issued</span> &#8594; buat vendor invoice baru untuk GRN yang terlewat</li>
+    <li>Hubungi Super Admin jika perlu koreksi data</li>
+  </ol>
+
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
-<!-- SECTION 13: PENGATURAN -->
-<div class="content page-break" id="sec13">
-  <h2>13. Pengaturan</h2>
-  <p>Menu Pengaturan hanya tersedia untuk role Owner dan Super Admin (kecuali Profil Saya yang tersedia untuk semua role).</p>
+<div class="content page-break" id="sec7-3">
+  <h2>7. FAQ &amp; Troubleshooting <span style="font-size:12pt; color:#718096;">(lanjutan)</span></h2>
 
-  <h3>13.1 Admin Panel</h3>
-  <ul>
-    <li><strong>Overview:</strong> Statistik pengguna, transaksi, dan sistem</li>
-    <li><strong>Users:</strong> Kelola pengguna</li>
-    <li><strong>Settings:</strong> Pengaturan sistem global</li>
-    <li><strong>Audit:</strong> Log aktivitas</li>
-  </ul>
-
-  <h3>13.2 Kelola Pengguna</h3>
-  <ol class="steps">
-    <li>Buka <strong>Pengaturan &#8594; Pengguna &amp; Akses</strong></li>
-    <li><strong>Tambah User:</strong> Klik + &#8594; isi nama, email, password, role, dapur (jika Admin Dapur)</li>
-    <li><strong>Edit User:</strong> Klik Edit &#8594; ubah nama, email, role, dapur</li>
-    <li><strong>Reset Password:</strong> Klik Reset &#8594; masukkan password baru</li>
-  </ol>
-
-  <div class="info-box tip">
-    &#128161; <strong>Tip:</strong> Saat menambah user dengan role Admin Dapur, wajib memilih dapur yang akan dikelola.
-  </div>
-
-  <h3>13.3 Audit Log</h3>
-  <p>Audit Log mencatat seluruh aktivitas pengguna di sistem untuk keperluan tracking dan keamanan.</p>
-
-  <ol class="steps">
-    <li>Buka <strong>Pengaturan &#8594; Audit Log</strong></li>
-    <li>Lihat semua aktivitas: siapa, kapan, aksi apa, pada data apa</li>
-    <li>Filter per user, tanggal, dan tipe aksi</li>
-  </ol>
-
-  <h3>13.4 Profil Saya</h3>
-  <ol class="steps">
-    <li>Buka <strong>Pengaturan &#8594; Profil Saya</strong></li>
-    <li>Edit nama dan email</li>
-    <li>Ganti password (masukkan password lama dan password baru)</li>
-    <li>Klik <strong>Simpan</strong></li>
-  </ol>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- SECTION 14: ROLE & HAK AKSES -->
-<div class="content page-break" id="sec14">
-  <h2>14. Role &amp; Hak Akses</h2>
-  <p>Sistem ERP MBG memiliki 5 role utama dengan hak akses berbeda per modul.</p>
-
-  <h3>Matriks Hak Akses</h3>
+  <h3>7.3 Kontak Support</h3>
+  <p>Jika mengalami masalah yang tidak bisa diselesaikan sendiri:</p>
   <table>
-    <thead>
-      <tr>
-        <th>Modul</th>
-        <th>Owner</th>
-        <th>Super Admin</th>
-        <th>Admin Pusat</th>
-        <th>Admin Dapur</th>
-        <th>Finance</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Jenis Masalah</th><th>Hubungi</th></tr></thead>
     <tbody>
-      <tr>
-        <td><strong>Dashboard</strong></td>
-        <td>&#9989; Executive</td>
-        <td>&#9989; Semua</td>
-        <td>&#9989; Semua</td>
-        <td>&#9989; Dapur sendiri</td>
-        <td>&#9989; Keuangan</td>
-      </tr>
-      <tr>
-        <td><strong>Master Data</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#10060;</td>
-        <td>&#9989; Price List</td>
-      </tr>
-      <tr>
-        <td><strong>Purchase Order</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Buat &amp; Ajukan</td>
-        <td>&#10060;</td>
-        <td>&#128065;&#65039; View</td>
-      </tr>
-      <tr>
-        <td><strong>Goods Receipt</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#10060;</td>
-        <td>&#10060;</td>
-      </tr>
-      <tr>
-        <td><strong>Internal Request</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full + Approve</td>
-        <td>&#9989; Buat + Approve</td>
-        <td>&#9989; Buat (dapur sendiri)</td>
-        <td>&#10060;</td>
-      </tr>
-      <tr>
-        <td><strong>Delivery Order</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#128065;&#65039; View (dapur sendiri)</td>
-        <td>&#10060;</td>
-      </tr>
-      <tr>
-        <td><strong>Kitchen Receiving</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#128065;&#65039; View</td>
-        <td>&#9989; Terima (dapur sendiri)</td>
-        <td>&#10060;</td>
-      </tr>
-      <tr>
-        <td><strong>Inventori</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#128065;&#65039; View</td>
-        <td>&#10060;</td>
-      </tr>
-      <tr>
-        <td><strong>Tagihan Dapur</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Bayar (dapur sendiri)</td>
-        <td>&#9989; Approve</td>
-      </tr>
-      <tr>
-        <td><strong>Pembayaran Vendor</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#10060;</td>
-        <td>&#9989; Approve</td>
-      </tr>
-      <tr>
-        <td><strong>Anggaran &amp; Log</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#128065;&#65039; View (dapur sendiri)</td>
-        <td>&#9989; Full</td>
-      </tr>
-      <tr>
-        <td><strong>Pembukuan</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#10060;</td>
-        <td>&#9989; Full</td>
-      </tr>
-      <tr>
-        <td><strong>Laporan</strong></td>
-        <td>&#9989; Semua</td>
-        <td>&#9989; Semua</td>
-        <td>&#9989; Semua</td>
-        <td>&#9989; Dapur sendiri</td>
-        <td>&#9989; Keuangan</td>
-      </tr>
-      <tr>
-        <td><strong>Approval</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#9989; IR &amp; PO</td>
-        <td>&#10060;</td>
-        <td>&#9989; Keuangan</td>
-      </tr>
-      <tr>
-        <td><strong>Pengaturan</strong></td>
-        <td>&#9989; Full</td>
-        <td>&#9989; Full</td>
-        <td>&#10060;</td>
-        <td>&#10060;</td>
-        <td>&#10060;</td>
-      </tr>
-      <tr>
-        <td><strong>Telegram Bot</strong></td>
-        <td>&#9989;</td>
-        <td>&#9989;</td>
-        <td>&#9989;</td>
-        <td>&#9989;</td>
-        <td>&#9989;</td>
-      </tr>
+      <tr><td>Masalah Operasional</td><td>Admin Pusat</td></tr>
+      <tr><td>Masalah Teknis / Bug</td><td>Super Admin</td></tr>
+      <tr><td>Masalah Akses / Role</td><td>Admin Pusat atau Super Admin</td></tr>
+      <tr><td>Masalah Keuangan</td><td>Finance</td></tr>
     </tbody>
   </table>
 
-  <h3>Keterangan Simbol</h3>
+  <h3 id="sec7-4">7.4 Tips &amp; Best Practices</h3>
+
+  <h4>Untuk Kitchen Admin:</h4>
   <ul>
-    <li>&#9989; &#8212; Akses penuh atau sesuai keterangan</li>
-    <li>&#128065;&#65039; &#8212; Hanya bisa melihat (view only)</li>
-    <li>&#10060; &#8212; Tidak memiliki akses</li>
+    <li>&#9989; Buat IR minimal 2 hari sebelum kebutuhan</li>
+    <li>&#9989; Selalu cek sisa anggaran sebelum buat IR</li>
+    <li>&#9989; Lakukan KR segera setelah barang tiba</li>
+    <li>&#9989; Catat alasan jika ada selisih di KR</li>
+    <li>&#9989; Upload bukti bayar tagihan tepat waktu</li>
+    <li>&#10060; Jangan buat IR melebihi anggaran tanpa koordinasi</li>
   </ul>
 
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
+  <h4>Untuk Admin Pusat:</h4>
+  <ul>
+    <li>&#9989; Approve IR dalam 1 hari kerja</li>
+    <li>&#9989; Kirim DO segera setelah approve IR</li>
+    <li>&#9989; Update price list setiap ada perubahan harga vendor</li>
+    <li>&#9989; Lakukan stock opname minimal 1x per bulan</li>
+    <li>&#9989; Buat PO sebelum stok habis (pantau stok minimum)</li>
+    <li>&#10060; Jangan approve IR jika stok gudang tidak mencukupi</li>
+  </ul>
 
-<!-- SECTION 15: FLOW DIAGRAM -->
-<div class="content page-break" id="sec15">
-  <h2>15. Flow Diagram</h2>
-  <p>Berikut adalah diagram alur proses utama dalam sistem ERP MBG.</p>
+  <h4>Untuk Finance:</h4>
+  <ul>
+    <li>&#9989; Approve tagihan dapur dalam 2 hari kerja setelah bukti diupload</li>
+    <li>&#9989; Bayar vendor sesuai jadwal untuk menjaga hubungan baik</li>
+    <li>&#9989; Buat vendor invoice di awal bulan untuk bulan sebelumnya</li>
+    <li>&#9989; Generate laporan keuangan setiap akhir bulan</li>
+    <li>&#9989; Catat semua pengeluaran operasional dengan bukti</li>
+    <li>&#10060; Jangan approve pembayaran tanpa bukti yang valid</li>
+  </ul>
 
-  <h3>15.1 Flow Pembelian</h3>
-  <div class="flow">
-    <div class="flow-step">Buat PO (auto-fill harga)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Approve PO</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Goods Receipt</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Stok Gudang +</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Tagihan Vendor</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Upload Bukti</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step" style="background:#22543d;">Lunas &#10003;</div>
-  </div>
+  <h4>Untuk Owner:</h4>
+  <ul>
+    <li>&#9989; Review executive dashboard minimal 1x per minggu</li>
+    <li>&#9989; Perhatikan tren gross margin &#8212; jika turun, investigasi penyebabnya</li>
+    <li>&#9989; Bandingkan performa antar dapur secara berkala</li>
+    <li>&#9989; Review laporan keuangan bulanan sebelum tanggal 10 bulan berikutnya</li>
+  </ul>
 
-  <h3>15.2 Flow Direct Delivery PO</h3>
-  <div class="flow">
-    <div class="flow-step">Buat PO (centang Direct)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Approve PO</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Receive Direct</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step" style="background:#2d3748;">Stok Gudang TIDAK berubah</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Budget Dapur Dipotong</div>
-  </div>
-
-  <h3>15.3 Flow Distribusi (IR &#8594; DO &#8594; KR &#8594; Invoice)</h3>
-  <div class="flow">
-    <div class="flow-step">Buat IR (cek budget)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Approve IR</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">DO Dibuat (Auto)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Input Harga DO</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Kirim DO</div>
-  </div>
-  <div class="flow" style="margin-top:4px;">
-    <div class="flow-step" style="background:#2d3748;">Stok Gudang &#8722;</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Kitchen Receiving</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step" style="background:#2d3748;">Stok Dapur +</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Invoice Terbit (Auto)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step" style="background:#22543d;">Bayar &#10003;</div>
-  </div>
-
-  <h3>15.4 Flow Budget Control</h3>
-  <div class="flow">
-    <div class="flow-step">Finance Set Budget</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Buat IR (estimasi real-time)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Jika melebihi: IR Diblokir</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Saran Alternatif Item</div>
-  </div>
-  <div class="flow" style="margin-top:4px;">
-    <div class="flow-step">IR Disetujui</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Budget Log: ir_reserved</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">IR Dibatalkan &#8594; Reverse</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Log Anggaran Tercatat</div>
-  </div>
-
-  <h3>15.5 Flow Price List</h3>
-  <div class="flow">
-    <div class="flow-step">Input Harga (effectiveDate)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">Harga Aktif = terbesar &#8804; tanggal</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">PO: auto-fill + deviasi</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">BOM: HPP &amp; Harga Jual</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step">IR: estimasi anggaran</div>
-  </div>
-
-  <h3>15.6 Status Anggaran</h3>
-  <div class="flow">
-    <div class="flow-step" style="background:#38a169;">Aman (&lt;80%)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step" style="background:#d69e2e;">Hampir Habis (80-99%)</div>
-    <div class="flow-arrow">&#8594;</div>
-    <div class="flow-step" style="background:#e53e3e;">OVER BUDGET (&#8805;100%)</div>
-  </div>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
-</div>
-
-<!-- SECTION 16: FAQ & TROUBLESHOOTING -->
-<div class="content page-break" id="sec16">
-  <h2>16. FAQ &amp; Troubleshooting</h2>
-  <p>Pertanyaan yang sering diajukan dan solusi untuk masalah umum.</p>
-
-  <h3>Login &amp; Akses</h3>
-
-  <h4>Q: Tidak bisa login?</h4>
   <div class="info-box tip">
-    <strong>A:</strong> Pastikan email dan password benar. Perhatikan huruf besar/kecil pada password. Jika lupa password, minta Super Admin untuk reset melalui menu Pengaturan &#8594; Pengguna.
+    &#128161; Manual ini dibuat untuk membantu pengguna sistem ERP MBG. Untuk pertanyaan lebih lanjut, hubungi tim support.
   </div>
 
-  <h4>Q: Menu tertentu tidak muncul di sidebar?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Menu yang tampil disesuaikan dengan role Anda. Admin Dapur hanya melihat menu yang relevan dengan operasional dapur. Hubungi Super Admin jika merasa ada menu yang seharusnya tersedia.
-  </div>
-
-  <h3>Pembelian &amp; Harga</h3>
-
-  <h4>Q: Harga tidak auto-fill di PO?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Pastikan sudah ada Price List entry untuk item tersebut dengan effectiveDate &#8804; tanggal order. Buka <strong>Master Data &#8594; Price List</strong> untuk cek dan tambahkan harga.
-  </div>
-
-  <h4>Q: Muncul badge deviasi merah di PO?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Harga yang diinput berbeda &gt;10% dari Price List. Dialog konfirmasi akan muncul sebelum simpan. Pastikan harga sudah benar atau update Price List jika harga vendor berubah.
-  </div>
-
-  <h3>Budget &amp; Anggaran</h3>
-
-  <h4>Q: IR diblokir karena budget?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Estimasi nilai IR melebihi sisa anggaran dapur. Kurangi qty, gunakan alternatif item yang lebih murah (klik "Gunakan Alternatif"), atau minta Finance tambah anggaran di Arus Kas &#8594; Anggaran Dapur.
-  </div>
-
-  <h4>Q: Log Anggaran kosong?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Log dibuat otomatis saat ada transaksi IR, PO Direct Delivery, atau pembatalan IR yang mempengaruhi anggaran. Pastikan ada anggaran aktif untuk dapur tersebut.
-  </div>
-
-  <h3>Inventori &amp; Stok</h3>
-
-  <h4>Q: Stok dapur tidak muncul di halaman Stok?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Halaman Stok Gudang hanya menampilkan stok gudang utama. Stok dapur tidak dimonitor di halaman ini.
-  </div>
-
-  <h3>Keuangan</h3>
-
-  <h4>Q: Tombol WA tidak buka ke kontak vendor?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Nomor telepon vendor belum diisi. Buka <strong>Master Data &#8594; Vendor &#8594; Edit</strong> &#8594; isi nomor telepon dengan format internasional (08xxx atau +628xxx).
-  </div>
-
-  <h4>Q: IR yang ditolak masih muncul sebagai "Menunggu"?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Refresh halaman (F5). Status akan update ke "Ditolak".
-  </div>
-
-  <h3>Upload &amp; File</h3>
-
-  <h4>Q: Upload Excel gagal?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Pastikan format file <strong>.xlsx</strong> (bukan .xls). Gunakan template yang sesuai. Jangan mengubah struktur header template.
-  </div>
-
-  <h4>Q: Bagaimana cara cetak/save PDF?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Klik tombol <strong>PDF</strong> atau <strong>Cetak</strong> pada halaman terkait. Browser akan membuka dialog print. Pilih <strong>"Save as PDF"</strong> sebagai printer.
-  </div>
-
-  <h3>Telegram Bot</h3>
-
-  <h4>Q: Telegram bot tidak merespons?</h4>
-  <div class="info-box tip">
-    <strong>A:</strong> Pastikan sudah mengetik /start dan menghubungkan email. Cek apakah email yang dimasukkan sama persis dengan yang terdaftar di sistem (termasuk huruf besar/kecil).
-  </div>
-
-  <div class="page-footer">Manual Book ERP MBG v1.2.0 &#8212; PT. Manggala Utama Indonesia</div>
+  <div class="page-footer">Manual Book ERP MBG v1.1.0 &#8212; PT. Manggala Utama Indonesia</div>
 </div>
 
 <!-- BACK COVER -->
 <div class="cover page-break" style="min-height: 100vh;">
   <img src="/logo.png" alt="Logo" onerror="this.style.display='none'" style="width: 80px; margin-bottom: 20px;">
   <h1 style="font-size: 20pt;">MANUAL BOOK</h1>
-  <div class="subtitle" style="font-size: 12pt;">Sistem ERP MBG (Reneo MBG)</div>
+  <div class="subtitle" style="font-size: 12pt;">Sistem ERP MBG</div>
   <div style="margin-top: 40px; font-size: 10pt; color: #718096; line-height: 2;">
     <strong>PT. Manggala Utama Indonesia</strong><br>
-    Email: support@manggalautama.web.id<br>
     Web: https://rmb.manggalautama.web.id<br><br>
-    Versi 1.2.0 &#8212; Mei 2026<br>
+    Versi 1.1.0<br>
     <span style="font-size: 9pt; color: #4a5568;">Dokumen ini bersifat rahasia dan hanya untuk penggunaan internal.</span>
   </div>
 </div>
