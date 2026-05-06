@@ -12,7 +12,7 @@ import { fmtDate, fmtDateOnly, fmtRp } from '../../lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type MainTab = 'vendor_summary' | 'vendor_payment' | 'income'
+type MainTab = 'vendor_summary' | 'vendor_payment'
 
 interface GrnItem {
   itemName: string
@@ -628,7 +628,6 @@ function TransactionTab({ type, onUpload, onApprove, onView }: TransactionTabPro
 const TAB_LABELS: Record<MainTab, string> = {
   vendor_summary: 'Summary per Vendor',
   vendor_payment: 'Per Transaksi',
-  income: 'Pendapatan Dapur',
 }
 
 export default function ArusKasPage() {
@@ -736,14 +735,6 @@ export default function ArusKasPage() {
       {tab === 'vendor_payment' && (
         <TransactionTab
           type="vendor_payment"
-          onUpload={setUploadItem}
-          onApprove={(id) => approveMut.mutate(id)}
-          onView={setViewItem}
-        />
-      )}
-      {tab === 'income' && (
-        <TransactionTab
-          type="income"
           onUpload={setUploadItem}
           onApprove={(id) => approveMut.mutate(id)}
           onView={setViewItem}
