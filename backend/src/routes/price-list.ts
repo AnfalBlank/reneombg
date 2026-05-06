@@ -18,7 +18,7 @@
 
 import { Hono } from 'hono'
 import { db } from '../db/index'
-import { priceListEntries, items, inventoryStock } from '../db/schema/index'
+import { priceListEntries, items, inventoryStock, grItems } from '../db/schema/index'
 import { eq, and, lte, gte, like, or, asc, desc } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { requireAuth, requireRole } from '../middleware/auth'
@@ -131,15 +131,31 @@ app.get('/template', requireAuth, requireRole('super_admin', 'admin', 'finance')
         orderBy: (i, { asc }) => [asc(i.category), asc(i.name)],
     })
 
-    // Fetch gudang stocks to auto-fill avg cost — Requirement 3.1, 3.2
+    // Calculate avg purchase price from gr_items (actual purchase history)
+    const allGrItems = await db.query.grItems.findMany({
+        with: { grn: true },
+    })
+    // Build map: itemId → avg unit price from all GRN receipts
+    const purchasePriceMap = new Map<string, number>()
+    const itemPriceAccum = new Map<string, { total: number; count: number }>()
+    for (const gi of allGrItems) {
+        if (!gi.unitPrice || gi.unitPrice <= 0) continue
+        const acc = itemPriceAccum.get(gi.itemId) || { total: 0, count: 0 }
+        acc.total += gi.unitPrice
+        acc.count += 1
+        itemPriceAccum.set(gi.itemId, acc)
+    }
+    for (const [itemId, acc] of itemPriceAccum) {
+        purchasePriceMap.set(itemId, Math.round(acc.total / acc.count))
+    }
+
+    // Fallback: also check inventory_stock avgCost for items with no GRN history
     const gudangStocks = await db.query.inventoryStock.findMany({
         where: eq(inventoryStock.locationType, 'gudang'),
     })
-    // Build map: itemId → avgCost (first gudang with avgCost > 0)
-    const avgCostMap = new Map<string, number>()
     for (const s of gudangStocks) {
-        if (s.avgCost > 0 && !avgCostMap.has(s.itemId)) {
-            avgCostMap.set(s.itemId, s.avgCost)
+        if (s.avgCost > 0 && !purchasePriceMap.has(s.itemId)) {
+            purchasePriceMap.set(s.itemId, s.avgCost)
         }
     }
 
@@ -169,7 +185,7 @@ app.get('/template', requireAuth, requireRole('super_admin', 'admin', 'finance')
         item.sku,
         item.name,
         item.category,
-        avgCostMap.get(item.id) || 0,  // Harga Beli (Avg) — auto-filled from avg cost
+        purchasePriceMap.get(item.id) || 0,  // Harga Beli (Avg) — from actual purchase history
         '',  // Harga Jual — wajib diisi
         todayStr,  // Tanggal Berlaku — default hari ini, bisa diubah
     ])
