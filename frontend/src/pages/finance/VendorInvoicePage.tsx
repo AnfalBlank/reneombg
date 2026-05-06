@@ -122,7 +122,7 @@ function DetailModal({ invoice, onClose }: { invoice: VendorInvoiceDetail | null
         <Modal isOpen={!!invoice} onClose={onClose} title={`Detail Invoice: ${invoice.invoiceNumber}`} wide>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* Summary */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
                     <div style={{ background: 'var(--color-surface-2)', borderRadius: 8, padding: '12px 14px' }}>
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Invoice</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-primary)', marginTop: 4 }}>{fmtRp(invoice.totalAmount)}</div>

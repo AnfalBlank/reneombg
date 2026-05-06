@@ -84,7 +84,7 @@ export default function PeriodClosingPage() {
                         </div>
                         <Badge label="Open" color="blue" />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, marginBottom: 20 }}>
                         <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: 14 }}>
                             <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tahun</div>
                             <div style={{ fontSize: 20, fontWeight: 700, marginTop: 6 }}>{currentPeriod.year}</div>
