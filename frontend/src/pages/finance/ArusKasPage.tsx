@@ -321,7 +321,7 @@ function VendorSummaryTab({ onUpload, onApprove, onView }: VendorSummaryTabProps
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Summary bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {[
           { label: 'Total Hutang', value: fmtRp(totalHutang), color: '#ef4444' },
           { label: 'Total Vendor', value: String(vendors.length), color: 'var(--color-text)' },
@@ -384,8 +384,8 @@ function VendorSummaryTab({ onUpload, onApprove, onView }: VendorSummaryTabProps
               </div>
 
               {/* Stats + WA button */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-                <div style={{ display: 'flex', gap: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#ef4444', fontWeight: 600 }}>Belum Bayar</div>
                     <div style={{ fontSize: 14, fontWeight: 800, color: '#ef4444' }}>{fmtRp(vendor.totalUnpaid)}</div>
@@ -540,7 +540,7 @@ function TransactionTab({ type, onUpload, onApprove, onView }: TransactionTabPro
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {[
           { label: type === 'vendor_payment' ? 'Belum Bayar' : 'Belum Terima', value: fmtRp(totalUnpaid), color: '#ef4444' },
           { label: 'Pending', value: fmtRp(totalPending), color: '#f59e0b' },

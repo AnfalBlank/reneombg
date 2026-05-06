@@ -98,7 +98,7 @@ export default function ApprovalPage() {
             </div>
 
             {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
                 {[
                     { label: 'Total', value: summary.total, color: '#4f7cff', icon: Filter },
                     { label: 'Menunggu', value: summary.pending, color: '#f59e0b', icon: Clock },

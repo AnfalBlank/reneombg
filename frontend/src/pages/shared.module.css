@@ -358,3 +358,14 @@
         min-width: 100%;
     }
 }
+
+/* ── Tablet Responsive ─────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .summaryBar {
+        gap: 12px;
+    }
+
+    .summaryItem {
+        min-width: calc(33% - 8px);
+    }
+}

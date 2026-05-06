@@ -77,7 +77,7 @@ export default function ReportsPage() {
             {tab === 'pnl' && !isLoading && (
                 <>
                     {/* Summary Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
                         {[
                             { label: 'Pendapatan (Invoice Dapur)', value: fmt(pnl.revenue), color: '#22c55e', sub: `${pnl.revenueBreakdown?.invoiceCount || 0} invoice` },
                             { label: 'COGS (Invoice Vendor)', value: fmt(pnl.cogs), color: '#ef4444', sub: `${pnl.cogsBreakdown?.vendorInvoiceCount || 0} invoice vendor` },
@@ -93,7 +93,7 @@ export default function ReportsPage() {
                         ))}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
                         {/* Breakdown Pendapatan */}
                         <Card title="📥 Pendapatan — Invoice Dapur">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -254,7 +254,7 @@ export default function ReportsPage() {
             {tab === 'balance-sheet' && !isLoading && (
                 <>
                     {/* Summary */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
                         <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 18 }}>
                             <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Total Aset</div>
                             <div style={{ fontSize: 22, fontWeight: 800, color: '#4f7cff', marginTop: 6 }}>{fmt(bs.totalAssets)}</div>
@@ -284,7 +284,7 @@ export default function ReportsPage() {
                         </div>
                     )}
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
                         {/* ASET */}
                         <Card title="📦 Aset" noPadding>
                             <div className={styles.tableWrapper}>

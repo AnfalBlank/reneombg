@@ -55,7 +55,7 @@
 /* Stats */
 .statsGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 16px;
 }
 
@@ -126,7 +126,7 @@
 /* Charts */
 .chartsRow {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr minmax(0, 360px);
     gap: 16px;
 }
 
@@ -188,10 +188,6 @@
 }
 
 @media (max-width: 1200px) {
-    .statsGrid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
     .chartsRow {
         grid-template-columns: 1fr;
     }
@@ -213,15 +209,16 @@
 
     .statsGrid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 10px;
     }
 
     .statCard {
-        padding: 14px 16px;
+        padding: 12px 14px;
+        gap: 12px;
     }
 
     .statValue {
-        font-size: 16px;
+        font-size: 17px;
     }
 
     .chartsRow {
@@ -242,12 +239,22 @@
 
 @media (max-width: 480px) {
     .statsGrid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 
     .statCard {
-        flex-direction: row;
-        align-items: center;
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .statIcon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .statValue {
+        font-size: 15px;
     }
 
     .table th,

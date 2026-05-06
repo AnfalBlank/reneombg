@@ -200,7 +200,7 @@ export default function ExecutiveDashboard() {
             </div>
 
             {/* ── Operational Summary ─────────────────────────────────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
                 {operationalCards.map((card, i) => (
                     <div
                         key={i}

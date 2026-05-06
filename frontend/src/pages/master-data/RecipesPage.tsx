@@ -170,7 +170,7 @@ function BOMPriceSummary({ ingredients, multiplier }: BOMPriceSummaryProps) {
                         <Badge label="Beberapa bahan belum ada harga" color="yellow" />
                     )}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                     <div style={{ background: 'var(--color-surface)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--color-border)' }}>
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             Total HPP (Porsi Dasar)

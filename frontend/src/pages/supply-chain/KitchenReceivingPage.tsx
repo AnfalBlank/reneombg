@@ -168,8 +168,8 @@ export default function KitchenReceivingPage() {
                         </div>
 
                         {/* Items Table */}
-                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflowX: 'auto' }}>
+                            <table style={{ width: '100%', minWidth: 460, borderCollapse: 'collapse', fontSize: 13 }}>
                                 <thead>
                                     <tr style={{ background: 'var(--color-surface-2)' }}>
                                         <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Item</th>
@@ -239,7 +239,7 @@ export default function KitchenReceivingPage() {
                         </div>
 
                         {/* Summary */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
                             <div style={{ background: 'var(--color-surface-2)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                                 <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>Total Dikirim</div>
                                 <div style={{ fontSize: 18, fontWeight: 700 }}>{receiveItems.reduce((a, i) => a + i.qtyExpected, 0)}</div>
@@ -272,7 +272,7 @@ export default function KitchenReceivingPage() {
                 {viewKR && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         {/* Header Info */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
                             <div style={{ background: 'var(--color-surface-2)', borderRadius: 8, padding: 12 }}>
                                 <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>Dapur</div>
                                 <div style={{ fontWeight: 600 }}>{viewKR.dapur?.name || '-'}</div>
@@ -292,8 +292,8 @@ export default function KitchenReceivingPage() {
                         </div>
 
                         {/* Items Table */}
-                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflowX: 'auto' }}>
+                            <table style={{ width: '100%', minWidth: 460, borderCollapse: 'collapse', fontSize: 13 }}>
                                 <thead>
                                     <tr style={{ background: 'var(--color-surface-2)' }}>
                                         <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Item</th>

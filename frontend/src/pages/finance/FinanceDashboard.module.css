@@ -70,7 +70,7 @@
 /* KPI Grid */
 .kpiGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 16px;
 }
 
@@ -200,7 +200,7 @@
 /* Charts */
 .chartsRow {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr minmax(0, 360px);
     gap: 16px;
 }
 
@@ -395,10 +395,30 @@
     .cashFlowItem {
         width: 100%;
     }
+
+    .chartsRow {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
 }
 
 @media (max-width: 480px) {
     .kpiGrid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .kpiCard {
+        padding: 12px;
+    }
+
+    .kpiValue {
+        font-size: 15px;
+    }
+
+    .table th,
+    .table td {
+        padding: 8px 10px;
+        font-size: 11px;
     }
 }

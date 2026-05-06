@@ -345,7 +345,7 @@ export default function PurchaseOrderPage() {
             {/* Create / Edit PO Modal */}
             <Modal isOpen={showCreate} onClose={() => { setShowCreate(false); setShowDeviationConfirm(false) }} title={editPO ? `Edit PO: ${editPO.poNumber}` : 'Buat Purchase Order Baru'} wide>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                         <div>
                             <label style={labelStyle}>Vendor *</label>
                             <select style={inputStyle} value={form.vendorId} onChange={e => setForm({ ...form, vendorId: e.target.value })}>
@@ -387,7 +387,7 @@ export default function PurchaseOrderPage() {
                             const hasHighDeviation = deviation !== null && deviation > 10
                             return (
                                 <div key={idx} style={{ marginBottom: 10 }}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 2fr) minmax(80px, 1fr) minmax(80px, 1fr) auto', gap: 8 }}>
                                         <select style={inputStyle} value={item.itemId} onChange={e => handleItemSelect(idx, e.target.value)}>
                                             <option value="">-- Pilih Item --</option>
                                             {items.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}
@@ -487,7 +487,7 @@ export default function PurchaseOrderPage() {
             <Modal isOpen={!!viewPO} onClose={() => setViewPO(null)} title={`Detail PO: ${viewPO?.poNumber}`} wide>
                 {viewPO && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, fontSize: 13 }}>
                             <div><span style={{ color: 'var(--color-text-muted)' }}>Vendor:</span> <strong>{viewPO.vendor?.name}</strong></div>
                             <div><span style={{ color: 'var(--color-text-muted)' }}>Status:</span> <Badge label={statusMap[viewPO.status]?.label || viewPO.status} color={statusMap[viewPO.status]?.color || 'gray'} /></div>
                             <div><span style={{ color: 'var(--color-text-muted)' }}>Dibuat:</span> {fmtDate(viewPO.createdAt)}</div>
@@ -557,7 +557,7 @@ export default function PurchaseOrderPage() {
                                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📦 Penerimaan Aktual (Partial Receive)</div>
                                 <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8 }}>Sesuaikan qty aktual yang diterima dari vendor. Tidak harus semua item diterima sekaligus.</div>
                                 {(viewPO.items || []).filter((i: any) => i.qtyReceived < i.qtyOrdered).map((i: any) => (
-                                    <div key={i.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                                    <div key={i.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 2fr) minmax(80px, 1fr) minmax(80px, 1fr)', gap: 8, marginBottom: 6, alignItems: 'center' }}>
                                         <span style={{ fontSize: 12 }}>{i.item?.name} <span style={{ color: 'var(--color-text-dim)' }}>(sisa: {i.qtyOrdered - i.qtyReceived})</span></span>
                                         <input id={`recv-${i.id}`} style={inputStyle} type="number" min={0} max={i.qtyOrdered - i.qtyReceived} defaultValue={i.qtyOrdered - i.qtyReceived} placeholder="Qty aktual" />
                                         <span style={{ fontSize: 11, color: 'var(--color-text-dim)' }}>@ {fmtRp(i.unitPrice)}</span>

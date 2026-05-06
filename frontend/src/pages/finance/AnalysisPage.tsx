@@ -73,7 +73,7 @@ export default function AnalysisPage() {
                     )}
 
                     {/* Financial Ratios */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
                         {[
                             { label: 'Gross Margin', value: pct(ratios.grossMargin), color: '#4f7cff', desc: 'Laba Kotor / Revenue' },
                             { label: 'Net Margin', value: pct(ratios.netMargin), color: '#22c55e', desc: 'Laba Bersih / Revenue' },
@@ -89,7 +89,7 @@ export default function AnalysisPage() {
                     </div>
 
                     {/* Charts Row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 16 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 360px)', gap: 16 }}>
                         {/* Margin Trend */}
                         <Card title="Tren Margin" subtitle="Gross & Net Margin per periode">
                             <ResponsiveContainer width="100%" height={260}>

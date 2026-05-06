@@ -541,7 +541,7 @@ export default function InternalRequestPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', fontSize: 13 }}>
                             <p style={{ fontWeight: 600, marginBottom: 8, color: '#ef4444' }}>IR tidak dapat dibuat karena estimasi nilai melebihi sisa anggaran dapur.</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
                                 <div style={{ textAlign: 'center', padding: '10px 8px', background: 'var(--color-surface)', borderRadius: 8 }}>
                                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>Sisa Anggaran</div>
                                     <div style={{ fontWeight: 700, color: '#22c55e', fontSize: 15 }}>{fmtRp(budgetExceededError.remaining)}</div>

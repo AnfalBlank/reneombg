@@ -181,7 +181,7 @@ export default function BudgetPage() {
             </div>
 
             {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '16px 20px' }}>
                     <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Total Anggaran</div>
                     <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-primary)', marginTop: 4 }}>{fmtRp(totalBudget)}</div>
@@ -332,7 +332,7 @@ export default function BudgetPage() {
                 {detail && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         {/* Summary */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
                             <div style={{ background: 'var(--color-surface-2)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                                 <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>Anggaran</div>
                                 <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-primary)' }}>{fmtRp(detail.budgetAmount)}</div>

@@ -261,7 +261,7 @@ export default function AdminPanelPage() {
                         ))}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
                         {/* User per Role */}
                         <Card title="Distribusi Role">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -483,7 +483,7 @@ export default function AdminPanelPage() {
 
                     {/* Branding */}
                     <Card title="🏢 Branding & Identitas">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
                             <div>
                                 <label style={lbl}>Nama Sistem</label>
                                 <input
@@ -507,7 +507,7 @@ export default function AdminPanelPage() {
 
                     {/* Default Settings */}
                     <Card title="⚙️ Default Sistem">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
                             <div>
                                 <label style={lbl}>Timezone</label>
                                 <select
@@ -547,7 +547,7 @@ export default function AdminPanelPage() {
 
                     {/* Feature Toggles */}
                     <Card title="🔧 Feature Toggle" subtitle="Aktifkan atau nonaktifkan modul sistem">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
                             {[
                                 { key: 'module_finance', label: 'Modul Finance', desc: 'Laporan keuangan, arus kas, anggaran' },
                                 { key: 'module_supply_chain', label: 'Modul Supply Chain', desc: 'IR, DO, Kitchen Receiving' },
@@ -578,7 +578,7 @@ export default function AdminPanelPage() {
 
                     {/* Notification Settings */}
                     <Card title="🔔 Notifikasi & Integrasi">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
                             <div>
                                 <label style={lbl}>Telegram Bot Token</label>
                                 <input

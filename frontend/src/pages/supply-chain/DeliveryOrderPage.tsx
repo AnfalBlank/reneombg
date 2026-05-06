@@ -256,7 +256,7 @@ export default function DeliveryOrderPage() {
                             </div>
                             {doItems.map((item, idx) => (
                                 <div key={idx} style={{ marginBottom: 8 }}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 2fr) minmax(80px, 1fr) minmax(80px, 1fr) auto', gap: 8 }}>
                                         <select style={inputStyle} value={item.itemId} onChange={async e => {
                                             const newItemId = e.target.value
                                             setDoItems(p => p.map((it, i) => i === idx ? { ...it, itemId: newItemId, sellPrice: 0 } : it))

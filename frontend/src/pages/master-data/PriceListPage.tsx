@@ -129,7 +129,7 @@ function PriceHistoryRow({ itemId, itemName }: { itemId: string; itemName: strin
     return (
         <tr>
             <td colSpan={8} style={{ padding: 0, background: 'var(--color-surface-2)' }}>
-                <div style={{ padding: '12px 24px 16px' }}>
+                <div style={{ padding: '12px 16px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                         <History size={13} style={{ color: 'var(--color-primary)' }} />
                         <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -139,38 +139,38 @@ function PriceHistoryRow({ itemId, itemName }: { itemId: string; itemName: strin
                     {history.length === 0 ? (
                         <span style={{ fontSize: 12, color: 'var(--color-text-dim)' }}>Belum ada riwayat harga.</span>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Tanggal Berlaku</th>
-                                    <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Harga Beli (Avg)</th>
-                                    <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Harga Jual</th>
-                                    <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Catatan</th>
-                                    <th style={{ textAlign: 'left', padding: '6px 12px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)' }}>Dibuat</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {history.map((h, idx) => (
-                                    <tr key={h.id} style={{ background: idx === 0 ? 'rgba(79,124,255,0.05)' : 'transparent' }}>
-                                        <td style={{ padding: '6px 12px', color: 'var(--color-text)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                {fmtDateOnly(h.effectiveDate)}
-                                                {idx === 0 && !isUpcoming(h.effectiveDate) && (
-                                                    <Badge label="Aktif" color="green" />
-                                                )}
-                                                {isUpcoming(h.effectiveDate) && (
-                                                    <Badge label="Akan Berlaku" color="yellow" />
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '6px 12px', color: 'var(--color-text)' }}>{fmtRp(h.purchasePrice)}</td>
-                                        <td style={{ padding: '6px 12px', color: 'var(--color-text)' }}>{fmtRp(h.sellPrice)}</td>
-                                        <td style={{ padding: '6px 12px', color: 'var(--color-text-muted)' }}>{h.notes || '-'}</td>
-                                        <td style={{ padding: '6px 12px', color: 'var(--color-text-muted)' }}>{h.createdBy || '-'}</td>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                            <table style={{ width: '100%', minWidth: 480, borderCollapse: 'collapse', fontSize: 12 }}>
+                                <thead>
+                                    <tr>
+                                        {['Tanggal Berlaku', 'Harga Beli (Avg)', 'Harga Jual', 'Catatan', 'Dibuat'].map(h => (
+                                            <th key={h} style={{ textAlign: 'left', padding: '6px 10px', color: 'var(--color-text-muted)', fontWeight: 600, borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}>{h}</th>
+                                        ))}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {history.map((h, idx) => (
+                                        <tr key={h.id} style={{ background: idx === 0 ? 'rgba(79,124,255,0.05)' : 'transparent' }}>
+                                            <td style={{ padding: '6px 10px', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    {fmtDateOnly(h.effectiveDate)}
+                                                    {idx === 0 && !isUpcoming(h.effectiveDate) && (
+                                                        <Badge label="Aktif" color="green" />
+                                                    )}
+                                                    {isUpcoming(h.effectiveDate) && (
+                                                        <Badge label="Akan Berlaku" color="yellow" />
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '6px 10px', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{fmtRp(h.purchasePrice)}</td>
+                                            <td style={{ padding: '6px 10px', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{fmtRp(h.sellPrice)}</td>
+                                            <td style={{ padding: '6px 10px', color: 'var(--color-text-muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.notes || '-'}</td>
+                                            <td style={{ padding: '6px 10px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{h.createdBy || '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             </td>

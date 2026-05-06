@@ -328,3 +328,52 @@ a {
         font-size: 12.5px;
     }
 }
+
+/* ── Responsive Grid Utilities ─────────────────────────────── */
+.grid-auto-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+.grid-auto-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.grid-auto-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+
+/* Overflow-safe table wrapper */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Responsive 2-col form grid */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+@media (max-width: 600px) {
+    .form-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* Tablet breakpoint helpers */
+@media (max-width: 1024px) {
+    .hide-tablet { display: none !important; }
+}
+@media (max-width: 768px) {
+    .hide-mobile { display: none !important; }
+    .stack-mobile { flex-direction: column !important; }
+    .full-mobile { width: 100% !important; }
+}
+
+/* ── Auto-responsive form grids inside modals ──────────────── */
+/* Grid 2-kolom di dalam modal otomatis jadi 1 kolom di mobile */
+@media (max-width: 600px) {
+    /* Target semua grid 2-kolom di dalam modal content */
+    [class*="content"] > div > [style*="grid-template-columns: 1fr 1fr"],
+    [class*="content"] > form > div > [style*="grid-template-columns: 1fr 1fr"],
+    [class*="content"] [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Target grid 2-kolom di dalam page (bukan modal) */
+    [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Kecuali yang memang harus 2 kolom (summary stats kecil) */
+    [style*="grid-template-columns: repeat(auto-fit"] {
+        /* Biarkan auto-fit bekerja sendiri */
+    }
+}

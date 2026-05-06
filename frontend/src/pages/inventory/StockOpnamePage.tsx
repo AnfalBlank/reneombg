@@ -126,7 +126,7 @@ export default function StockOpnamePage() {
             {/* Create Opname Modal */}
             <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Buat Stock Opname Baru" wide>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
                         <div><label style={lbl}>Tipe Lokasi</label><select style={inp} value={locationType} onChange={e => { setLocationType(e.target.value as any); setLocationId(''); setOpnameItems([]) }}><option value="gudang">Gudang</option><option value="dapur">Dapur</option></select></div>
                         <div><label style={lbl}>Lokasi</label><select style={inp} value={locationId} onChange={e => setLocationId(e.target.value)}>
                             <option value="">-- Pilih --</option>

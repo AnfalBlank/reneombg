@@ -52,7 +52,7 @@ export default function ReturnItemsPage() {
             </div>
 
             {/* Summary */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
                 {[
                     { label: 'Total', value: items.length, color: '#4f7cff', filter: 'all' },
                     { label: 'Menunggu Approval', value: items.filter((i: any) => i.status === 'pending').length, color: '#f59e0b', filter: 'pending' },
