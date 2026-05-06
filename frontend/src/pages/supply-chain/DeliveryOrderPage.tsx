@@ -184,11 +184,6 @@ export default function DeliveryOrderPage() {
                     </div>
                 </div>
 
-                <div style={{ background: 'rgba(79,124,255,0.05)', border: '1px solid rgba(79,124,255,0.15)', borderRadius: 'var(--radius-md)', padding: '12px 16px', fontSize: 13, color: 'var(--color-primary)', display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Truck size={14} />
-                    <span>Setiap DO terkirim otomatis menghasilkan jurnal: <strong>Dr Inventory Dapur / Cr Inventory Gudang</strong></span>
-                </div>
-
                 <Card noPadding>
                     <div style={{ padding: '16px 16px 0' }}>
                         <div className={styles.toolbar}>

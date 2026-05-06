@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, ApiResponse, Item, Vendor, Dapur, Coa } from '../lib/api';
+import { api, ApiResponse, Item, Vendor, Dapur } from '../lib/api';
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 export function useDashboardSummary(startDate?: string, endDate?: string) {
@@ -118,19 +118,6 @@ export function useDeleteMaster(entity: string) {
 }
 
 // ─── Finance ──────────────────────────────────────────────────────────────────
-export function useCoa() {
-    return useQuery({
-        queryKey: ['master', 'coa'],
-        queryFn: () => api.get<ApiResponse<Coa[]>>('/master/coa'),
-    });
-}
-
-export function useJournalEntries(startDate?: string, endDate?: string) {
-    return useQuery({
-        queryKey: ['journals', startDate, endDate],
-        queryFn: () => api.get<ApiResponse<any[]>>(`/finance/journal?${new URLSearchParams({ startDate: startDate || '', endDate: endDate || '' })}`),
-    });
-}
 
 // ─── Purchase (Simplified) ──────────────────────────────────────────────────
 export function usePurchaseOrders() {
@@ -155,7 +142,6 @@ export function useReceivePurchaseOrder() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['purchase', 'orders'] });
             queryClient.invalidateQueries({ queryKey: ['items'] });
-            queryClient.invalidateQueries({ queryKey: ['journals'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
             queryClient.invalidateQueries({ queryKey: ['inventory', 'stock'] });
         },
@@ -269,7 +255,6 @@ export function useConfirmDeliveryOrder() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['supply-chain', 'delivery-orders'] });
             queryClient.invalidateQueries({ queryKey: ['inventory', 'stock'] });
-            queryClient.invalidateQueries({ queryKey: ['journals'] });
         },
     });
 }
@@ -279,14 +264,6 @@ export function usePeriods() {
     return useQuery({
         queryKey: ['finance', 'periods'],
         queryFn: () => api.get<ApiResponse<any[]>>('/finance/periods'),
-    });
-}
-
-export function useGeneralLedger(coaId: string, startDate?: string, endDate?: string) {
-    return useQuery({
-        queryKey: ['finance', 'gl', coaId, startDate, endDate],
-        queryFn: () => api.get<ApiResponse<any>>(`/finance/general-ledger?${new URLSearchParams({ coaId, startDate: startDate || '', endDate: endDate || '' })}`),
-        enabled: !!coaId,
     });
 }
 
@@ -301,6 +278,16 @@ export function useClosePeriod() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => api.post<ApiResponse<any>>(`/finance/periods/${id}/close`, {}),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['finance', 'periods'] });
+        },
+    });
+}
+
+export function useCreatePeriod() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: { year: number; month: number }) => api.post<ApiResponse<any>>('/finance/periods', data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance', 'periods'] });
         },
@@ -355,7 +342,6 @@ export function useCreateConsumption() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['supply-chain', 'consumption'] });
             queryClient.invalidateQueries({ queryKey: ['inventory', 'stock'] });
-            queryClient.invalidateQueries({ queryKey: ['journals'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
         },
     });

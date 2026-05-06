@@ -30,7 +30,7 @@ function getBottomTabs(role: string): NavTab[] {
     } else if (role === 'finance') {
         tabs.push({ label: 'Arus Kas', path: '/finance/cashflow', icon: Wallet, match: ['/finance'] })
         tabs.push({ label: 'Pembelian', path: '/purchase/po', icon: ClipboardList, match: ['/purchase'] })
-        tabs.push({ label: 'Pembukuan', path: '/accounting/journal', icon: Package, match: ['/accounting'] })
+        tabs.push({ label: 'Laporan', path: '/finance/reports', icon: Package, match: ['/finance/reports'] })
     } else {
         // owner, super_admin, admin
         tabs.push({ label: 'Supply', path: '/supply-chain/requests', icon: ClipboardList, match: ['/supply-chain'] })

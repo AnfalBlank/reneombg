@@ -98,7 +98,7 @@ export default function GoodsReceiptPage() {
 
             <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 'var(--radius-md)', padding: '12px 16px', fontSize: 13, color: 'var(--color-success)', display: 'flex', gap: 8, alignItems: 'center' }}>
                 <CheckCircle size={14} />
-                <span>Proses receive dilakukan di halaman <strong>Purchase Order</strong>. Setiap receiving otomatis menghasilkan jurnal.</span>
+                <span>Proses receive dilakukan di halaman <strong>Purchase Order</strong>. Stok gudang otomatis diperbarui setelah receiving.</span>
             </div>
 
             {/* Tabs */}
@@ -245,7 +245,6 @@ export default function GoodsReceiptPage() {
                                 <div><span style={{ color: 'var(--color-text-muted)' }}>Gudang:</span> <strong>{viewGRN.gudangName || '-'}</strong></div>
                             )}
                             <div><span style={{ color: 'var(--color-text-muted)' }}>Total Nilai:</span> <strong style={{ color: 'var(--color-primary)' }}>{fmtRp(viewGRN.totalAmount)}</strong></div>
-                            {viewGRN.journalId && <div><span style={{ color: 'var(--color-text-muted)' }}>Jurnal:</span> <span className={styles.mono}>✓ Tercatat</span></div>}
                         </div>
 
                         <table className={styles.table} style={{ fontSize: 12 }}>

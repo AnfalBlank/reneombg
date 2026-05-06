@@ -93,16 +93,11 @@ export default function ConsumptionPage() {
             <div className={styles.pageHeader}>
                 <div>
                     <h1 className={styles.pageTitle}>Pemakaian Bahan (Consumption)</h1>
-                    <p className={styles.pageSubtitle}>Catat penggunaan bahan harian per dapur — otomatis menghasilkan jurnal COGS</p>
+                    <p className={styles.pageSubtitle}>Catat penggunaan bahan harian per dapur</p>
                 </div>
                 <div className={styles.pageActions}>
                     <Button icon={<Plus size={14} />} onClick={() => setShowCreate(true)}>Catat Pemakaian</Button>
                 </div>
-            </div>
-
-            <div style={{ background: 'rgba(123,94,167,0.05)', border: '1px solid rgba(123,94,167,0.2)', borderRadius: 'var(--radius-md)', padding: '12px 16px', fontSize: 13, color: 'var(--color-accent-light)', display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Utensils size={14} />
-                <span>Setiap pencatatan pemakaian otomatis menghasilkan jurnal: <strong>Dr COGS Dapur / Cr Inventory Dapur</strong></span>
             </div>
 
             <div className={styles.summaryBar}>

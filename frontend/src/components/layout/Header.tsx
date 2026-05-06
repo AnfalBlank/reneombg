@@ -40,7 +40,6 @@ export default function Header({ breadcrumbs, toggleSidebar, userId }: HeaderPro
             else if (q.startsWith('DO-')) navigate('/supply-chain/delivery-orders')
             else if (q.startsWith('KR-')) navigate('/supply-chain/kitchen-receiving')
             else if (q.startsWith('GRN-')) navigate('/purchase/receiving')
-            else if (q.startsWith('JRN-')) navigate('/accounting/journal')
             else navigate('/dashboard')
         }
     }

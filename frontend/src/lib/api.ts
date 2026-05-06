@@ -116,11 +116,3 @@ export interface Gudang {
     name: string;
     location?: string;
 }
-
-export interface Coa {
-    id: string;
-    code: string;
-    name: string;
-    type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
-    level: number;
-}

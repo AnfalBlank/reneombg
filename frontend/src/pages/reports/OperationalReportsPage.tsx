@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-    FileText, Download, ShoppingCart, Truck, Package, Receipt,
+    FileText, Download, ShoppingCart, Truck, Package,
     ClipboardList, BarChart3, ChevronRight, Printer
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
@@ -12,14 +12,13 @@ import { api, ApiResponse } from '../../lib/api'
 import { fmtDate, fmtRp } from '../../lib/utils'
 import { downloadPDF, pdfFmt } from '../../lib/pdf'
 
-type ReportType = 'purchase' | 'internal-requests' | 'distribution' | 'inventory' | 'journals' | 'consumption'
+type ReportType = 'purchase' | 'internal-requests' | 'distribution' | 'inventory' | 'consumption'
 
 const reportTypes: Array<{ key: ReportType; label: string; icon: typeof FileText; desc: string; color: string }> = [
     { key: 'purchase', label: 'Laporan Pembelian', icon: ShoppingCart, desc: 'PO & Goods Receipt dari vendor', color: '#4f7cff' },
     { key: 'internal-requests', label: 'Laporan Internal Request', icon: ClipboardList, desc: 'Permintaan bahan dapur ke gudang', color: '#f59e0b' },
     { key: 'distribution', label: 'Laporan Distribusi', icon: Truck, desc: 'Delivery Order & Kitchen Receiving', color: '#22c55e' },
     { key: 'inventory', label: 'Laporan Stok', icon: Package, desc: 'Posisi stok gudang & dapur', color: '#a680d0' },
-    { key: 'journals', label: 'Laporan Jurnal', icon: Receipt, desc: 'Semua jurnal pembukuan', color: '#ef4444' },
     { key: 'consumption', label: 'Laporan Pemakaian Bahan', icon: BarChart3, desc: 'Konsumsi bahan per item', color: '#38bdf8' },
 ]
 
@@ -29,7 +28,6 @@ const statusLabels: Record<string, string> = {
     open: 'Open', partial: 'Partial', received: 'Selesai', cancelled: 'Ditolak',
     draft: 'Draft', delivered: 'Terkirim', confirmed: 'Selesai',
     complete: 'Selesai', discrepancy: 'Selisih',
-    purchase_receiving: 'Pembelian', distribution: 'Distribusi', consumption: 'COGS', waste: 'Waste',
 }
 
 export default function OperationalReportsPage() {
@@ -113,19 +111,6 @@ export default function OperationalReportsPage() {
                 </div>
                 <h2>Posisi Stok</h2>
                 <table><thead><tr><th>No</th><th>Item</th><th>SKU</th><th>Lokasi</th><th>Tipe</th><th class="right">Qty</th><th class="right">HPP</th><th class="right">Nilai</th></tr></thead><tbody>${stockRows}</tbody></table>
-            `
-        } else if (selected === 'journals') {
-            const jRows = (report.journals || []).map((j: any, i: number) =>
-                `<tr><td>${i + 1}</td><td class="mono">${j.journalNumber}</td><td>${new Date(j.createdAt).toLocaleDateString('id-ID')}</td><td>${j.description}</td><td>${statusLabels[j.type] || j.type}</td><td class="right">${pdfFmt(j.totalDebit)}</td><td class="right">${pdfFmt(j.totalCredit)}</td></tr>`
-            ).join('')
-            body = `
-                <div style="display:flex;gap:24px;margin-bottom:20px">
-                    <div><strong>Total Jurnal:</strong> ${summary.total}</div>
-                    <div><strong>Total Debit:</strong> ${pdfFmt(summary.totalDebit)}</div>
-                    <div><strong>Total Kredit:</strong> ${pdfFmt(summary.totalCredit)}</div>
-                </div>
-                <h2>Daftar Jurnal</h2>
-                <table><thead><tr><th>No</th><th>No. Jurnal</th><th>Tanggal</th><th>Deskripsi</th><th>Tipe</th><th class="right">Debit</th><th class="right">Kredit</th></tr></thead><tbody>${jRows}</tbody></table>
             `
         } else if (selected === 'consumption') {
             const cRows = (report.byItem || []).map((c: any, i: number) =>
@@ -283,27 +268,6 @@ export default function OperationalReportsPage() {
                             rows={(report.dapurStocks || []).map((s: any) => [
                                 s.item?.name, <span className={styles.mono}>{s.item?.sku}</span>,
                                 s.dapur?.name, s.qty, fmtRp(s.avgCost), <strong>{fmtRp(s.totalValue)}</strong>,
-                            ])} />
-                    </Card>
-                </>
-            )}
-
-            {selected === 'journals' && report && (
-                <>
-                    <SummaryCards items={[
-                        { label: 'Total Jurnal', value: summary.total, color: '#ef4444' },
-                        { label: 'Total Debit', value: fmtRp(summary.totalDebit), color: '#4f7cff' },
-                        { label: 'Total Kredit', value: fmtRp(summary.totalCredit), color: '#22c55e' },
-                    ]} />
-                    <Card title="Daftar Jurnal" noPadding>
-                        <DataTable headers={['No. Jurnal', 'Tanggal', 'Deskripsi', 'Tipe', 'Debit', 'Kredit']}
-                            rows={(report.journals || []).map((j: any) => [
-                                <span className={styles.mono}>{j.journalNumber}</span>,
-                                fmtDate(j.createdAt),
-                                <span style={{ maxWidth: 200 }} className="truncate">{j.description}</span>,
-                                <Badge label={statusLabels[j.type] || j.type} color={j.type === 'purchase_receiving' ? 'blue' : j.type === 'distribution' ? 'green' : j.type === 'consumption' ? 'purple' : 'red'} />,
-                                <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{fmtRp(j.totalDebit)}</span>,
-                                <span style={{ color: 'var(--color-danger)', fontWeight: 600 }}>{fmtRp(j.totalCredit)}</span>,
                             ])} />
                     </Card>
                 </>
