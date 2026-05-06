@@ -27,7 +27,11 @@ export default function KitchenReceivingPage() {
     const { data: krRes, isLoading, error } = useKitchenReceivings()
     const { data: doRes } = useDeliveryOrders()
     const receipts = krRes?.data || []
-    const dos = (doRes?.data || []).filter((d: any) => d.status === 'delivered')
+    // Hanya tampilkan DO yang status 'delivered' DAN belum punya KR
+    const confirmedDoIds = new Set((krRes?.data || []).map((kr: any) => kr.doId))
+    const dos = (doRes?.data || []).filter((d: any) =>
+        d.status === 'delivered' && !confirmedDoIds.has(d.id)
+    )
 
     const confirmKR = useConfirmKitchenReceiving()
 
@@ -59,7 +63,7 @@ export default function KitchenReceivingPage() {
     }
 
     const handleConfirm = async () => {
-        if (!receiveDO) return
+        if (!receiveDO || confirmKR.isPending) return
         try {
             const krItems = receiveItems.map(i => ({
                 itemId: i.itemId,

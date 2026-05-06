@@ -784,6 +784,26 @@ app.post('/kitchen-receiving/:doId/confirm', requireAuth, requireRole('super_adm
     })
     if (!doRecord) return c.json({ error: 'Delivery Order not found' }, 404)
 
+    // ── Cegah duplicate KR untuk DO yang sama ────────────────────────────────
+    const existingKR = await db.query.kitchenReceivings.findFirst({
+        where: eq(kitchenReceivings.doId, doId),
+    })
+    if (existingKR) {
+        return c.json({
+            error: `DO ${doRecord.doNumber} sudah pernah diterima (${existingKR.krNumber}). Tidak bisa membuat KR duplikat.`,
+            existingKrNumber: existingKR.krNumber,
+            existingKrId: existingKR.id,
+        }, 400)
+    }
+
+    // ── Cegah DO yang belum dikirim ───────────────────────────────────────────
+    if (doRecord.status === 'confirmed') {
+        return c.json({ error: `DO ${doRecord.doNumber} sudah dikonfirmasi sebelumnya.` }, 400)
+    }
+    if (doRecord.status === 'draft') {
+        return c.json({ error: `DO ${doRecord.doNumber} belum dikirim (masih draft).` }, 400)
+    }
+
     const krId = randomUUID()
     const now = new Date()
 
