@@ -36,6 +36,7 @@ import AuditLogPage from './pages/settings/AuditLogPage'
 import AdminPanelPage from './pages/settings/AdminPanelPage'
 import OperationalReportsPage from './pages/reports/OperationalReportsPage'
 import PriceListPage from './pages/master-data/PriceListPage'
+import PriceListViewPage from './pages/supply-chain/PriceListViewPage'
 import VendorInvoicePage from './pages/finance/VendorInvoicePage'
 import BudgetLogPage from './pages/finance/BudgetLogPage'
 import TagihanDapurPage from './pages/finance/TagihanDapurPage'
@@ -81,6 +82,7 @@ export default function App() {
                         <Route path="supply-chain/delivery-orders/:id/print" element={<DOPrintPage />} />
                         <Route path="supply-chain/kitchen-receiving" element={<KitchenReceivingPage />} />
                         <Route path="supply-chain/consumption" element={<ConsumptionPage />} />
+                        <Route path="supply-chain/price-list" element={<PriceListViewPage />} />
 
                         {/* Pembukuan (Accounting) */}
                         <Route path="accounting/journal" element={<JournalPage />} />

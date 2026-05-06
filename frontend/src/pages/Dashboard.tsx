@@ -116,6 +116,7 @@ export default function Dashboard() {
         { label: 'Buat IR', icon: UtensilsCrossed, path: '/supply-chain/requests', color: '#f59e0b', show: access.supplyChain },
         { label: 'Cek Stok', icon: Package, path: '/inventory/stock', color: '#22c55e', show: access.inventory },
         { label: 'Kitchen Receiving', icon: Truck, path: '/supply-chain/kitchen-receiving', color: '#a680d0', show: userRole === 'kitchen_admin' },
+        { label: 'Daftar Harga', icon: ClipboardList, path: '/supply-chain/price-list', color: '#22c55e', show: userRole === 'kitchen_admin' },
         { label: 'Lihat Jurnal', icon: Receipt, path: '/accounting/journal', color: '#a680d0', show: access.accounting },
         { label: 'Finance', icon: TrendingUp, path: '/finance/dashboard', color: '#f59e0b', show: access.finance },
         { label: 'Laporan', icon: BarChart3, path: '/reports', color: '#38bdf8', show: access.reports },
