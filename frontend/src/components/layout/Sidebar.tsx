@@ -19,14 +19,25 @@ function buildNav(role: string): NavItem[] {
     const access = getNavAccess(role)
     const items: NavItem[] = []
 
+    // Owner: hanya Executive Dashboard, Approval, Laporan — tidak ada Dashboard biasa
+    if (role === 'owner') {
+        items.push({ label: 'Executive Dashboard', path: '/executive', icon: Crown })
+        items.push({ label: 'Approval', path: '/approvals', icon: CheckCircle })
+        items.push({ label: 'Laporan Keuangan', path: '/finance/reports', icon: FileText })
+        items.push({ label: 'Laporan Operasional', path: '/reports', icon: FileBarChart })
+        items.push({ label: 'Profil Saya', path: '/settings/profile', icon: Settings })
+        return items
+    }
+
+    // Semua role lain: mulai dengan Dashboard
     items.push({ label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard })
 
-    // Executive Dashboard — owner & super_admin only
-    if (role === 'owner' || role === 'super_admin') {
+    // Executive Dashboard — super_admin only (owner sudah handle di atas)
+    if (role === 'super_admin') {
         items.push({ label: 'Executive Dashboard', path: '/executive', icon: Crown })
     }
 
-    // Approval Center — only roles that can approve: owner, super_admin, admin
+    // Approval Center
     if (access.approval) {
         items.push({ label: 'Approval', path: '/approvals', icon: CheckCircle })
     }
@@ -110,7 +121,7 @@ function buildNav(role: string): NavItem[] {
         })
     }
 
-    // Settings — always show profile, admin panel only for owner/super_admin
+    // Settings — profile selalu ada, users untuk admin+, admin panel hanya super_admin
     const settingsChildren: NavItem[] = []
     if (access.adminPanel) {
         settingsChildren.push({ label: 'Admin Panel', path: '/settings/admin', icon: Monitor })

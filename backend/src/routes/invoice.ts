@@ -118,7 +118,7 @@ app.patch('/:id/edit-bukti', requireAuth, async (c) => {
 })
 
 // ─── Approve pembayaran (status → paid) ───────────────────────────────────────
-app.patch('/:id/approve', requireAuth, requireRole('owner', 'super_admin', 'finance'), async (c) => {
+app.patch('/:id/approve', requireAuth, requireRole('owner', 'super_admin', 'admin', 'finance'), async (c) => {
     const id = c.req.param('id') as string
     const user = (c as any).get('user') as { id: string }
     const inv = await db.query.invoices.findFirst({ where: eq(invoices.id, id) })

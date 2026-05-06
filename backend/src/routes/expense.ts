@@ -126,7 +126,7 @@ app.patch('/:id', requireAuth, async (c) => {
     return c.json({ data: updated })
 })
 
-app.delete('/:id', requireAuth, requireRole('owner', 'super_admin', 'finance'), async (c) => {
+app.delete('/:id', requireAuth, requireRole('owner', 'super_admin', 'admin', 'finance'), async (c) => {
     const id = c.req.param('id') as string
     await db.delete(fileUploads).where(and(eq(fileUploads.refType, 'expense'), eq(fileUploads.refId, id)))
     await db.delete(expenses).where(eq(expenses.id, id))

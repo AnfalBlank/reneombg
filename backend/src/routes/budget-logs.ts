@@ -18,10 +18,16 @@ async function enrichWithDapurName(logs: any[]) {
 // ─── List budget logs with filters and daily summary ─────────────────────────
 // GET /api/budget-logs?dapurId=&dateFrom=&dateTo=&transactionType=
 app.get('/', requireAuth, async (c) => {
-    const dapurId = c.req.query('dapurId')
+    const user = (c as any).get('user') as any
+    let dapurId = c.req.query('dapurId')
     const dateFrom = c.req.query('dateFrom')
     const dateTo = c.req.query('dateTo')
     const transactionType = c.req.query('transactionType')
+
+    // kitchen_admin hanya bisa lihat log dapurnya sendiri
+    if (user.role === 'kitchen_admin' && user.dapurId) {
+        dapurId = user.dapurId
+    }
 
     // Build filter conditions
     const conditions: ReturnType<typeof eq>[] = []

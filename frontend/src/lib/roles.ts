@@ -12,22 +12,18 @@ export function getRoleLabel(role: string) {
     return ROLES[role as RoleKey] || { label: role, color: 'gray' as const }
 }
 
-/** Check if user has one of the allowed roles */
 export function hasRole(userRole: string, ...allowed: RoleKey[]): boolean {
     return allowed.includes(userRole as RoleKey)
 }
 
-/** Check if user can access admin features */
 export function isAdmin(role: string): boolean {
     return hasRole(role, 'owner', 'super_admin')
 }
 
-/** Check if user can approve requests (IR/PO) */
 export function canApprove(role: string): boolean {
     return hasRole(role, 'owner', 'super_admin', 'admin')
 }
 
-/** Navigation items filtered by role */
 export interface NavAccess {
     dashboard: boolean
     masterData: boolean
@@ -45,17 +41,55 @@ export interface NavAccess {
 export function getNavAccess(role: string): NavAccess {
     switch (role) {
         case 'owner':
-            return { dashboard: true, masterData: true, purchase: true, inventory: true, supplyChain: true, accounting: true, reports: true, finance: true, settings: true, adminPanel: true, approval: true }
+            // Owner: hanya Executive Dashboard, Approval, Laporan
+            return {
+                dashboard: false,   // langsung redirect ke /executive
+                masterData: false,
+                purchase: false,
+                inventory: false,
+                supplyChain: false,
+                accounting: false,
+                reports: true,      // Laporan Operasional
+                finance: true,      // Laporan Keuangan (P&L, Balance Sheet)
+                settings: false,
+                adminPanel: false,
+                approval: true,     // Approval Center
+            }
         case 'super_admin':
-            return { dashboard: true, masterData: true, purchase: true, inventory: true, supplyChain: true, accounting: true, reports: true, finance: true, settings: true, adminPanel: true, approval: true }
+            // Super Admin: akses penuh semua fitur
+            return {
+                dashboard: true, masterData: true, purchase: true, inventory: true,
+                supplyChain: true, accounting: true, reports: true, finance: true,
+                settings: true, adminPanel: true, approval: true,
+            }
         case 'admin':
-            return { dashboard: true, masterData: true, purchase: true, inventory: true, supplyChain: true, accounting: true, reports: true, finance: false, settings: false, adminPanel: false, approval: true }
+            // Admin Pusat: operasional penuh + finance + pengaturan user (tanpa admin panel)
+            return {
+                dashboard: true, masterData: true, purchase: true, inventory: true,
+                supplyChain: true, accounting: true, reports: true,
+                finance: true,      // ✅ Arus Kas & Finance
+                settings: true,     // ✅ Pengaturan User (tanpa admin panel)
+                adminPanel: false,
+                approval: true,
+            }
         case 'kitchen_admin':
-            // Admin dapur: supply chain only (IR, KR, Consumption) — NO inventory, NO purchase, NO approval
-            return { dashboard: true, masterData: false, purchase: false, inventory: false, supplyChain: true, accounting: false, reports: false, finance: false, settings: false, adminPanel: false, approval: false }
+            // Admin Dapur: hanya supply chain dapur sendiri
+            return {
+                dashboard: true, masterData: false, purchase: false, inventory: false,
+                supplyChain: true, accounting: false, reports: false, finance: false,
+                settings: false, adminPanel: false, approval: false,
+            }
         case 'finance':
-            return { dashboard: true, masterData: false, purchase: true, inventory: false, supplyChain: false, accounting: true, reports: true, finance: true, settings: false, adminPanel: false, approval: false }
+            return {
+                dashboard: true, masterData: false, purchase: true, inventory: false,
+                supplyChain: false, accounting: true, reports: true, finance: true,
+                settings: false, adminPanel: false, approval: false,
+            }
         default:
-            return { dashboard: true, masterData: false, purchase: false, inventory: false, supplyChain: false, accounting: false, reports: false, finance: false, settings: false, adminPanel: false, approval: false }
+            return {
+                dashboard: true, masterData: false, purchase: false, inventory: false,
+                supplyChain: false, accounting: false, reports: false, finance: false,
+                settings: false, adminPanel: false, approval: false,
+            }
     }
 }
