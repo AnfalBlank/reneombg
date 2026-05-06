@@ -3,7 +3,7 @@
  * Menampilkan harga aktif per item hari ini
  */
 import { useState } from 'react'
-import { Search, DollarSign, AlertTriangle } from 'lucide-react'
+import { Search, DollarSign } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -134,7 +134,6 @@ export default function PriceListViewPage() {
                                             <th>Nama Item</th>
                                             <th>SKU</th>
                                             <th style={{ textAlign: 'right' }}>Harga Jual</th>
-                                            <th style={{ textAlign: 'right' }}>Harga Beli (Avg)</th>
                                             <th>Keterangan</th>
                                         </tr>
                                     </thead>
@@ -158,20 +157,10 @@ export default function PriceListViewPage() {
                                                 <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--color-primary)', fontSize: 14 }}>
                                                     {fmtRp(entry.sellPrice)}
                                                 </td>
-                                                <td style={{ textAlign: 'right', color: 'var(--color-text-muted)', fontSize: 13 }}>
-                                                    {entry.purchasePrice > 0 ? fmtRp(entry.purchasePrice) : '-'}
-                                                </td>
                                                 <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                        {entry.sellPrice < entry.purchasePrice && (
-                                                            <span title="Harga jual lebih rendah dari harga beli">
-                                                                <AlertTriangle size={12} style={{ color: 'var(--color-warning)' }} />
-                                                            </span>
-                                                        )}
-                                                        {entry.notes && (
-                                                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{entry.notes}</span>
-                                                        )}
-                                                    </div>
+                                                    {entry.notes && (
+                                                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{entry.notes}</span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
