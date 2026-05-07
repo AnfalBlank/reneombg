@@ -86,20 +86,25 @@ export default function InternalRequestPage() {
 
     // Item prices: itemId → purchasePrice (null = no active price)
     const [itemPrices, setItemPrices] = useState<Record<string, number | null>>({})
+    // Item sell prices: itemId → sellPrice (null = no active price)
+    const [itemSellPrices, setItemSellPrices] = useState<Record<string, number | null>>({})
     // Budget exceeded error detail for modal
     const [budgetExceededError, setBudgetExceededError] = useState<BudgetExceededDetail | null>(null)
 
-    // Fetch active price for an item and cache in itemPrices state
+    // Fetch active price for an item and cache in itemPrices + itemSellPrices state
     const fetchItemPrice = useCallback(async (itemId: string) => {
         if (!itemId || itemId in itemPrices) return
         try {
             const now = new Date()
             const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
             const res = await api.get<any>(`/price-list/active?itemId=${itemId}&date=${today}`)
-            const price = res?.data?.purchasePrice ?? null
-            setItemPrices(prev => ({ ...prev, [itemId]: price }))
+            const purchasePrice = res?.data?.purchasePrice ?? null
+            const sellPrice = res?.data?.sellPrice ?? null
+            setItemPrices(prev => ({ ...prev, [itemId]: purchasePrice }))
+            setItemSellPrices(prev => ({ ...prev, [itemId]: sellPrice }))
         } catch {
             setItemPrices(prev => ({ ...prev, [itemId]: null }))
+            setItemSellPrices(prev => ({ ...prev, [itemId]: null }))
         }
     }, [itemPrices])
 
@@ -210,9 +215,12 @@ export default function InternalRequestPage() {
         const menu = recipes.find((r: any) => r.id === selectedMenu)
         if (!menu || !menu.ingredients?.length) return toastError('Resep belum memiliki bahan!')
         const multiplier = targetPorsi / (menu.defaultYield || 1)
-        setIrItems(menu.ingredients.map((ing: any) => ({
+        const loadedItems = menu.ingredients.map((ing: any) => ({
             itemId: ing.itemId, qtyRequested: Number((ing.quantity * multiplier).toFixed(3)), notes: `Resep: ${menu.name}`,
-        })))
+        }))
+        setIrItems(loadedItems)
+        // Fetch harga untuk semua item yang dimuat agar estimasi nilai terhitung
+        loadedItems.forEach((it: any) => { if (it.itemId) fetchItemPrice(it.itemId) })
         success(`BOM ${menu.name} untuk ${targetPorsi} porsi dimuat!`)
     }
 
@@ -455,14 +463,35 @@ export default function InternalRequestPage() {
                             <label style={labelStyle}>Item yang Diminta *</label>
                             <button onClick={() => setIrItems(p => [...p, { itemId: '', qtyRequested: 1, notes: '' }])} style={{ fontSize: 12, color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>+ Tambah Baris</button>
                         </div>
+                        {/* Header kolom */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, marginBottom: 4, paddingLeft: 2 }}>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 600 }}>Item</span>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 600 }}>Qty</span>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 600 }}>Harga Jual</span>
+                            <span />
+                        </div>
                         {irItems.map((item, idx) => (
-                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: 8, marginBottom: 8 }}>
+                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, marginBottom: 8 }}>
                                 <select style={inputStyle} value={item.itemId} onChange={e => {
                                     const newItemId = e.target.value
                                     setIrItems(p => p.map((it, i) => i === idx ? { ...it, itemId: newItemId } : it))
                                     if (newItemId) fetchItemPrice(newItemId)
                                 }}><option value="">-- Pilih Item --</option>{allItems.map((i: any) => <option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}</select>
                                 <input style={inputStyle} type="number" placeholder="Qty" min={1} value={item.qtyRequested} onChange={e => setIrItems(p => p.map((it, i) => i === idx ? { ...it, qtyRequested: Number(e.target.value) } : it))} />
+                                <div style={{
+                                    ...inputStyle,
+                                    display: 'flex', alignItems: 'center',
+                                    background: 'var(--color-surface-2)',
+                                    color: item.itemId && itemSellPrices[item.itemId] != null ? 'var(--color-text)' : 'var(--color-text-muted)',
+                                    fontSize: 12,
+                                    cursor: 'default',
+                                }}>
+                                    {item.itemId
+                                        ? (itemSellPrices[item.itemId] != null
+                                            ? fmtRp(itemSellPrices[item.itemId]!)
+                                            : '—')
+                                        : '—'}
+                                </div>
                                 <button onClick={() => setIrItems(p => p.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)' }}><X size={14} /></button>
                             </div>
                         ))}
