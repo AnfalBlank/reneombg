@@ -7,6 +7,27 @@ import { z } from 'zod'
 
 const router = new Hono()
 
+// ─── GET /next-code ───────────────────────────────────────────────────────────
+// Generate kode resep berikutnya secara otomatis (format RCP-0001)
+router.get('/next-code', async (c) => {
+    try {
+        const allRecipes = await db.query.recipes.findMany()
+        const codes = allRecipes.map(r => r.code)
+        const prefix = 'RCP-'
+        const numbers = codes
+            .filter(c => c.startsWith(prefix))
+            .map(c => {
+                const num = parseInt(c.replace(prefix, ''), 10)
+                return isNaN(num) ? 0 : num
+            })
+        const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0
+        const nextCode = `${prefix}${String(maxNum + 1).padStart(4, '0')}`
+        return c.json({ data: nextCode })
+    } catch (error: any) {
+        return c.json({ error: error.message }, 500)
+    }
+})
+
 const createRecipeSchema = z.object({
     code: z.string(),
     name: z.string(),

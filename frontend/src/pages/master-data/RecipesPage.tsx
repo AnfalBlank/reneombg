@@ -247,6 +247,10 @@ export default function RecipesPage() {
         setIngredients([{ itemId: '', quantity: 0, uom: '' }])
         setFormErrors({})
         setIsModalOpen(true)
+        // Auto-generate kode resep
+        api.get<{ data: string }>('/recipes/next-code').then(res => {
+            if (res?.data) setFormData(prev => ({ ...prev, code: res.data }))
+        }).catch(() => {})
     }
 
     const openEdit = (recipe: any) => {
@@ -387,8 +391,9 @@ export default function RecipesPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div>
                             <label style={labelStyle}>Kode Resep *</label>
-                            <input style={{ ...inputStyle, border: formErrors.code ? errorBorder : inputStyle.border }} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="RCP-001" />
+                            <input style={{ ...inputStyle, border: formErrors.code ? errorBorder : inputStyle.border }} value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="RCP-0001" />
                             {formErrors.code && <span style={{ fontSize: 11, color: '#ef4444' }}>Kode wajib diisi</span>}
+                            {!editingId && !formErrors.code && <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Auto-generate, bisa diubah manual</span>}
                         </div>
                         <div>
                             <label style={labelStyle}>Nama Menu *</label>
