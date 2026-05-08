@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn, authClient } from '../../lib/auth-client'
-import { LogIn } from 'lucide-react'
+import { LogIn, Sun, Moon } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import styles from './LoginPage.module.css'
 
@@ -11,6 +11,21 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark'
+    })
+
+    useEffect(() => {
+        if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light')
+            document.documentElement.classList.add('light-theme')
+        } else {
+            document.documentElement.removeAttribute('data-theme')
+            document.documentElement.classList.remove('light-theme')
+        }
+        localStorage.setItem('theme', theme)
+    }, [theme])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -58,6 +73,15 @@ export default function LoginPage() {
 
     return (
         <div className={styles.page}>
+            {/* Theme toggle — pojok kanan atas */}
+            <button
+                onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+                aria-label="Toggle Theme"
+                className={styles.themeToggle}
+            >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
             <div className={styles.card}>
                 <div className={styles.header}>
                     <img src="/logo.png" alt="ERP MBG" style={{ height: 56, objectFit: 'contain', marginBottom: 12 }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
