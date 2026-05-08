@@ -7,6 +7,7 @@ import styles from './MainLayout.module.css'
 import { useSession } from '../../lib/auth-client'
 import { useIdleTimeout } from '../../hooks/useIdleTimeout'
 import IdleWarningModal from '../ui/IdleWarningModal'
+import { api } from '../../lib/api'
 
 const CS_WHATSAPP = '6281290903004'
 const CS_MESSAGE = encodeURIComponent('Halo, saya butuh bantuan dengan sistem ERP MBG.')
@@ -59,6 +60,17 @@ export default function MainLayout() {
 
     // Idle timeout — auto-logout setelah 30 menit tidak ada aktivitas
     const { showWarning, secondsLeft, extendSession, doLogout } = useIdleTimeout()
+
+    // Session validity polling — cek setiap 60 detik apakah session masih valid
+    // Jika session dicabut (login dari tempat lain), api.ts akan redirect ke /login
+    useEffect(() => {
+        const interval = setInterval(() => {
+            api.get('/session/check').catch(() => {
+                // Error (termasuk 401) sudah ditangani di api.ts → redirect ke login
+            })
+        }, 60_000) // setiap 60 detik
+        return () => clearInterval(interval)
+    }, [])
 
     // Close menu on navigation
     useEffect(() => {

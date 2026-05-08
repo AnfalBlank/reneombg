@@ -24,6 +24,13 @@ async function handleResponse<T>(response: Response): Promise<T> {
     }
 
     if (!response.ok) {
+        // Session dicabut atau expired — redirect ke login
+        if (response.status === 401) {
+            const currentPath = window.location.pathname
+            if (currentPath !== '/login') {
+                window.location.href = '/login?reason=session_revoked'
+            }
+        }
         throw new Error(data?.error || data?.message || `API request failed with status ${response.status}`);
     }
     return data as T;

@@ -13,8 +13,10 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    // Tampilkan info jika logout karena idle
-    const idleLogout = new URLSearchParams(window.location.search).get('reason') === 'idle'
+    // Tampilkan info jika logout karena idle atau session dicabut
+    const logoutReason = new URLSearchParams(window.location.search).get('reason')
+    const idleLogout = logoutReason === 'idle'
+    const sessionRevoked = logoutReason === 'session_revoked'
 
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark'
@@ -37,6 +39,13 @@ export default function LoginPage() {
         setError(null)
 
         try {
+            // Single session: hapus SEMUA session lama sebelum login baru dibuat
+            try {
+                await api.post('/session/revoke-by-email', { email })
+            } catch {
+                // Non-fatal — lanjut meski revoke gagal
+            }
+
             const result = await signIn.email({
                 email,
                 password,
@@ -45,12 +54,6 @@ export default function LoginPage() {
             if (result.error) {
                 setError(result.error.message || 'Login failed. Invalid credentials.')
             } else {
-                // Single session: cabut semua session lain milik user ini
-                try {
-                    await api.post('/session/revoke-others', {})
-                } catch {
-                    // Non-fatal — lanjut meski revoke gagal
-                }
                 navigate('/dashboard', { replace: true })
             }
         } catch (err: any) {
@@ -104,6 +107,11 @@ export default function LoginPage() {
                 {idleLogout && !error && (
                     <div className={styles.idleInfo}>
                         ⏱️ Sesi Anda berakhir karena tidak ada aktivitas selama 30 menit.
+                    </div>
+                )}
+                {sessionRevoked && !error && (
+                    <div className={styles.idleInfo}>
+                        🔒 Sesi Anda dicabut karena akun ini login dari perangkat lain.
                     </div>
                 )}
 
