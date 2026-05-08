@@ -4,6 +4,7 @@ import { signIn, authClient } from '../../lib/auth-client'
 import { LogIn, Sun, Moon } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import styles from './LoginPage.module.css'
+import { api } from '../../lib/api'
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -11,6 +12,9 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // Tampilkan info jika logout karena idle
+    const idleLogout = new URLSearchParams(window.location.search).get('reason') === 'idle'
 
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark'
@@ -41,6 +45,12 @@ export default function LoginPage() {
             if (result.error) {
                 setError(result.error.message || 'Login failed. Invalid credentials.')
             } else {
+                // Single session: cabut semua session lain milik user ini
+                try {
+                    await api.post('/session/revoke-others', {})
+                } catch {
+                    // Non-fatal — lanjut meski revoke gagal
+                }
                 navigate('/dashboard', { replace: true })
             }
         } catch (err: any) {
@@ -62,6 +72,7 @@ export default function LoginPage() {
             if (res.error) {
                 setError(res.error.message || 'Failed to create account')
             } else {
+                try { await api.post('/session/revoke-others', {}) } catch { /* non-fatal */ }
                 navigate('/dashboard', { replace: true })
             }
         } catch (err: any) {
@@ -90,6 +101,11 @@ export default function LoginPage() {
                 </div>
 
                 {error && <div className={styles.error}>{error}</div>}
+                {idleLogout && !error && (
+                    <div className={styles.idleInfo}>
+                        ⏱️ Sesi Anda berakhir karena tidak ada aktivitas selama 30 menit.
+                    </div>
+                )}
 
                 <form className={styles.form} onSubmit={handleSubmit}>
                     <div className={styles.field}>

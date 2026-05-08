@@ -101,3 +101,14 @@
     border-color: var(--color-border-strong);
     background: var(--color-surface-2);
 }
+
+.idleInfo {
+    background-color: rgba(245, 158, 11, 0.08);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    text-align: center;
+    line-height: 1.5;
+}

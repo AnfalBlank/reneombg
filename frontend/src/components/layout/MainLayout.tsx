@@ -5,6 +5,8 @@ import Header from './Header'
 import BottomNav from './BottomNav'
 import styles from './MainLayout.module.css'
 import { useSession } from '../../lib/auth-client'
+import { useIdleTimeout } from '../../hooks/useIdleTimeout'
+import IdleWarningModal from '../ui/IdleWarningModal'
 
 const CS_WHATSAPP = '6281290903004'
 const CS_MESSAGE = encodeURIComponent('Halo, saya butuh bantuan dengan sistem ERP MBG.')
@@ -54,6 +56,9 @@ export default function MainLayout() {
     const [csExpanded, setCsExpanded] = useState(false)
     const segments = location.pathname.split('/').filter(Boolean)
     const breadcrumbs = segments.map((s) => breadcrumbMap[s] ?? s)
+
+    // Idle timeout — auto-logout setelah 30 menit tidak ada aktivitas
+    const { showWarning, secondsLeft, extendSession, doLogout } = useIdleTimeout()
 
     // Close menu on navigation
     useEffect(() => {
@@ -176,6 +181,15 @@ export default function MainLayout() {
                     to   { opacity: 1; transform: translateX(0); }
                 }
             `}</style>
+
+            {/* Idle timeout warning modal */}
+            {showWarning && (
+                <IdleWarningModal
+                    secondsLeft={secondsLeft}
+                    onExtend={extendSession}
+                    onLogout={doLogout}
+                />
+            )}
         </div>
     )
 }

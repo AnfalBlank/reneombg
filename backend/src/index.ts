@@ -32,6 +32,7 @@ import budgetRoutes from './routes/budget'
 import priceListRoutes from './routes/price-list'
 import budgetLogsRoutes from './routes/budget-logs'
 import vendorInvoicesRoutes from './routes/vendor-invoices'
+import sessionRoutes from './routes/session'
 
 const app = new Hono()
 
@@ -79,6 +80,7 @@ app.route('/api/budgets', budgetRoutes)
 app.route('/api/price-list', priceListRoutes)
 app.route('/api/budget-logs', budgetLogsRoutes)
 app.route('/api/vendor-invoices', vendorInvoicesRoutes)
+app.route('/api/session', sessionRoutes)
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (c) => c.json({
