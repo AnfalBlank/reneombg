@@ -25,7 +25,11 @@ app.get('/purchase', requireAuth, async (c) => {
     pos = filterByDate(pos, 'orderDate', start, end)
 
     let grns = await db.query.goodsReceipts.findMany({
-        with: { items: { with: { item: true } } },
+        with: {
+            po: { with: { vendor: true } },
+            gudang: true,
+            items: { with: { item: true } },
+        },
         orderBy: (g, { desc }) => [desc(g.receivedDate)],
     })
     grns = filterByDate(grns, 'receivedDate', start, end)
