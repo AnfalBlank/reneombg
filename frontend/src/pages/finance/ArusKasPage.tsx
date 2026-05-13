@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, Upload, Eye, Edit2, CheckCircle, X, Paperclip, ChevronDown, ChevronRight, Building2, MessageCircle } from 'lucide-react'
+import { RefreshCw, Upload, Eye, Edit2, CheckCircle, X, Paperclip, ChevronDown, ChevronRight, Building2, MessageCircle, Download, Printer, Search } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -9,6 +9,7 @@ import styles from '../shared.module.css'
 import { useToast } from '../../components/ui/Toast'
 import { api } from '../../lib/api'
 import { fmtDate, fmtDateOnly, fmtRp } from '../../lib/utils'
+import * as XLSX from 'xlsx'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -514,7 +515,7 @@ function VendorSummaryTab({ onUpload, onApprove, onView }: VendorSummaryTabProps
   )
 }
 
-// ─── Tab 2 & 3: Transaction Table ─────────────────────────────────────────────
+// ─── Tab 2: Transaction Table ─────────────────────────────────────────────────
 
 interface TransactionTabProps {
   type: 'vendor_payment' | 'income'
@@ -524,18 +525,138 @@ interface TransactionTabProps {
 }
 
 function TransactionTab({ type, onUpload, onApprove, onView }: TransactionTabProps) {
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [vendorSearch, setVendorSearch] = useState('')
+
   const { data: res, isLoading } = useQuery({
     queryKey: ['cashflow', type],
     queryFn: () => api.get<any>(`/cashflow?type=${type}`),
   })
-  const items = res?.data || []
+  const allItems: any[] = res?.data || []
+
+  // ── Filter ──────────────────────────────────────────────────────────────────
+  const filtered = allItems.filter(item => {
+    if (statusFilter && item.status !== statusFilter) return false
+    if (vendorSearch) {
+      const q = vendorSearch.toLowerCase()
+      const name = (item.vendorName || item.dapurName || '').toLowerCase()
+      const ref = (item.refNumber || '').toLowerCase()
+      const pay = (item.paymentNumber || '').toLowerCase()
+      if (!name.includes(q) && !ref.includes(q) && !pay.includes(q)) return false
+    }
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      from.setHours(0, 0, 0, 0)
+      if (new Date(item.createdAt) < from) return false
+    }
+    if (dateTo) {
+      const to = new Date(dateTo)
+      to.setHours(23, 59, 59, 999)
+      if (new Date(item.createdAt) > to) return false
+    }
+    return true
+  })
 
   const refLabel = type === 'vendor_payment' ? 'Ref GRN' : 'Ref KR'
   const nameLabel = type === 'vendor_payment' ? 'Vendor' : 'Dapur'
 
-  const totalUnpaid = items.filter((i: any) => i.status === 'unpaid').reduce((a: number, i: any) => a + i.totalAmount, 0)
-  const totalPending = items.filter((i: any) => i.status === 'pending').reduce((a: number, i: any) => a + i.totalAmount, 0)
-  const totalPaid = items.filter((i: any) => i.status === 'paid').reduce((a: number, i: any) => a + i.totalAmount, 0)
+  const totalUnpaid = filtered.filter(i => i.status === 'unpaid').reduce((a, i) => a + i.totalAmount, 0)
+  const totalPending = filtered.filter(i => i.status === 'pending').reduce((a, i) => a + i.totalAmount, 0)
+  const totalPaid = filtered.filter(i => i.status === 'paid').reduce((a, i) => a + i.totalAmount, 0)
+  const grandTotal = totalUnpaid + totalPending + totalPaid
+
+  const periodLabel = dateFrom || dateTo
+    ? `${dateFrom ? fmtDateOnly(dateFrom) : '...'} s/d ${dateTo ? fmtDateOnly(dateTo) : '...'}`
+    : 'Semua Periode'
+
+  // ── Export Excel ─────────────────────────────────────────────────────────────
+  const exportExcel = () => {
+    const rows: any[] = filtered.map((item, idx) => ({
+      'No.': idx + 1,
+      'Tanggal': fmtDate(item.createdAt),
+      'No. Payment': item.paymentNumber,
+      [refLabel]: item.refNumber || '-',
+      [nameLabel]: item.vendorName || item.dapurName || '-',
+      'Total (Rp)': item.totalAmount,
+      'Status': statusConfig[item.status]?.label || item.status,
+    }))
+    rows.push({})
+    rows.push({ 'No.': '', 'Tanggal': 'RINGKASAN', 'No. Payment': '', [refLabel]: '', [nameLabel]: '', 'Total (Rp)': '', 'Status': '' })
+    rows.push({ 'No.': '', 'Tanggal': 'Belum Bayar', 'No. Payment': '', [refLabel]: '', [nameLabel]: '', 'Total (Rp)': totalUnpaid, 'Status': '' })
+    rows.push({ 'No.': '', 'Tanggal': 'Pending', 'No. Payment': '', [refLabel]: '', [nameLabel]: '', 'Total (Rp)': totalPending, 'Status': '' })
+    rows.push({ 'No.': '', 'Tanggal': 'Lunas', 'No. Payment': '', [refLabel]: '', [nameLabel]: '', 'Total (Rp)': totalPaid, 'Status': '' })
+    rows.push({ 'No.': '', 'Tanggal': 'GRAND TOTAL', 'No. Payment': '', [refLabel]: '', [nameLabel]: '', 'Total (Rp)': grandTotal, 'Status': '' })
+
+    const ws = XLSX.utils.json_to_sheet(rows)
+    ws['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 24 }, { wch: 18 }, { wch: 14 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Pembayaran Vendor')
+    XLSX.writeFile(wb, `pembayaran-vendor-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
+  // ── Print PDF ─────────────────────────────────────────────────────────────────
+  const printPdf = () => {
+    const rows = filtered.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${fmtDate(item.createdAt)}</td>
+        <td style="font-family:monospace">${item.paymentNumber}</td>
+        <td style="font-family:monospace">${item.refNumber || '-'}</td>
+        <td>${item.vendorName || item.dapurName || '-'}</td>
+        <td style="text-align:right;font-weight:700">${fmtRp(item.totalAmount)}</td>
+        <td><span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:${
+          item.status === 'paid' ? '#dcfce7' : item.status === 'pending' ? '#fef9c3' : '#fee2e2'
+        };color:${
+          item.status === 'paid' ? '#166534' : item.status === 'pending' ? '#854d0e' : '#991b1b'
+        }">${statusConfig[item.status]?.label || item.status}</span></td>
+      </tr>
+    `).join('')
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Pembayaran Vendor</title>
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:24px}
+        h1{font-size:18px;font-weight:800;margin-bottom:4px}
+        .subtitle{font-size:12px;color:#666;margin-bottom:16px}
+        .meta{display:flex;gap:24px;margin-bottom:16px;font-size:11px;color:#555;flex-wrap:wrap}
+        table{width:100%;border-collapse:collapse;margin-bottom:16px}
+        th{background:#f3f4f6;padding:7px 10px;text-align:left;font-size:11px;font-weight:700;border-bottom:2px solid #e5e7eb}
+        td{padding:6px 10px;border-bottom:1px solid #f0f0f0}
+        tr:nth-child(even){background:#fafafa}
+        .summary{margin-top:12px;border-top:2px solid #e5e7eb;padding-top:12px}
+        .summary table{width:280px;margin-left:auto}
+        .summary td{padding:4px 10px;border:none}
+        .summary .total-row td{font-weight:800;font-size:13px;border-top:1px solid #e5e7eb}
+        @media print{body{padding:12px}}
+      </style></head><body>
+      <h1>Laporan Pembayaran Vendor</h1>
+      <div class="subtitle">ERP MBG — Arus Kas</div>
+      <div class="meta">
+        <span>Periode: <strong>${periodLabel}</strong></span>
+        <span>Status: <strong>${statusFilter ? statusConfig[statusFilter]?.label : 'Semua'}</strong></span>
+        <span>Dicetak: <strong>${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>
+        <span>Total Transaksi: <strong>${filtered.length}</strong></span>
+      </div>
+      <table>
+        <thead><tr><th>No.</th><th>Tanggal</th><th>No. Payment</th><th>${refLabel}</th><th>${nameLabel}</th><th style="text-align:right">Total</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="summary"><table>
+        <tr><td>Belum Bayar</td><td style="text-align:right">${fmtRp(totalUnpaid)}</td></tr>
+        <tr><td>Pending</td><td style="text-align:right">${fmtRp(totalPending)}</td></tr>
+        <tr><td>Lunas</td><td style="text-align:right">${fmtRp(totalPaid)}</td></tr>
+        <tr class="total-row"><td>Grand Total</td><td style="text-align:right">${fmtRp(grandTotal)}</td></tr>
+      </table></div>
+      </body></html>`
+
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+    win.onload = () => { win.print() }
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -554,13 +675,48 @@ function TransactionTab({ type, onUpload, onApprove, onView }: TransactionTabPro
       </div>
 
       <Card noPadding>
+        {/* Filter bar */}
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className={styles.searchBox} style={{ flex: '1 1 180px', minWidth: 160 }}>
+            <Search size={13} style={{ color: 'var(--color-text-muted)' }} />
+            <input
+              className={styles.searchInput}
+              placeholder="Cari vendor / no. GRN..."
+              value={vendorSearch}
+              onChange={e => setVendorSearch(e.target.value)}
+            />
+          </div>
+          <input type="date" className={styles.filterSelect} value={dateFrom} onChange={e => setDateFrom(e.target.value)} title="Dari tanggal" style={{ cursor: 'pointer', flex: '0 0 auto' }} />
+          <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>s/d</span>
+          <input type="date" className={styles.filterSelect} value={dateTo} onChange={e => setDateTo(e.target.value)} title="Sampai tanggal" style={{ cursor: 'pointer', flex: '0 0 auto' }} />
+          <select className={styles.filterSelect} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ flex: '0 0 auto' }}>
+            <option value="">Semua Status</option>
+            <option value="unpaid">Belum Bayar</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Lunas</option>
+          </select>
+          {(dateFrom || dateTo || statusFilter || vendorSearch) && (
+            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); setStatusFilter(''); setVendorSearch('') }}>Reset</Button>
+          )}
+          <div style={{ flex: 1 }} />
+          <Button variant="secondary" size="sm" icon={<Download size={13} />} onClick={exportExcel} disabled={filtered.length === 0}>Export Excel</Button>
+          <Button variant="secondary" size="sm" icon={<Printer size={13} />} onClick={printPdf} disabled={filtered.length === 0}>Cetak PDF</Button>
+        </div>
+
+        {(dateFrom || dateTo) && (
+          <div style={{ padding: '8px 16px', background: 'rgba(79,124,255,0.06)', borderBottom: '1px solid var(--color-border)', fontSize: 12, color: 'var(--color-text-muted)' }}>
+            Menampilkan <strong>{filtered.length}</strong> transaksi untuk periode <strong>{periodLabel}</strong>
+            {statusFilter && <> · Status: <strong>{statusConfig[statusFilter]?.label}</strong></>}
+          </div>
+        )}
+
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
               <tr>
                 <th>No.</th>
                 <th>Tanggal</th>
-                <th>No Payment</th>
+                <th>No. Payment</th>
                 <th>{refLabel}</th>
                 <th>{nameLabel}</th>
                 <th>Total</th>
@@ -572,14 +728,16 @@ function TransactionTab({ type, onUpload, onApprove, onView }: TransactionTabPro
               {isLoading && (
                 <tr><td colSpan={8} style={{ textAlign: 'center', padding: 24 }}>Loading...</td></tr>
               )}
-              {!isLoading && items.length === 0 && (
+              {!isLoading && filtered.length === 0 && (
                 <tr>
                   <td colSpan={8}>
-                    <div className={styles.emptyState}>Belum ada data. Klik "Sync Data" untuk generate dari GRN/KR.</div>
+                    <div className={styles.emptyState}>
+                      {allItems.length === 0 ? 'Belum ada data. Klik "Sync Data" untuk generate dari GRN/KR.' : 'Tidak ada data untuk filter yang dipilih.'}
+                    </div>
                   </td>
                 </tr>
               )}
-              {items.map((item: any, idx: number) => {
+              {filtered.map((item: any, idx: number) => {
                 const sc = statusConfig[item.status] || statusConfig.unpaid
                 return (
                   <tr key={item.id}>
@@ -618,6 +776,18 @@ function TransactionTab({ type, onUpload, onApprove, onView }: TransactionTabPro
             </tbody>
           </table>
         </div>
+
+        {filtered.length > 0 && (
+          <div style={{ padding: '10px 16px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <span className={styles.muted}>{filtered.length} transaksi</span>
+            <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
+              <span style={{ color: '#ef4444' }}>Belum Bayar: <strong>{fmtRp(totalUnpaid)}</strong></span>
+              <span style={{ color: '#f59e0b' }}>Pending: <strong>{fmtRp(totalPending)}</strong></span>
+              <span style={{ color: '#22c55e' }}>Lunas: <strong>{fmtRp(totalPaid)}</strong></span>
+              <span style={{ color: 'var(--color-text)', fontWeight: 700 }}>Total: <strong>{fmtRp(grandTotal)}</strong></span>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   )
@@ -636,7 +806,6 @@ export default function ArusKasPage() {
   const [tab, setTab] = useState<MainTab>('vendor_summary')
   const [viewItem, setViewItem] = useState<any>(null)
   const [uploadItem, setUploadItem] = useState<any>(null)
-
   const syncMut = useMutation({
     mutationFn: () => api.post<any>('/cashflow/sync', {}),
     onSuccess: (r: any) => {
