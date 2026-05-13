@@ -149,12 +149,26 @@ function PriceHistoryRow({ itemId, itemName }: { itemId: string; itemName: strin
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {history.map((h, idx) => (
-                                        <tr key={h.id} style={{ background: idx === 0 ? 'rgba(79,124,255,0.05)' : 'transparent' }}>
+                                    {history.map((h, idx) => {
+                                        // Active = latest entry with effectiveDate <= today
+                                        const hDate = new Date(h.effectiveDate)
+                                        hDate.setHours(0, 0, 0, 0)
+                                        const todayStart = new Date()
+                                        todayStart.setHours(0, 0, 0, 0)
+                                        const isPast = hDate <= todayStart
+                                        // Find the active entry: latest effectiveDate <= today
+                                        const activeEntry = history
+                                            .filter(e => { const d = new Date(e.effectiveDate); d.setHours(0,0,0,0); return d <= todayStart })
+                                            .reduce((best, cur) =>
+                                                new Date(cur.effectiveDate) > new Date(best.effectiveDate) ? cur : best
+                                            , history.find(e => { const d = new Date(e.effectiveDate); d.setHours(0,0,0,0); return d <= todayStart }) || history[0])
+                                        const isActive = isPast && h.id === activeEntry?.id
+                                        return (
+                                        <tr key={h.id} style={{ background: isActive ? 'rgba(79,124,255,0.05)' : 'transparent' }}>
                                             <td style={{ padding: '6px 10px', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                                     {fmtDateOnly(h.effectiveDate)}
-                                                    {idx === 0 && !isUpcoming(h.effectiveDate) && (
+                                                    {isActive && (
                                                         <Badge label="Aktif" color="green" />
                                                     )}
                                                     {isUpcoming(h.effectiveDate) && (
@@ -169,7 +183,8 @@ function PriceHistoryRow({ itemId, itemName }: { itemId: string; itemName: strin
                                                 {(h as any).createdByName || h.createdBy || '-'}
                                             </td>
                                         </tr>
-                                    ))}
+                                        )
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -227,23 +242,36 @@ export default function PriceListPage() {
     const entries = priceListRes?.data || []
     const items = itemsRes?.data || []
 
-    // Group entries by itemId — show only the latest active entry per item in the table
-    // (full history shown in the expandable row)
-    const latestByItem = new Map<string, PriceListEntry>()
+    // Group entries by itemId — show the currently ACTIVE entry per item in the table
+    // Active = entry with the latest effectiveDate that does NOT exceed today
+    // (entries with future effectiveDate are "upcoming", not yet active)
+    // Full history shown in the expandable row
+    const today = new Date()
+    today.setHours(23, 59, 59, 999)
+    const activeByItem = new Map<string, PriceListEntry>()
+    const upcomingByItem = new Map<string, PriceListEntry>() // fallback if no active entry yet
     for (const entry of entries) {
-        const existing = latestByItem.get(entry.itemId)
-        if (!existing) {
-            latestByItem.set(entry.itemId, entry)
+        const entryDate = new Date(entry.effectiveDate)
+        entryDate.setHours(0, 0, 0, 0)
+        if (entryDate <= today) {
+            // Candidate for active — keep the one with the latest effectiveDate <= today
+            const existing = activeByItem.get(entry.itemId)
+            if (!existing || new Date(entry.effectiveDate).getTime() > new Date(existing.effectiveDate).getTime()) {
+                activeByItem.set(entry.itemId, entry)
+            }
         } else {
-            // Keep the one with the latest effectiveDate
-            const existingDate = new Date(existing.effectiveDate).getTime()
-            const entryDate = new Date(entry.effectiveDate).getTime()
-            if (entryDate > existingDate) {
-                latestByItem.set(entry.itemId, entry)
+            // Upcoming — keep the nearest future entry as fallback display
+            const existing = upcomingByItem.get(entry.itemId)
+            if (!existing || new Date(entry.effectiveDate).getTime() < new Date(existing.effectiveDate).getTime()) {
+                upcomingByItem.set(entry.itemId, entry)
             }
         }
     }
-    const dedupedEntries = Array.from(latestByItem.values())
+    // Merge: prefer active entry, fall back to upcoming if no active entry exists for item
+    const allItemIds = new Set([...activeByItem.keys(), ...upcomingByItem.keys()])
+    const dedupedEntries = Array.from(allItemIds).map(itemId =>
+        activeByItem.get(itemId) ?? upcomingByItem.get(itemId)!
+    )
 
     const sellPriceWarning = formData.sellPrice && formData.purchasePrice &&
         parseFloat(formData.sellPrice) < parseFloat(formData.purchasePrice)
@@ -254,6 +282,22 @@ export default function PriceListPage() {
         setIsModalOpen(true)
     }
 
+    // "Update harga" = buat entry BARU untuk item yang sama (POST), bukan edit entry lama (PATCH).
+    // Entry lama tetap tersimpan sebagai riwayat harga.
+    const openNewPriceForItem = (entry: PriceListEntry) => {
+        setEditingId(null) // always create new
+        const todayStr = new Date().toISOString().split('T')[0]
+        setFormData({
+            itemId: entry.itemId,
+            purchasePrice: String(entry.purchasePrice),
+            sellPrice: String(entry.sellPrice),
+            effectiveDate: todayStr,
+            notes: '',
+        })
+        setIsModalOpen(true)
+    }
+
+    // Edit entry lama — hanya untuk koreksi typo, hanya jika belum dipakai di transaksi
     const openEdit = (entry: PriceListEntry) => {
         setEditingId(entry.id)
         setFormData({
@@ -535,10 +579,18 @@ export default function PriceListPage() {
                                                 <div className={styles.rowActions}>
                                                     <button
                                                         className={styles.actionBtn}
-                                                        onClick={() => openEdit(entry)}
-                                                        title="Edit harga"
+                                                        onClick={() => openNewPriceForItem(entry)}
+                                                        title="Tambah harga baru untuk item ini (entry lama tetap tersimpan)"
                                                     >
-                                                        <Edit2 size={12} /> Edit
+                                                        <Plus size={12} /> Update Harga
+                                                    </button>
+                                                    <button
+                                                        className={styles.actionBtn}
+                                                        onClick={() => openEdit(entry)}
+                                                        title="Koreksi entry ini (hanya jika belum dipakai di PO)"
+                                                        style={{ opacity: 0.7 }}
+                                                    >
+                                                        <Edit2 size={12} /> Koreksi
                                                     </button>
                                                     <button
                                                         className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
@@ -575,8 +627,11 @@ export default function PriceListPage() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editingId ? 'Edit Harga' : 'Tambah Harga Baru'}
-                description="Isi harga beli, harga jual, dan tanggal berlaku untuk item yang dipilih."
+                title={editingId ? 'Koreksi Harga (Edit Entry)' : 'Tambah Harga Baru'}
+                description={editingId
+                    ? 'Koreksi data entry harga yang sudah ada. Hanya bisa dilakukan jika entry belum dipakai di transaksi PO.'
+                    : 'Buat entry harga baru. Entry lama tetap tersimpan sebagai riwayat harga.'
+                }
             >
                 <form onSubmit={handleSubmit}>
                     <div className={modalStyles.formGroup}>
