@@ -34,6 +34,8 @@ export const auth = betterAuth({
     // Trust frontend origin for CORS
     trustedOrigins: [
         process.env.FRONTEND_URL || 'http://localhost:5173',
+        'http://localhost:5173',
+        `http://localhost:${process.env.PORT || '3000'}`,
     ],
 
     // Custom user fields for role-based access
