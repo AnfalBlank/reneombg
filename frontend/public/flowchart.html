@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowchart Operasional — ERP MBG</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #0c0f1a; color: #e2e8f0; padding: 24px; }
+        h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: #fff; }
+        .subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 32px; }
+        .section { margin-bottom: 48px; }
+        .section h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #7c9aff; border-left: 3px solid #7c9aff; padding-left: 12px; }
+        .section p { font-size: 13px; color: #94a3b8; margin-bottom: 12px; line-height: 1.6; }
+        .mermaid { background: #1a1f2e; border-radius: 12px; padding: 24px; border: 1px solid #2d3548; overflow-x: auto; }
+        .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: #94a3b8; }
+        .legend span { display: flex; align-items: center; gap: 6px; }
+        .legend .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .back-link { display: inline-block; margin-bottom: 24px; color: #7c9aff; text-decoration: none; font-size: 13px; }
+        .back-link:hover { text-decoration: underline; }
+        @media print { body { background: #fff; color: #111; } .mermaid { background: #f8f9fa; border-color: #e5e7eb; } h1, .section h2 { color: #111; } }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Kembali ke ERP</a>
+    <h1>📊 Flowchart Operasional ERP MBG</h1>
+    <p class="subtitle">Alur kerja sistem dari pemesanan bahan baku hingga pembayaran vendor</p>
+
+    <!-- FLOW 1: Supply Chain -->
+    <div class="section">
+        <h2>1. Alur Supply Chain (Dapur → Gudang → Vendor)</h2>
+        <p>Dapur membuat permintaan bahan (IR), disetujui admin, lalu gudang mengirim barang via Delivery Order. Jika stok gudang kurang, otomatis generate Purchase Order ke vendor.</p>
+        <div class="mermaid">
+graph LR
+    A[🏠 Dapur Buat IR] --> B{Admin Approve?}
+    B -->|Ya| C[📦 DO Otomatis Dibuat]
+    B -->|Tidak| Z1[❌ IR Ditolak]
+    C --> D[🚚 Gudang Kirim Barang]
+    D --> E[✅ Dapur Terima & Konfirmasi]
+    E --> F[📊 Stok Dapur Update]
+    
+    C --> G{Stok Gudang Cukup?}
+    G -->|Tidak| H[⚠️ Generate PO ke Vendor]
+    G -->|Ya| D
+        </div>
+    </div>
+
+    <!-- FLOW 2: Purchase Order -->
+    <div class="section">
+        <h2>2. Alur Purchase Order (PO)</h2>
+        <p>Admin membuat PO, Finance approve, vendor kirim barang, gudang terima (GRN), stok update otomatis.</p>
+        <div class="mermaid">
+graph LR
+    A[📝 Admin Buat PO] --> B[⏳ Status: Pending Approval]
+    B --> C{Finance Approve?}
+    C -->|Ya| D[✅ Status: Open]
+    C -->|Tidak| Z[❌ PO Ditolak]
+    D --> E[📦 Vendor Kirim Barang]
+    E --> F[📋 Admin Buat GRN]
+    F --> G[📊 Stok Gudang Update]
+    G --> H[💰 Hutang ke Vendor Tercatat]
+        </div>
+    </div>
+
+    <!-- FLOW 3: Direct Delivery -->
+    <div class="section">
+        <h2>3. Alur Direct Delivery (Vendor → Langsung ke Dapur)</h2>
+        <p>Untuk barang yang dikirim langsung ke dapur tanpa lewat gudang. Stok gudang tidak berubah, budget dapur langsung terpotong.</p>
+        <div class="mermaid">
+graph LR
+    A[📝 PO Direct Delivery] --> B[✅ Finance Approve]
+    B --> C[🚚 Vendor Kirim ke Dapur]
+    C --> D[📋 GRN Direct Delivery]
+    D --> E[💰 Budget Dapur Terpotong]
+    D --> F[📊 Tercatat di Inventory Movement]
+    D --> G[💳 Hutang Vendor Tercatat]
+        </div>
+    </div>
+
+    <!-- FLOW 4: Pembayaran Vendor -->
+    <div class="section">
+        <h2>4. Alur Pembayaran Vendor</h2>
+        <p>Setelah GRN diterima, hutang tercatat di Arus Kas. Finance upload bukti bayar, lalu approve untuk melunasi.</p>
+        <div class="mermaid">
+graph LR
+    A[📋 GRN Diterima] --> B[💰 Hutang Tercatat - Belum Bayar]
+    B --> C[📎 Finance Upload Bukti]
+    C --> D[⏳ Status: Pending]
+    D --> E{Finance Approve?}
+    E -->|Ya| F[✅ Status: Lunas]
+    E -->|Tidak| C
+    F --> G[📱 Notifikasi WA ke Vendor]
+        </div>
+    </div>
+
+    <!-- FLOW 5: Price List -->
+    <div class="section">
+        <h2>5. Alur Price List & Harga Jual</h2>
+        <p>Finance/Admin set harga beli dan jual per item dengan tanggal berlaku. Harga aktif otomatis dipakai saat buat PO dan DO.</p>
+        <div class="mermaid">
+graph LR
+    A[📊 Set Harga di Price List] --> B[📅 Tanggal Berlaku]
+    B --> C{Sudah Berlaku?}
+    C -->|Ya| D[✅ Harga Aktif]
+    C -->|Belum| E[⏳ Akan Berlaku Nanti]
+    D --> F[🛒 Dipakai di PO]
+    D --> G[🚚 Dipakai di DO - Harga Jual ke Dapur]
+        </div>
+    </div>
+
+    <!-- FLOW 6: Budget Dapur -->
+    <div class="section">
+        <h2>6. Alur Budget Dapur</h2>
+        <p>Finance set budget per dapur per periode. Setiap IR dan Direct Delivery memotong budget. Jika habis, IR ditolak otomatis.</p>
+        <div class="mermaid">
+graph LR
+    A[💰 Finance Set Budget] --> B[📅 Periode Aktif]
+    B --> C[🏠 Dapur Buat IR]
+    C --> D{Budget Cukup?}
+    D -->|Ya| E[✅ IR Diproses]
+    D -->|Tidak| F[❌ IR Ditolak - Budget Habis]
+    E --> G[💸 Budget Terpotong]
+    G --> H{Sisa < 20%?}
+    H -->|Ya| I[⚠️ Warning ke Finance]
+    H -->|Tidak| J[✅ Normal]
+        </div>
+    </div>
+
+    <!-- FLOW 7: Telegram Bot -->
+    <div class="section">
+        <h2>7. Alur Telegram Bot</h2>
+        <p>User bisa login, buat IR, approve IR/PO, dan terima notifikasi langsung dari Telegram.</p>
+        <div class="mermaid">
+graph LR
+    A[📱 Login via Telegram] --> B[✅ Akun Terhubung]
+    B --> C[📎 Upload Excel SPPG]
+    C --> D[📦 IR Otomatis Dibuat]
+    B --> E[/approve]
+    E --> F[✅ Approve IR/PO dari Telegram]
+    F --> G[📢 Notifikasi ke User Terkait]
+        </div>
+    </div>
+
+    <!-- FLOW 8: Role & Akses -->
+    <div class="section">
+        <h2>8. Pembagian Role & Akses</h2>
+        <div class="mermaid">
+graph TD
+    A[👑 Owner] --> A1[Executive Dashboard]
+    A --> A2[Approval]
+    A --> A3[Laporan]
+    
+    B[🔑 Super Admin] --> B1[Semua Fitur]
+    
+    C[📋 Admin Pusat] --> C1[Master Data]
+    C --> C2[Purchase Order]
+    C --> C3[Inventory]
+    C --> C4[Supply Chain]
+    C --> C5[Laporan]
+    
+    D[🏠 Admin Dapur] --> D1[Buat IR]
+    D --> D2[Terima Barang]
+    D --> D3[Dashboard Dapur]
+    
+    E[💰 Finance] --> E1[Approve PO]
+    E --> E2[Pembayaran Vendor]
+    E --> E3[Budget Management]
+    E --> E4[Price List]
+    E --> E5[Laporan Keuangan]
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#4f7cff',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#6b8cff',
+                lineColor: '#64748b',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#0f172a',
+            }
+        });
+    </script>
+</body>
+</html>
