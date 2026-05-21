@@ -110,16 +110,20 @@ export function initTelegramBot() {
 
             // Verify password via better-auth internal API
             try {
-                const res = await fetch(`${process.env.BETTER_AUTH_URL || 'http://localhost:3000'}/api/auth/sign-in/email`, {
+                const authUrl = `${process.env.BETTER_AUTH_URL || 'http://localhost:3000'}/api/auth/sign-in/email`
+                console.log(`[TG] Verifying password for ${email} via ${authUrl}`)
+                const res = await fetch(authUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Origin': process.env.FRONTEND_URL || 'http://localhost:5173' },
+                    headers: { 'Content-Type': 'application/json', 'Origin': process.env.BETTER_AUTH_URL || 'http://localhost:3000' },
                     body: JSON.stringify({ email, password }),
                 })
+                console.log(`[TG] Auth response status: ${res.status}`)
                 if (!res.ok) {
                     await logAudit({ userId: foundUser.id, userName: foundUser.name, userRole: foundUser.role, action: 'login_failed', entity: 'telegram', description: `Login Telegram gagal: password salah untuk ${email}`, metadata: { source: 'telegram', chatId } })
                     return send(chatId, '❌ Password salah. Coba lagi.')
                 }
-            } catch (e) {
+            } catch (e: any) {
+                console.error('[TG] Auth fetch error:', e?.message || e)
                 return send(chatId, '❌ Gagal verifikasi. Coba lagi nanti.')
             }
 
